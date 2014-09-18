@@ -7,9 +7,9 @@ Name proposals:
  - deeplearn
  - ?
 
-## Features (currently a TODO list)
+## Features (aka. TODO list)
  - Pythonic user interface based on NumPy's ndarray.
- - Back-end implementations in both CUDA and NumPy/Cython implementation allow you to run on the CPU or on Nvidia GPUs as you please.
+ - Runs on either CUDA or NumPy/Cython allowing you to run on the CPU or on Nvidia GPUs if available.
  - Competitive speed compared to Torch, Caffe, cuda-convnet and Theano.
 
 ### Feed-forward nets
@@ -38,6 +38,3 @@ Thanks to the following projects for showing the way:
  - scikit-learn
  - Caffe
  - Theano
- - cudamat
- - PyCUDA
- - pyFFTW
