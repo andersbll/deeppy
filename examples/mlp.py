@@ -4,8 +4,6 @@
 import numpy as np
 import sklearn.datasets
 
-import os
-os.environ['deeppy_BACKEND'] = 'numpy'
 import deeppy
 
 

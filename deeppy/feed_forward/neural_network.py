@@ -1,6 +1,7 @@
 import numpy as np
+import cudarray as ca
 from .layers import ParamMixin
-from .. import ndarray as nda
+from ..helpers import one_hot_encode, one_hot_decode
 
 
 class NeuralNetwork:
@@ -21,7 +22,7 @@ class NeuralNetwork:
         """ Train network on the given data. """
         n_samples = Y.shape[0]
         n_batches = n_samples // batch_size
-        Y_one_hot = nda.nnet.one_hot_encode(Y)
+        Y_one_hot = one_hot_encode(Y)
         self._setup(X, Y_one_hot)
         iter = 0
         # Stochastic gradient descent with mini-batches
@@ -73,7 +74,7 @@ class NeuralNetwork:
 #                                                  npc.mean(npc.abs(inc))))
 
             # Output training status
-            loss = self._loss(X, Y_one_hot)
+            loss = np.mean(self._loss(X, Y_one_hot))
             error = self.error(X, Y)
             print('iter %i, loss %.4f, train error %.4f' % (iter, loss, error))
 
@@ -82,19 +83,18 @@ class NeuralNetwork:
         for layer in self.layers:
             X_next = layer.fprop(X_next)
         Y_pred = X_next
-        losses = self.layers[-1].loss(Y_one_hot, Y_pred)
-        return nda.mean(losses)
+        return self.layers[-1].loss(Y_one_hot, Y_pred)
 
     def predict(self, X):
         """ Calculate an output Y for the given input X. """
         X_next = X
         for layer in self.layers:
             X_next = layer.fprop(X_next)
-        Y_pred = nda.nnet.one_hot_decode(X_next)
+        Y_pred = one_hot_decode(X_next)
         return Y_pred
 
     def error(self, X, Y):
         """ Calculate error on the given data. """
         Y_pred = self.predict(X)
         error = Y_pred != Y
-        return nda.mean(error)
+        return ca.mean(error)

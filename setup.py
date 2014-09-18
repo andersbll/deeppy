@@ -2,8 +2,6 @@
 import os
 
 from setuptools import setup, find_packages
-from setuptools.extension import Extension
-from Cython.Build import cythonize
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -17,7 +15,7 @@ setup(
     license='MIT',
     url='http://compute.dtu.dk/~abll',
     packages=find_packages(),
-    install_requires=['numpy', 'scipy', 'cython', 'cudarray'],
+    install_requires=['numpy', 'cudarray'],
     long_description=read('README.md'),
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -28,6 +26,4 @@ setup(
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering',
     ],
-    ext_modules = cythonize(['deeppy/ndarray/numpy/nnet/conv_bc01.pyx',
-                             'deeppy/ndarray/numpy/nnet/pool_bc01.pyx']),
 )
