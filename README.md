@@ -1,4 +1,4 @@
-# Pythonic neural networks.
+# Deep learning in Python
 
 Name proposals:
  - deeppy ('deep-pi')
