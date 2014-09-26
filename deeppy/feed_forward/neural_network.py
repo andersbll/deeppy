@@ -81,7 +81,7 @@ class NeuralNetwork:
     def _loss(self, X, Y_one_hot):
         X_next = X
         for layer in self.layers:
-            X_next = layer.fprop(X_next)
+            X_next = layer.predict(X_next)
         Y_pred = X_next
         return self.layers[-1].loss(Y_one_hot, Y_pred)
 
@@ -89,7 +89,7 @@ class NeuralNetwork:
         """ Calculate an output Y for the given input X. """
         X_next = X
         for layer in self.layers:
-            X_next = layer.fprop(X_next)
+            X_next = layer.predict(X_next)
         Y_pred = one_hot_decode(X_next)
         return Y_pred
 
