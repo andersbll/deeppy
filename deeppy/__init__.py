@@ -3,6 +3,8 @@ from .feed_forward import (
     FullyConnected,
     Activation,
     MultinomialLogReg,
+    Dropout,
+    DropoutFullyConnected,
 )
 from .fillers import (
     CopyFiller,

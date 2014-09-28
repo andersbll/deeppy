@@ -37,7 +37,7 @@ class NeuralNetwork:
                 # Forward propagation
                 X_next = X_batch
                 for layer in self.layers:
-                    X_next = layer.fprop(X_next)
+                    X_next = layer.fprop(X_next, 'train')
                 Y_pred = X_next
 
                 # Back propagation of partial derivatives
@@ -45,33 +45,12 @@ class NeuralNetwork:
                 for layer in reversed(self.layers[:-1]):
                     next_grad = layer.bprop(next_grad)
 
-#                for layer in self.layers:
-#                    if isinstance(layer, ParamMixin):
-#                        print(layer)
-#                        for param, inc in zip(layer.params(),
-#                                              layer.param_incs()):
-#                            print('\t%.1e  [%.1e]' % (np.mean(np.abs(param)),
-#                                                      np.mean(np.abs(inc))))
-#                # Output training status
-#                loss = self._loss(X, Y_one_hot)
-#                error = self.error(X, Y)
-#                print('iter %i, loss %.4f, train error %.4f'
-#                      % (iter, loss, error))
-
                 # Update parameters
                 for layer in self.layers:
                     if isinstance(layer, ParamMixin):
                         for param, inc in zip(layer.params(),
                                               layer.param_incs()):
                             param -= learning_rate*inc
-
-#            for layer in self.layers:
-#                if isinstance(layer, ParamMixin):
-#                    print(layer)
-#                    for param, inc in zip(layer.params(),
-#                                          layer.param_incs()):
-#                        print('\t%.1e  [%.1e]' % (npc.mean(npc.abs(param)),
-#                                                  npc.mean(npc.abs(inc))))
 
             # Output training status
             loss = np.mean(self._loss(ca.array(X), ca.array(Y_one_hot)))
@@ -81,7 +60,7 @@ class NeuralNetwork:
     def _loss(self, X, Y_one_hot):
         X_next = X
         for layer in self.layers:
-            X_next = layer.predict(X_next)
+            X_next = layer.fprop(X_next, 'test')
         Y_pred = X_next
         return self.layers[-1].loss(Y_one_hot, Y_pred)
 
@@ -89,7 +68,7 @@ class NeuralNetwork:
         """ Calculate an output Y for the given input X. """
         X_next = ca.array(X)
         for layer in self.layers:
-            X_next = layer.predict(X_next)
+            X_next = layer.fprop(X_next, 'test')
         Y_pred = np.array(X_next)
         Y_pred = one_hot_decode(Y_pred)
         return Y_pred
