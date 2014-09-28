@@ -31,8 +31,8 @@ class NeuralNetwork:
             for b in range(n_batches):
                 batch_begin = b*batch_size
                 batch_end = batch_begin+batch_size
-                X_batch = X[batch_begin:batch_end]
-                Y_batch = Y_one_hot[batch_begin:batch_end]
+                X_batch = ca.array(X[batch_begin:batch_end])
+                Y_batch = ca.array(Y_one_hot[batch_begin:batch_end])
 
                 # Forward propagation
                 X_next = X_batch
@@ -74,7 +74,7 @@ class NeuralNetwork:
 #                                                  npc.mean(npc.abs(inc))))
 
             # Output training status
-            loss = np.mean(self._loss(X, Y_one_hot))
+            loss = np.mean(self._loss(ca.array(X), ca.array(Y_one_hot)))
             error = self.error(X, Y)
             print('iter %i, loss %.4f, train error %.4f' % (iter, loss, error))
 
@@ -87,14 +87,15 @@ class NeuralNetwork:
 
     def predict(self, X):
         """ Calculate an output Y for the given input X. """
-        X_next = X
+        X_next = ca.array(X)
         for layer in self.layers:
             X_next = layer.fprop(X_next)
-        Y_pred = one_hot_decode(X_next)
+        Y_pred = np.array(X_next)
+        Y_pred = one_hot_decode(Y_pred)
         return Y_pred
 
     def error(self, X, Y):
         """ Calculate error on the given data. """
         Y_pred = self.predict(X)
         error = Y_pred != Y
-        return ca.mean(error)
+        return np.mean(error)

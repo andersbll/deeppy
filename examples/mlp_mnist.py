@@ -5,6 +5,8 @@ import time
 import numpy as np
 import sklearn.datasets
 
+import os
+os.environ['CUDARRAY_BACKEND'] = 'cuda'
 import deeppy
 
 
@@ -28,13 +30,13 @@ def run():
     nn = deeppy.NeuralNetwork(
         layers=[
             deeppy.FullyConnected(
-                n_output=100,
+                n_output=500,
                 weights=deeppy.NormalFiller(sigma=0.2),
                 weight_decay=0.004,
             ),
             deeppy.Activation('relu'),
             deeppy.FullyConnected(
-                n_output=50,
+                n_output=500,
                 weights=deeppy.NormalFiller(sigma=0.2),
                 weight_decay=0.004,
             ),
@@ -50,7 +52,7 @@ def run():
 
     # Train neural network
     t0 = time.time()
-    nn.fit(X_train, y_train, learning_rate=0.1, max_iter=5, batch_size=64)
+    nn.fit(X_train, y_train, learning_rate=0.1, max_iter=5, batch_size=128)
     t1 = time.time()
     print('Duration: %.1fs' % (t1-t0))
 

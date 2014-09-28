@@ -129,6 +129,7 @@ class MultinomialLogReg(Layer, LossMixin):
         return -(y - y_pred)
 
     def loss(self, y, y_pred):
+        # Assumes one-hot encoding.
         return ca.nnet.categorical_cross_entropy(y, y_pred)
 
     def output_shape(self, input_shape):
