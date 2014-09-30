@@ -11,13 +11,6 @@ from .fillers import (
     ConstantFiller,
     NormalFiller,
 )
-
-__all__ = [
-    'NeuralNetwork',
-    'FullyConnected',
-    'Activation',
-    'MultinomialLogReg',
-    'CopyFiller',
-    'ConstantFiller',
-    'NormalFiller',
-]
+from .trainers.sgd import (
+    StochasticGradientDescent,
+)

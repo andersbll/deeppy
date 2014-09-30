@@ -45,5 +45,6 @@ class DropoutFullyConnected(FullyConnected):
         return Y
 
     def bprop(self, Y_grad):
-        Y_grad *= self.mask
+        if self.dropout > 0.0:
+            Y_grad *= self.mask
         return super(DropoutFullyConnected, self).bprop(Y_grad)

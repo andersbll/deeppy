@@ -1,5 +1,6 @@
 import cudarray as ca
 from ..fillers import filler, ConstantFiller
+from ..base import Parameter
 
 
 class Layer(object):
@@ -38,14 +39,6 @@ class ParamMixin(object):
         """ Layer parameters. """
         raise NotImplementedError()
 
-    def param_grads(self):
-        """ Get layer parameter gradients as calculated from bprop(). """
-        raise NotImplementedError()
-
-    def param_incs(self):
-        """ Get layer parameter steps as calculated from bprop(). """
-        raise NotImplementedError()
-
 
 class FullyConnected(Layer, ParamMixin):
     def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0):
@@ -60,6 +53,17 @@ class FullyConnected(Layer, ParamMixin):
         b_shape = self.n_output
         self.W = ca.array(self.weight_filler.array(W_shape))
         self.b = ca.array(self.bias_filler.array(b_shape))
+        self.W_grad = ca.empty_like(self.W)
+        self.b_grad = ca.empty_like(self.b)
+
+        if self.weight_decay > 0.0:
+            def penalty_fun():
+                return -2*self.weight_decay*self.W
+        else:
+            penalty_fun = None
+        self.W_param = Parameter(self.W, gradient=self.W_grad, name='W',
+                                 penalty_fun=penalty_fun, monitor=True)
+        self.b_param = Parameter(self.b, gradient=self.b_grad, name='b')
 
     def fprop(self, X, phase):
         self.last_X = X
@@ -67,20 +71,13 @@ class FullyConnected(Layer, ParamMixin):
 
     def bprop(self, Y_grad):
         n = Y_grad.shape[0]
-        self.dW = ca.dot(self.last_X.T, Y_grad)/n - self.weight_decay*self.W
-        self.db = ca.mean(Y_grad, axis=0)
+        ca.dot(self.last_X.T, Y_grad, out=self.W_grad)
+        self.W_grad /= n
+        ca.mean(Y_grad, axis=0, out=self.b_grad)
         return ca.dot(Y_grad, self.W.T)
 
     def params(self):
-        return self.W, self.b
-
-    def param_incs(self):
-        return self.dW, self.db
-
-    def param_grads(self):
-        # XXX: stupid: undo weight decay to get gradient
-        gW = self.dW+self.weight_decay*self.W
-        return gW, self.db
+        return self.W_param, self.b_param
 
     def output_shape(self, input_shape):
         return (input_shape[0], self.n_output)
