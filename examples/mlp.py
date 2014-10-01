@@ -3,8 +3,13 @@
 
 import numpy as np
 import sklearn.datasets
+import deeppy as dp
 
-import deeppy
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)-8s %(message)s',
+)
 
 
 def run():
@@ -16,34 +21,30 @@ def run():
     n_classes = np.unique(y_train).size
 
     # Setup multi-layer perceptron
-    nn = deeppy.NeuralNetwork(
+    nn = dp.NeuralNetwork(
         layers=[
-            deeppy.FullyConnected(
+            dp.FullyConnected(
                 n_output=50,
-                weights=deeppy.NormalFiller(sigma=0.1),
-                weight_decay=0.002,
-                momentum = 0.6,
-                droprate = 0.2,
+                weights=dp.NormalFiller(sigma=0.1),
+                weight_decay=0.000001,
             ),
-            deeppy.Activation('sigmoid'),
-            deeppy.FullyConnected(
+            dp.Activation('sigmoid'),
+            dp.FullyConnected(
                 n_output=n_classes,
-                weights=deeppy.NormalFiller(sigma=0.1),
-                weight_decay=0.002,
-                momentum = 0.6,
-                droprate = 0.5,
+                weights=dp.NormalFiller(sigma=0.1),
+                weight_decay=0.000001,
             ),
-            deeppy.MultinomialLogReg(),
+            dp.MultinomialLogReg(),
         ],
     )
 
-#    # Verify network for correct back-propagation of parameter gradients
-#    print('Checking gradients')
-#    nn.check_gradients(X_train[:100], y_train[:100])
-
     # Train neural network
     print('Training neural network')
-    nn.fit(X_train, y_train, learning_rate=0.1, max_iter=25, batch_size=32)
+    trainer = dp.StochasticGradientDescent(
+        batch_size=32, learn_rate=0.05, learn_momentum=0.95, max_epochs=25
+    )
+
+    trainer.train(nn, X_train, y_train)
 
     # Evaluate on training data
     error = nn.error(X_train, y_train)
