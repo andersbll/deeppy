@@ -5,6 +5,8 @@ from .feed_forward import (
     MultinomialLogReg,
     Dropout,
     DropoutFullyConnected,
+    Convolutional,
+    Flatten,
 )
 from .fillers import (
     CopyFiller,
