@@ -35,18 +35,14 @@ class Convolutional(Layer, ParamMixin):
     def fprop(self, input, phase):
         self.last_input = input
         self.last_input_shape = input.shape
-        print ("calling conv_bc01")
         convout = np.empty(self.output_shape(input.shape))
-        convout = ca.conv_bc01(input, self.W, convout)
+        ca.conv_bc01(input, self.W, convout)
         return convout + self.b[np.newaxis, :, np.newaxis, np.newaxis]
 
     def bprop(self, Y_grad):
         input_grad = np.empty(self.last_input_shape)
-        print("calling  bprop_imgs")
-        input_grad = ca.conv_bc01_bprop_imgs(self.W, Y_grad, input_grad)
-        print("calling  conv_bc01_bprop_filters")
-        self.W_grad = ca.conv_bc01_bprop_filters(self.last_input, Y_grad, self.W_grad)
-        print("done")
+        ca.conv_bc01_bprop_imgs(self.W, Y_grad, input_grad)
+        ca.conv_bc01_bprop_filters(self.last_input, Y_grad, self.W_grad)
         n_imgs = Y_grad.shape[0]
         self.b_grad = ca.sum(Y_grad, axis=(0, 2, 3)) / (n_imgs)
         return input_grad
