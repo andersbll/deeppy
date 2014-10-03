@@ -2,6 +2,7 @@ import numpy as np
 import sklearn.datasets
 import deeppy as dp
 import logging
+#hejder 
 logging.basicConfig(
     level=logging.INFO,
     format='%(levelname)-8s %(message)s',
@@ -21,9 +22,9 @@ def run():
     y = y[shuffle_idxs, ...]
 
     
-    n_test = 1500
-    n_valid = 750
-    n_train = 2000
+    n_test = 150
+    n_valid = 75
+    n_train = 200
 
 
     print ("n_train ", n_train)
@@ -33,12 +34,16 @@ def run():
     X_train = np.reshape(X[:n_train], (-1, 1, 28, 28))
     y_train = y[:n_train]
 
-    X_valid = np.reshape(X[n_train+1:n_train+n_valid], (-1, 1, 28, 28))
-    y_valid = y[n_train+1:n_train+n_valid]
+    X_valid = np.reshape(X[n_train:n_train+n_valid], (-1, 1, 28, 28))
+    y_valid = y[n_train:n_train+n_valid]
 
-    X_test = np.reshape(X[n_train+n_valid+1:n_train+n_valid+n_test], (-1, 1, 28, 28))
-    y_test = y[n_train+n_valid+1:n_train+n_valid+n_test]
+    X_test = np.reshape(X[n_train+n_valid:n_train+n_valid+n_test], (-1, 1, 28, 28))
+    y_test = y[n_train+n_valid:n_train+n_valid+n_test]
     n_classes = np.unique(y_train).size
+
+    print ("n_train ", y_train.size)
+    print ("n_valid ", y_valid.size)
+    print ("n_test ", y_test.size)
     
     # Setup multi-layer perceptron
     nn = dp.NeuralNetwork(
@@ -62,7 +67,7 @@ def run():
     
     # Train neural network
     trainer = dp.StochasticGradientDescent(
-        batch_size=100, learn_rate=0.05, learn_momentum=0.9, max_epochs=15
+        batch_size=15, learn_rate=0.05, learn_momentum=0.9, max_epochs=15
     )
     trainer.train(nn, X_train, y_train, X_valid, y_valid)
 
