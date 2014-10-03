@@ -1,12 +1,13 @@
 import numpy as np
-
 from .layers import Layer, ParamMixin
 from ..fillers import filler
 from ..base import Parameter
 import cudarray as ca
 
+
 class Convolutional(Layer, ParamMixin):
-    def __init__(self, n_output, filter_shape, weights, bias=0.0, weight_decay=0.0):
+    def __init__(self, n_output, filter_shape,
+                 weights, bias=0.0, weight_decay=0.0):
         self.n_output = n_output
         self.filter_shape = filter_shape
         self.weight_filler = filler(weights)
@@ -41,8 +42,12 @@ class Convolutional(Layer, ParamMixin):
 
     def bprop(self, Y_grad):
         input_grad = np.empty(self.last_input_shape)
-        ca.conv_bc01_bprop_imgs(self.W, Y_grad, input_grad)
-        ca.conv_bc01_bprop_filters(self.last_input, Y_grad, self.W_grad)
+        # ca.conv_bc01_bprop_imgs(self.W, Y_grad, input_grad)
+        # problems with mallock when split int two functions
+        # ca.conv_bc01_bprop_filters(self.last_input, Y_grad, self.W_grad)
+        ca.conv_bc01_bprop(self.last_input, Y_grad, self.W,
+                           input_grad, self.W_grad)
+
         n_imgs = Y_grad.shape[0]
         self.b_grad = ca.sum(Y_grad, axis=(0, 2, 3)) / (n_imgs)
         return input_grad
@@ -55,6 +60,7 @@ class Convolutional(Layer, ParamMixin):
         w = input_shape[3]
         shape = (input_shape[0], self.n_output, h, w)
         return shape
+
 
 class Flatten(Layer):
     def fprop(self, input, phase):
