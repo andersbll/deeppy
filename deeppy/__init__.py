@@ -7,6 +7,7 @@ from .feed_forward import (
     DropoutFullyConnected,
     Convolutional,
     Flatten,
+    Pool,
 )
 from .fillers import (
     CopyFiller,

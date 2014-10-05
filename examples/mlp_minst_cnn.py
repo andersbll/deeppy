@@ -55,6 +55,11 @@ def run():
                 weight_decay=0.00001,
             ),
             dp.Activation('relu'),
+            dp.Pool(
+                win_shape=(2, 2),
+                strides=(2, 2),
+                poolType='max',
+            ),
             dp.Flatten(),
             dp.FullyConnected(
                 n_output=n_classes,

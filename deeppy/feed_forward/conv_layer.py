@@ -62,6 +62,36 @@ class Convolutional(Layer, ParamMixin):
         return shape
 
 
+class Pool(Layer):
+    def __init__(self, win_shape=(3, 3), poolType='max', strides=(1, 1)):
+        self.type = poolType
+        self.pool_h, self.pool_w = win_shape
+        self.stride_y, self.stride_x = strides
+
+    def fprop(self, input, phase):
+        self.last_input_shape = input.shape
+        self.last_switches = np.empty(self.output_shape(input.shape)+(2,),
+                                      dtype=np.int)
+        poolout = np.empty(self.output_shape(input.shape))
+        if(self.type == "max"):
+            ca.max_pool_bc01(input, poolout, self.last_switches, self.pool_h, self.pool_w,
+                             self.stride_y, self.stride_x)
+        return poolout
+
+    def bprop(self, output_grad):
+        input_grad = np.empty(self.last_input_shape)
+        if(self.type == "max"):
+            ca.bprop_max_pool_bc01(output_grad, self.last_switches, input_grad)
+        return input_grad
+
+    def output_shape(self, input_shape):
+        shape = (input_shape[0],
+                 input_shape[1],
+                 input_shape[2]//self.stride_y,
+                 input_shape[3]//self.stride_x)
+        return shape
+
+
 class Flatten(Layer):
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
