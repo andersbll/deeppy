@@ -112,10 +112,10 @@ class Pool(Layer):
 class Flatten(Layer):
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
-        return np.reshape(input, (input.shape[0], -1))
+        return ca.reshape(input, (input.shape[0], -1))
 
     def bprop(self, Y_grad):
-        return np.reshape(Y_grad, self.last_input_shape)
+        return ca.reshape(Y_grad, self.last_input_shape)
 
     def output_shape(self, input_shape):
         return (input_shape[0], np.prod(input_shape[1:]))
