@@ -58,7 +58,7 @@ def run():
             dp.Pool(
                 win_shape=(2, 2),
                 strides=(2, 2),
-                poolType='avg',
+                poolType='max',
             ),
             dp.Flatten(),
             dp.FullyConnected(

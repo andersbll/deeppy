@@ -70,13 +70,15 @@ class Convolutional(Layer, ParamMixin):
 
 class Pool(Layer):
     def __init__(self, win_shape=(3, 3), poolType='max', strides=(1, 1)):
+        self.win_shape = win_shape
+        self.strides = strides
+
         if (poolType == 'max'):
             self.type = PoolType.POOL_MAX
         elif (poolType == 'avg'):
             self.type = PoolType.POOL_MEAN
-
-        self.win_shape = win_shape
-        self.strides = strides
+        else:
+            raise ValueError('poolType must be "max" or "avg"')
 
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
