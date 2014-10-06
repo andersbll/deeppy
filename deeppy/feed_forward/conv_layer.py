@@ -2,7 +2,13 @@ import numpy as np
 from .layers import Layer, ParamMixin
 from ..fillers import filler
 from ..base import Parameter
+from enum import Enum
 import cudarray as ca
+
+
+class PoolType(Enum):
+    POOL_MAX = 0
+    POOL_MEAN = 1
 
 
 class Convolutional(Layer, ParamMixin):
@@ -64,31 +70,41 @@ class Convolutional(Layer, ParamMixin):
 
 class Pool(Layer):
     def __init__(self, win_shape=(3, 3), poolType='max', strides=(1, 1)):
-        self.type = poolType
-        self.pool_h, self.pool_w = win_shape
-        self.stride_y, self.stride_x = strides
+        if (poolType == 'max'):
+            self.type = PoolType.POOL_MAX
+        elif (poolType == 'avg'):
+            self.type = PoolType.POOL_MEAN
+
+        self.win_shape = win_shape
+        self.strides = strides
 
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
         self.last_switches = np.empty(self.output_shape(input.shape)+(2,),
                                       dtype=np.int)
         poolout = np.empty(self.output_shape(input.shape))
-        if(self.type == "max"):
-            ca.max_pool_bc01(input, poolout, self.last_switches, self.pool_h, self.pool_w,
-                             self.stride_y, self.stride_x)
+
+        ca.pool_bc01(imgs=input, win_shape=self.win_shape,
+                     strides=self.strides, type=self.type,
+                     poolout=poolout, switches=self.last_switches)
         return poolout
 
     def bprop(self, output_grad):
         input_grad = np.empty(self.last_input_shape)
-        if(self.type == "max"):
-            ca.bprop_max_pool_bc01(output_grad, self.last_switches, input_grad)
+
+        input_grad = ca.bprop_pool_bc01(poolout_grad=output_grad,
+                                        win_shape=self.win_shape,
+                                        strides=self.strides,
+                                        type=self.type,
+                                        switches=self.last_switches,
+                                        imgs_grad=input_grad)
         return input_grad
 
     def output_shape(self, input_shape):
         shape = (input_shape[0],
                  input_shape[1],
-                 input_shape[2]//self.stride_y,
-                 input_shape[3]//self.stride_x)
+                 input_shape[2]//self.strides[0],
+                 input_shape[3]//self.strides[1])
         return shape
 
 
