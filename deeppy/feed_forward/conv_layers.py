@@ -42,12 +42,12 @@ class Convolutional(Layer, ParamMixin):
     def fprop(self, input, phase):
         self.last_input = input
         self.last_input_shape = input.shape
-        convout = np.empty(self.output_shape(input.shape))
+        convout = ca.empty(self.output_shape(input.shape))
         ca.conv_bc01(input, self.W, convout)
         return convout + self.b[np.newaxis, :, np.newaxis, np.newaxis]
 
     def bprop(self, Y_grad):
-        input_grad = np.empty(self.last_input_shape)
+        input_grad = ca.empty(self.last_input_shape)
         # ca.conv_bc01_bprop_imgs(self.W, Y_grad, input_grad)
         # problems with mallock when split int two functions
         # ca.conv_bc01_bprop_filters(self.last_input, Y_grad, self.W_grad)
@@ -82,8 +82,8 @@ class Pool(Layer):
 
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
-        self.last_switches = np.empty(self.output_shape(input.shape)+(2,))
-        poolout = np.empty(self.output_shape(input.shape))
+        self.last_switches = ca.empty(self.output_shape(input.shape)+(2,))
+        poolout = ca.empty(self.output_shape(input.shape))
 
         ca.pool_bc01(imgs=input, win_shape=self.win_shape,
                      strides=self.strides, type=self.type,
@@ -91,7 +91,7 @@ class Pool(Layer):
         return poolout
 
     def bprop(self, output_grad):
-        input_grad = np.empty(self.last_input_shape)
+        input_grad = ca.empty(self.last_input_shape)
 
         input_grad = ca.bprop_pool_bc01(poolout_grad=output_grad,
                                         win_shape=self.win_shape,
