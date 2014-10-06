@@ -82,8 +82,7 @@ class Pool(Layer):
 
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
-        self.last_switches = np.empty(self.output_shape(input.shape)+(2,),
-                                      dtype=np.int)
+        self.last_switches = np.empty(self.output_shape(input.shape)+(2,))
         poolout = np.empty(self.output_shape(input.shape))
 
         ca.pool_bc01(imgs=input, win_shape=self.win_shape,
