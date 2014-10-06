@@ -2,11 +2,12 @@ import numpy as np
 import sklearn.datasets
 import deeppy as dp
 import logging
-#hejder 
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(levelname)-8s %(message)s',
 )
+
 
 def run():
     # Fetch data
@@ -21,11 +22,9 @@ def run():
     X = X[shuffle_idxs, ...]
     y = y[shuffle_idxs, ...]
 
-    
     n_test = 150
     n_valid = 75
     n_train = 200
-
 
     print ("n_train ", n_train)
     print ("n_valid ", n_valid)
@@ -37,20 +36,21 @@ def run():
     X_valid = np.reshape(X[n_train:n_train+n_valid], (-1, 1, 28, 28))
     y_valid = y[n_train:n_train+n_valid]
 
-    X_test = np.reshape(X[n_train+n_valid:n_train+n_valid+n_test], (-1, 1, 28, 28))
+    X_test = np.reshape(X[n_train+n_valid:n_train+n_valid+n_test],
+                        (-1, 1, 28, 28))
     y_test = y[n_train+n_valid:n_train+n_valid+n_test]
     n_classes = np.unique(y_train).size
 
     print ("n_train ", y_train.size)
     print ("n_valid ", y_valid.size)
     print ("n_test ", y_test.size)
-    
+
     # Setup multi-layer perceptron
     nn = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
                 n_output=12,
-                filter_shape=(5,5),
+                filter_shape=(5, 5),
                 weights=dp.NormalFiller(sigma=0.1),
                 weight_decay=0.00001,
             ),
@@ -69,7 +69,7 @@ def run():
             dp.MultinomialLogReg(),
         ],
     )
-    
+
     # Train neural network
     trainer = dp.StochasticGradientDescent(
         batch_size=15, learn_rate=0.05, learn_momentum=0.9, max_epochs=15
@@ -82,4 +82,4 @@ def run():
 
 
 if __name__ == '__main__':
-    run()   
+    run()
