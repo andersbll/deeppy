@@ -1,3 +1,9 @@
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)-8s %(message)s',
+)
+
 from .feed_forward import (
     NeuralNetwork,
     FullyConnected,

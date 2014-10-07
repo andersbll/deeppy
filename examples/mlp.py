@@ -5,12 +5,6 @@ import numpy as np
 import sklearn.datasets
 import deeppy as dp
 
-import logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)-8s %(message)s',
-)
-
 
 def run():
     # Fetch data
