@@ -82,7 +82,8 @@ class Pool(Layer):
 
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
-        self.last_switches = ca.empty(self.output_shape(input.shape)+(2,))
+        self.last_switches = ca.empty(self.output_shape(input.shape)+(2,),
+                                      dtype=np.int_)
         poolout = ca.empty(self.output_shape(input.shape))
 
         ca.pool_bc01(imgs=input, win_shape=self.win_shape,
@@ -90,10 +91,9 @@ class Pool(Layer):
                      poolout=poolout, switches=self.last_switches)
         return poolout
 
-    def bprop(self, output_grad):
+    def bprop(self, Y_grad):
         input_grad = ca.empty(self.last_input_shape)
-
-        input_grad = ca.bprop_pool_bc01(poolout_grad=output_grad,
+        input_grad = ca.bprop_pool_bc01(poolout_grad=Y_grad,
                                         win_shape=self.win_shape,
                                         strides=self.strides,
                                         type=self.type,
@@ -107,6 +107,29 @@ class Pool(Layer):
                  input_shape[2]//self.strides[0],
                  input_shape[3]//self.strides[1])
         return shape
+
+
+class LocalResponseNormalization(Layer):
+    def __init__(self, alpha=1e-4, beta=0.75, n=5, k=1):
+        self.alpha = alpha
+        self.beta = beta
+        self.n = n
+        self.k = k
+
+    def fprop(self, input, phase):
+        input = ca.lrnorm_bc01(input,
+                               N=self.n,
+                               alpha=self.alpha,
+                               beta=self.beta,
+                               k=self.k)
+
+        return input
+
+    def bprop(self, Y_grad):
+        return Y_grad
+
+    def output_shape(self, input_shape):
+        return input_shape
 
 
 class Flatten(Layer):
