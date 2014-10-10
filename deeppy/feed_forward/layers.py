@@ -72,8 +72,7 @@ class FullyConnected(Layer, ParamMixin):
     def bprop(self, Y_grad):
         n = Y_grad.shape[0]
         ca.dot(self.last_X.T, Y_grad, out=self.W_grad)
-        self.W_grad /= n
-        ca.mean(Y_grad, axis=0, out=self.b_grad)
+        ca.sum(Y_grad, axis=0, out=self.b_grad)
         return ca.dot(Y_grad, self.W.T)
 
     def params(self):
@@ -92,7 +91,7 @@ class Activation(Layer):
             self.fun = ca.nnet.relu
             self.fun_d = ca.nnet.relu_d
         elif type == 'tanh':
-            self.fun = ca.nnet.tanh
+            self.fun = ca.tanh
             self.fun_d = ca.nnet.tanh_d
         else:
             raise ValueError('Invalid activation function.')
