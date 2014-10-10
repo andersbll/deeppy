@@ -7,6 +7,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def print_params(param, step):
+    if param.monitor:
+        val_mean_abs = np.mean(np.abs(param.values))
+        step_mean_abs = np.mean(np.abs(step))
+        logger.info('%s:\t%.1e  [%.1e]'
+                    % (param.name, val_mean_abs, step_mean_abs))
+
+
 class StochasticGradientDescent:
     def __init__(self, batch_size, learn_rate, learn_momentum=0.95,
                  min_epochs=5, max_epochs=1000, improvement_thresh=0.995,
@@ -75,6 +83,8 @@ class StochasticGradientDescent:
                 logger.info('epoch %.2f/%.2f' % (epoch, patience)
                             + ', cost %f' % epoch_cost
                             + ', val_error %.4f' % val_error)
+                for param, step in zip(params, param_steps):
+                    print_params(param, step)
                 if patience <= epoch:
                     logger.info('SGD: Converged on validation set.')
                     converged = True
