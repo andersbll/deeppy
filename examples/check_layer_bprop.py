@@ -29,6 +29,31 @@ def run():
         print(layer)
         dp.misc.check_bprop(layer, x)
 
+    conv_layers = [
+        dp.Convolutional(
+            n_filters=32,
+            filter_shape=(3, 3),
+            border_mode='same',
+            weights=dp.NormalFiller(sigma=0.01),
+        ),
+        dp.Convolutional(
+            n_filters=32,
+            filter_shape=(5, 5),
+            border_mode='valid',
+            weights=dp.NormalFiller(sigma=0.01),
+        ),
+        dp.Pool(
+            win_shape=(3, 3),
+            strides=(2, 2),
+            method='max',
+        )
+    ]
+    input_shape = (5, 3, 8, 8)
+    x = np.random.normal(size=input_shape)
+    for layer in conv_layers:
+        print(layer)
+        dp.misc.check_bprop(layer, x)
+
 
 if __name__ == '__main__':
     run()
