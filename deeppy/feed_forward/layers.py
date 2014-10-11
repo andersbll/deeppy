@@ -42,6 +42,7 @@ class ParamMixin(object):
 
 class FullyConnected(Layer, ParamMixin):
     def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0):
+        self.name = 'fullconn'
         self.n_output = n_output
         self.weight_filler = filler(weights)
         self.bias_filler = filler(bias)
@@ -83,13 +84,17 @@ class FullyConnected(Layer, ParamMixin):
 
 class Activation(Layer):
     def __init__(self, type):
+        self.name = 'act_'
         if type == 'sigmoid':
+            self.name = self.name+'sigm'
             self.fun = ca.nnet.sigmoid
             self.fun_d = ca.nnet.sigmoid_d
         elif type == 'relu':
+            self.name = self.name+type
             self.fun = ca.nnet.relu
             self.fun_d = ca.nnet.relu_d
         elif type == 'tanh':
+            self.name = self.name+type
             self.fun = ca.tanh
             self.fun_d = ca.nnet.tanh_d
         else:
@@ -108,6 +113,9 @@ class Activation(Layer):
 
 class MultinomialLogReg(Layer, LossMixin):
     """ Multinomial logistic regression with a cross-entropy loss function. """
+    def __init__(self):
+        self.name = 'logreg'
+
     def fprop(self, X, phase):
         return ca.nnet.softmax(X)
 

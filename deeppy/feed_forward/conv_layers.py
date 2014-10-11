@@ -8,6 +8,7 @@ import cudarray as ca
 class Convolutional(Layer, ParamMixin):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
                  strides=(1, 1), border_mode='valid', weight_decay=0.0):
+        self.name = 'conv'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
         self.strides = strides
@@ -77,6 +78,7 @@ class Convolutional(Layer, ParamMixin):
 class Pool(Layer):
     def __init__(self, win_shape=(3, 3), method='max', strides=(1, 1),
                  border_mode='valid'):
+        self.name = 'pool'
         self.win_shape = win_shape
         self.strides = strides
         self.method = method
@@ -118,6 +120,7 @@ class Pool(Layer):
 
 class Flatten(Layer):
     def fprop(self, input, phase):
+        self.name = 'flatten'
         self.last_input_shape = input.shape
         return ca.reshape(input, self.output_shape(input.shape))
 
