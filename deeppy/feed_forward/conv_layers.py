@@ -5,6 +5,17 @@ from ..base import Parameter
 import cudarray as ca
 
 
+def padding(win_shape, border_mode):
+    if border_mode == 'valid':
+        return (0, 0)
+    elif border_mode == 'same':
+        return (win_shape[0]//2, win_shape[1]//2)
+    elif border_mode == 'full':
+        return (win_shape[0]-1, win_shape[1]-1)
+    else:
+        raise ValueError('invalid mode: "%s"' % mode)
+
+
 class Convolutional(Layer, ParamMixin):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
                  strides=(1, 1), border_mode='valid', weight_decay=0.0):
@@ -12,14 +23,7 @@ class Convolutional(Layer, ParamMixin):
         self.n_filters = n_filters
         self.filter_shape = filter_shape
         self.strides = strides
-        if border_mode == 'valid':
-            self.padding = (0, 0)
-        elif border_mode == 'same':
-            self.padding = (filter_shape[0]//2, filter_shape[1]//2)
-        elif border_mode == 'full':
-            self.padding = (filter_shape[0]-1, filter_shape[1]-1)
-        else:
-            raise ValueError('invalid mode: "%s"' % mode)
+        self.padding = padding(filter_shape, border_mode)
         self.weight_filler = filler(weights)
         self.bias_filler = filler(bias)
         self.weight_decay = weight_decay
@@ -82,14 +86,7 @@ class Pool(Layer):
         self.win_shape = win_shape
         self.strides = strides
         self.method = method
-        if border_mode == 'valid':
-            self.padding = (0, 0)
-        elif border_mode == 'same':
-            self.padding = (win_shape[0]//2, win_shape[1]//2)
-        elif border_mode == 'full':
-            self.padding = (win_shape[0]-1, win_shape[1]-1)
-        else:
-            raise ValueError('invalid mode: "%s"' % mode)
+        self.padding = padding(win_shape, border_mode)
 
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
