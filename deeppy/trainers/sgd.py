@@ -65,11 +65,12 @@ class StochasticGradientDescent:
                 # Gradient updates
                 for param, last_step in zip(params, param_steps):
                     last_step *= self.learn_momentum
-                    last_step -= self.learn_rate * param.gradient
+                    step = param.gradient
                     if param.penalty_fun is not None:
-                        last_step += param.penalty_fun()
+                        step -= param.penalty_fun()
+                    last_step += (self.learn_rate / self.batch_size) * step
                     p_values = param.values
-                    p_values += last_step
+                    p_values -= last_step
 
             epoch_cost = np.mean(batch_costs)
             if validation:
@@ -80,7 +81,7 @@ class StochasticGradientDescent:
                         # increase patience on significant improvement
                         patience = max(patience, epoch*self.patience_incr)
                     best_score = val_error
-                logger.info('epoch %.2f/%.2f' % (epoch, patience)
+                logger.info('epoch %d/%d' % (epoch, patience)
                             + ', cost %f' % epoch_cost
                             + ', val_error %.4f' % val_error)
                 for param, step in zip(params, param_steps):
@@ -95,7 +96,7 @@ class StochasticGradientDescent:
                         # increase patience on significant improvement
                         patience = max(patience, epoch*self.patience_incr)
                     best_score = epoch_cost
-                logger.info('epoch %i/%i' % (epoch, patience)
+                logger.info('epoch %d/%d' % (epoch, patience)
                             + ', cost %f' % epoch_cost)
                 if patience <= epoch:
                     logger.info('SGD: Converged on training set.')

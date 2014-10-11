@@ -58,7 +58,7 @@ class FullyConnected(Layer, ParamMixin):
 
         if self.weight_decay > 0.0:
             def penalty_fun():
-                return -2*self.weight_decay*self.W
+                return 2*self.weight_decay*self.W
         else:
             penalty_fun = None
         self.W_param = Parameter(self.W, gradient=self.W_grad, name='W',
@@ -70,7 +70,6 @@ class FullyConnected(Layer, ParamMixin):
         return ca.dot(X, self.W) + self.b
 
     def bprop(self, Y_grad):
-        n = Y_grad.shape[0]
         ca.dot(self.last_X.T, Y_grad, out=self.W_grad)
         ca.sum(Y_grad, axis=0, out=self.b_grad)
         return ca.dot(Y_grad, self.W.T)

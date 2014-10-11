@@ -7,9 +7,12 @@ from ..helpers import one_hot_encode, one_hot_decode
 
 class NeuralNetwork:
     def __init__(self, layers):
+        self._initialized = False
         self.layers = layers
 
     def _setup(self, X, Y):
+        if self._initialized:
+            return
         # Setup layers sequentially
         next_shape = X.shape
         for layer in self.layers:
@@ -18,6 +21,7 @@ class NeuralNetwork:
         if next_shape != Y.shape:
             raise ValueError('Output shape %s does not match Y %s'
                              % (next_shape, Y.shape))
+        self._initialized = True
 
     def _params(self):
         all_params = [layer.params() for layer in self.layers

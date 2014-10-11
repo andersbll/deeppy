@@ -33,7 +33,7 @@ class Convolutional(Layer, ParamMixin):
         self.b_grad = ca.empty_like(self.b)
         if self.weight_decay > 0.0:
             def penalty_fun():
-                return -2*self.weight_decay*self.W
+                return 2*self.weight_decay*self.W
         else:
             penalty_fun = None
         self.W_param = Parameter(self.W, gradient=self.W_grad, name='W',
@@ -119,7 +119,7 @@ class Pool(Layer):
 class Flatten(Layer):
     def fprop(self, input, phase):
         self.last_input_shape = input.shape
-        return ca.reshape(input, (input.shape[0], -1))
+        return ca.reshape(input, self.output_shape(input.shape))
 
     def bprop(self, Y_grad):
         return ca.reshape(Y_grad, self.last_input_shape)
