@@ -65,10 +65,11 @@ class StochasticGradientDescent:
                 # Gradient updates
                 for param, last_step in zip(params, param_steps):
                     last_step *= self.learn_momentum
-                    step = param.gradient
+                    step = param.grad
                     if param.penalty_fun is not None:
                         step -= param.penalty_fun()
-                    last_step += (self.learn_rate / self.batch_size) * step
+                    lr = self.learn_rate * param.learn_rate / self.batch_size
+                    last_step += lr * step
                     p_values = param.values
                     p_values -= last_step
 

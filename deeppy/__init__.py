@@ -5,6 +5,9 @@ logging.basicConfig(
 )
 
 import misc
+from .base import (
+    Parameter,
+)
 from .feed_forward import (
     NeuralNetwork,
     FullyConnected,

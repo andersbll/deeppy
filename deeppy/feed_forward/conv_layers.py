@@ -1,7 +1,6 @@
 import numpy as np
 from .layers import Layer, ParamMixin
-from ..fillers import filler
-from ..base import Parameter
+from ..base import parameter
 import cudarray as ca
 
 
@@ -29,50 +28,43 @@ class Convolutional(Layer, ParamMixin):
         self.filter_shape = filter_shape
         self.strides = strides
         self.padding = padding(filter_shape, border_mode)
-        self.weight_filler = filler(weights)
-        self.bias_filler = filler(bias)
-        self.weight_decay = weight_decay
+        self.W = parameter(weights)
+        self.b = parameter(bias)
 
     def _setup(self, input_shape):
         n_channels = input_shape[1]
         W_shape = (self.n_filters, n_channels) + self.filter_shape
         b_shape = (1, self.n_filters, 1, 1)
-        self.W = ca.array(self.weight_filler.array(W_shape))
-        self.b = ca.array(self.bias_filler.array(b_shape))
-        self.W_grad = ca.empty_like(self.W)
-        self.b_grad = ca.empty_like(self.b)
-        if self.weight_decay > 0.0:
-            def penalty_fun():
-                return 2*self.weight_decay*self.W
-        else:
-            penalty_fun = None
-        self.W_param = Parameter(self.W, gradient=self.W_grad, name='W',
-                                 penalty_fun=penalty_fun, monitor=True)
-        self.b_param = Parameter(self.b, gradient=self.b_grad, name='b')
+        self.W._setup(W_shape)
+        if not self.W.name:
+            self.W.name = self.name + '_W'
+        self.b._setup(b_shape)
+        if not self.b.name:
+            self.b.name = self.name + '_b'
 
     def fprop(self, input, phase):
         self.last_input = input
         self.last_input_shape = input.shape
         convout = ca.empty(self.output_shape(input.shape))
-        ca.nnet.conv_bc01(input, self.W, padding=self.padding,
+        ca.nnet.conv_bc01(input, self.W.values, padding=self.padding,
                           strides=self.strides, convout=convout)
-        return convout + self.b
+        return convout + self.b.values
 
     def bprop(self, Y_grad):
         img_shape = self.last_input_shape[2:]
         input_grad = ca.empty(self.last_input_shape)
         ca.nnet.conv_bc01_bprop_filters(
             self.last_input, Y_grad, self.filter_shape, self.padding,
-            self.strides, self.W_grad
+            self.strides, self.W.grad
         )
-        ca.nnet.conv_bc01_bprop_imgs(self.W, Y_grad, img_shape, self.padding,
-                                     self.strides, input_grad)
+        ca.nnet.conv_bc01_bprop_imgs(self.W.values, Y_grad, img_shape,
+                                     self.padding, self.strides, input_grad)
         ca.sum(ca.sum(Y_grad, axis=(2, 3), keepdims=True), axis=0,
-               keepdims=True, out=self.b_grad)
+               keepdims=True, out=self.b.grad)
         return input_grad
 
     def params(self):
-        return self.W_param, self.b_param
+        return self.W, self.b
 
     def output_shape(self, input_shape):
         b, _, img_h, img_w = input_shape

@@ -19,14 +19,14 @@ def run():
         layers=[
             dp.FullyConnected(
                 n_output=50,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.000001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.000001)),
             ),
             dp.Activation('sigmoid'),
             dp.FullyConnected(
                 n_output=n_classes,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.000001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.000001)),
             ),
             dp.MultinomialLogReg(),
         ],

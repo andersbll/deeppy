@@ -35,20 +35,20 @@ def run():
         layers=[
             dp.FullyConnected(
                 n_output=800,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.0001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.0001)),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=800,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.0001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.0001)),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=n_classes,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.0001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.0001)),
             ),
             dp.MultinomialLogReg(),
         ],

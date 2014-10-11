@@ -1,6 +1,5 @@
 import cudarray as ca
-from ..fillers import filler, ConstantFiller
-from ..base import Parameter
+from ..base import parameter
 
 
 class Layer(object):
@@ -44,39 +43,31 @@ class FullyConnected(Layer, ParamMixin):
     def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0):
         self.name = 'fullconn'
         self.n_output = n_output
-        self.weight_filler = filler(weights)
-        self.bias_filler = filler(bias)
-        self.weight_decay = weight_decay
+        self.W = parameter(weights)
+        self.b = parameter(bias)
 
     def _setup(self, input_shape):
         n_input = input_shape[1]
         W_shape = (n_input, self.n_output)
         b_shape = self.n_output
-        self.W = ca.array(self.weight_filler.array(W_shape))
-        self.b = ca.array(self.bias_filler.array(b_shape))
-        self.W_grad = ca.empty_like(self.W)
-        self.b_grad = ca.empty_like(self.b)
-
-        if self.weight_decay > 0.0:
-            def penalty_fun():
-                return 2*self.weight_decay*self.W
-        else:
-            penalty_fun = None
-        self.W_param = Parameter(self.W, gradient=self.W_grad, name='W',
-                                 penalty_fun=penalty_fun, monitor=True)
-        self.b_param = Parameter(self.b, gradient=self.b_grad, name='b')
+        self.W._setup(W_shape)
+        if not self.W.name:
+            self.W.name = self.name + '_W'
+        self.b._setup(b_shape)
+        if not self.b.name:
+            self.b.name = self.name + '_b'
 
     def fprop(self, X, phase):
         self.last_X = X
-        return ca.dot(X, self.W) + self.b
+        return ca.dot(X, self.W.values) + self.b.values
 
     def bprop(self, Y_grad):
-        ca.dot(self.last_X.T, Y_grad, out=self.W_grad)
-        ca.sum(Y_grad, axis=0, out=self.b_grad)
-        return ca.dot(Y_grad, self.W.T)
+        ca.dot(self.last_X.T, Y_grad, out=self.W.grad)
+        ca.sum(Y_grad, axis=0, out=self.b.grad)
+        return ca.dot(Y_grad, self.W.values.T)
 
     def params(self):
-        return self.W_param, self.b_param
+        return self.W, self.b
 
     def output_shape(self, input_shape):
         return (input_shape[0], self.n_output)

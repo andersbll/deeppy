@@ -26,7 +26,6 @@ def run():
     input_shape = (1, 5)
     x = np.random.normal(size=input_shape)
     for layer in layers:
-        print(layer)
         dp.misc.check_bprop(layer, x)
 
     conv_layers = [
@@ -51,7 +50,6 @@ def run():
     input_shape = (5, 3, 8, 8)
     x = np.random.normal(size=input_shape)
     for layer in conv_layers:
-        print(layer)
         dp.misc.check_bprop(layer, x)
 
 

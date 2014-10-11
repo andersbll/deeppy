@@ -40,8 +40,8 @@ def run():
                 n_filters=32,
                 filter_shape=(5, 5),
                 border_mode='same',
-                weights=dp.NormalFiller(sigma=0.0001),
-                weight_decay=0.004,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.0001),
+                                     penalty=('l2', 0.004), monitor=True),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
@@ -49,8 +49,8 @@ def run():
                 n_filters=32,
                 filter_shape=(5, 5),
                 border_mode='same',
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.004,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
+                                     penalty=('l2', 0.004), monitor=True),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
@@ -58,26 +58,30 @@ def run():
                 n_filters=64,
                 filter_shape=(5, 5),
                 border_mode='same',
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.004,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
+                                     penalty=('l2', 0.004), monitor=True),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
             dp.Flatten(),
             dp.FullyConnected(
                 n_output=64,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.03,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.03)),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=n_classes,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.03,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.03)),
             ),
             dp.MultinomialLogReg(),
         ],
     )
+
+    X_profile = X_train[:128, ...]
+    y_profile = y_train[:128, ...]
+    dp.misc.profile(nn, X_profile, y_profile)
 
     # Train neural network
     n_epochs = [8, 8]
