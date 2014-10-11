@@ -105,7 +105,9 @@ class Activation(Layer):
         return self.fun(X)
 
     def bprop(self, Y_grad):
-        return Y_grad*self.fun_d(self.last_X)
+        self.fun_d(self.last_X, self.last_X)
+        self.last_X *= Y_grad
+        return self.last_X
 
     def output_shape(self, input_shape):
         return input_shape
