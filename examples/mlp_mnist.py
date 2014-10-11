@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
 import numpy as np
 import sklearn.datasets
 import deeppy as dp
@@ -29,25 +30,25 @@ def run():
 
     n_classes = np.unique(y_train).size
 
-    # Setup multi-layer perceptron
+    # Setup neural network
     nn = dp.NeuralNetwork(
         layers=[
             dp.FullyConnected(
                 n_output=800,
                 weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.00001,
+                weight_decay=0.0001,
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=800,
                 weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.00001,
+                weight_decay=0.0001,
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=n_classes,
                 weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.00001,
+                weight_decay=0.0001,
             ),
             dp.MultinomialLogReg(),
         ],
@@ -55,9 +56,16 @@ def run():
 
     # Train neural network
     trainer = dp.StochasticGradientDescent(
-        batch_size=128, learn_rate=0.001, learn_momentum=0.9, max_epochs=15
+        batch_size=128, learn_rate=0.1, learn_momentum=0.9, max_epochs=25
     )
     trainer.train(nn, X_train, y_train, X_valid, y_valid)
+
+    # Visualize weights from first layer
+    W = next(np.array(layer.params()[0].values) for layer in nn.layers
+             if isinstance(layer, dp.FullyConnected))
+    W = np.reshape(W.T, (-1, 28, 28))
+    dp.misc.img_save(dp.misc.img_tile(dp.misc.img_stretch(W)),
+                     os.path.join('mnist', 'mlp_weights.png'))
 
     # Evaluate on test data
     error = nn.error(X_test, y_test)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
 import numpy as np
 import sklearn.datasets
 import deeppy as dp
@@ -27,6 +28,12 @@ def run():
     n_classes = np.unique(y_test).size
 
     # Setup neural network
+    pool_kwargs = {
+        'win_shape': (3, 3),
+        'strides': (2, 2),
+        'border_mode': 'same',
+        'method': 'max',
+    }
     nn = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
@@ -37,12 +44,7 @@ def run():
                 weight_decay=0.004,
             ),
             dp.Activation('relu'),
-            dp.Pool(
-                win_shape=(3, 3),
-                strides=(2, 2),
-                border_mode='same',
-                method='max',
-            ),
+            dp.Pool(**pool_kwargs),
             dp.Convolutional(
                 n_filters=32,
                 filter_shape=(5, 5),
@@ -51,12 +53,7 @@ def run():
                 weight_decay=0.004,
             ),
             dp.Activation('relu'),
-            dp.Pool(
-                win_shape=(3, 3),
-                strides=(2, 2),
-                border_mode='same',
-                method='max',
-            ),
+            dp.Pool(**pool_kwargs),
             dp.Convolutional(
                 n_filters=64,
                 filter_shape=(5, 5),
@@ -65,12 +62,7 @@ def run():
                 weight_decay=0.004,
             ),
             dp.Activation('relu'),
-            dp.Pool(
-                win_shape=(3, 3),
-                strides=(2, 2),
-                border_mode='same',
-                method='max',
-            ),
+            dp.Pool(**pool_kwargs),
             dp.Flatten(),
             dp.FullyConnected(
                 n_output=64,
@@ -88,10 +80,23 @@ def run():
     )
 
     # Train neural network
-    trainer = dp.StochasticGradientDescent(
-        batch_size=128, learn_rate=0.0001, learn_momentum=0.9, max_epochs=15
-    )
-    trainer.train(nn, X_train, y_train, X_valid, y_valid)
+    n_epochs = [8, 8]
+    learn_rate = 0.001
+    for i, max_epochs in enumerate(n_epochs):
+        lr = learn_rate/10**i
+        trainer = dp.StochasticGradientDescent(
+            batch_size=128, learn_rate=lr, learn_momentum=0.9,
+            max_epochs=max_epochs
+        )
+        trainer.train(nn, X_train, y_train, X_valid, y_valid)
+
+    # Visualize convolutional filters to disk
+    for l, layer in enumerate(nn.layers):
+        if not isinstance(layer, dp.Convolutional):
+            continue
+        W = np.array(layer.params()[0].values)
+        dp.misc.img_save(dp.misc.conv_filter_tile(W),
+                         os.path.join('cifar10', 'convnet_layer_%i.png' % l))
 
     # Evaluate on test data
     error = nn.error(X_test, y_test)
