@@ -16,6 +16,11 @@ def padding(win_shape, border_mode):
         raise ValueError('invalid mode: "%s"' % mode)
 
 
+def convout_shape(img_shape, filter_shape, padding, strides):
+    return ((img_shape[0] + 2*padding[0] - filter_shape[0])/strides[0] + 1,
+            (img_shape[1] + 2*padding[1] - filter_shape[1])/strides[1] + 1)
+
+
 class Convolutional(Layer, ParamMixin):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
                  strides=(1, 1), border_mode='valid', weight_decay=0.0):
@@ -70,13 +75,10 @@ class Convolutional(Layer, ParamMixin):
         return self.W_param, self.b_param
 
     def output_shape(self, input_shape):
-        b, c, img_h, img_w = input_shape
-        out_h = ((img_h + 2 * self.padding[0] - self.filter_shape[0])
-                 / self.strides[0] + 1)
-        out_w = ((img_w + 2 * self.padding[1] - self.filter_shape[1])
-                 / self.strides[1] + 1)
-        out_shape = (b, self.n_filters, out_h, out_w)
-        return out_shape
+        b, _, img_h, img_w = input_shape
+        out_shape = convout_shape((img_h, img_w), self.filter_shape,
+                                  self.padding, self.strides)
+        return (b, self.n_filters) + out_shape
 
 
 class Pool(Layer):
@@ -107,12 +109,9 @@ class Pool(Layer):
 
     def output_shape(self, input_shape):
         b, c, img_h, img_w = input_shape
-        out_h = ((img_h + 2 * self.padding[0] - self.win_shape[0])
-                 / self.strides[0] + 1)
-        out_w = ((img_w + 2 * self.padding[1] - self.win_shape[1])
-                 / self.strides[1] + 1)
-        out_shape = (b, c, out_h, out_w)
-        return out_shape
+        out_shape = convout_shape((img_h, img_w), self.win_shape,
+                                  self.padding, self.strides)
+        return (b, c) + out_shape
 
 
 class Flatten(Layer):
