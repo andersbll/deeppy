@@ -8,6 +8,8 @@ class NeuralNetwork:
     def __init__(self, layers):
         self._initialized = False
         self.layers = layers
+        self.bprop_until = next(idx for idx, layer in enumerate(layers)
+                                if isinstance(layer, ParamMixin))
 
     def _setup(self, X, Y):
         # Setup layers sequentially
@@ -37,7 +39,8 @@ class NeuralNetwork:
 
         # Back propagation of partial derivatives
         next_grad = self.layers[-1].input_grad(Y, Y_pred)
-        for layer in reversed(self.layers[:-1]):
+        layers = self.layers[self.bprop_until:-1]
+        for layer in reversed(layers):
             next_grad = layer.bprop(next_grad)
 
         return self.layers[-1].loss(Y, Y_pred)
