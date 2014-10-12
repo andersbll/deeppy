@@ -11,8 +11,8 @@ def run():
     # Fetch data
     mnist = sklearn.datasets.fetch_mldata('MNIST original', data_home='./data')
 
-    X = mnist.data/255.0
-    y = mnist.target
+    X = mnist.data.astype(dp.float_)/255.0
+    y = mnist.target.astype(dp.int_)
     n = y.size
     shuffle_idxs = np.random.random_integers(0, n-1, n)
     X = X[shuffle_idxs, ...]
@@ -27,7 +27,6 @@ def run():
     y_valid = y[n_train:n_train+n_valid]
     X_test = X[n_train+n_valid:]
     y_test = y[n_train+n_valid:]
-
     n_classes = np.unique(y_train).size
 
     # Setup neural network

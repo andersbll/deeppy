@@ -9,7 +9,7 @@ import skdata.cifar10
 
 
 def preprocess_imgs(imgs):
-    imgs = imgs.astype(float)
+    imgs = imgs.astype(dp.float_)
     imgs -= np.mean(imgs, axis=0, keepdims=True)
     # Convert images to BC01 format
     imgs = np.transpose(imgs, (0, 3, 1, 2))
@@ -20,9 +20,9 @@ def run():
     # Fetch data
     dataset = skdata.cifar10.view.OfficialImageClassificationTask()
     X_train = preprocess_imgs(dataset.train.x)
-    y_train = dataset.train.y
+    y_train = dataset.train.y.astype(dp.int_)
     X_test = preprocess_imgs(dataset.test.x)
-    y_test = dataset.test.y
+    y_test = dataset.test.y.astype(dp.int_)
     X_valid = X_test
     y_valid = y_test
     n_classes = np.unique(y_test).size

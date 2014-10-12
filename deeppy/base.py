@@ -3,6 +3,11 @@ import cudarray as ca
 from .fillers import filler, Filler
 
 
+bool_ = ca.bool_
+int_ = ca.int_
+float_ = ca.float_
+
+
 class Parameter(object):
     def __init__(self, fill, name='', learn_rate=1.0, penalty=None,
                  norm=None, monitor=False):

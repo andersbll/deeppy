@@ -11,8 +11,8 @@ def run():
     # Fetch data
     mnist = sklearn.datasets.fetch_mldata('MNIST original', data_home='./data')
 
-    X = mnist.data/255.0
-    y = mnist.target
+    X = mnist.data.astype(dp.float_)/255.0
+    y = mnist.target.astype(dp.int_)
     n = y.size
     shuffle_idxs = np.random.random_integers(0, n-1, n)
     X = X[shuffle_idxs, ...]

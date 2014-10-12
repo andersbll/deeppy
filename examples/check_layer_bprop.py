@@ -24,7 +24,7 @@ def run():
     ]
 
     input_shape = (1, 5)
-    x = np.random.normal(size=input_shape)
+    x = np.random.normal(size=input_shape).astype(dp.float_)
     for layer in layers:
         dp.misc.check_bprop(layer, x)
 
@@ -48,7 +48,7 @@ def run():
         )
     ]
     input_shape = (5, 3, 8, 8)
-    x = np.random.normal(size=input_shape)
+    x = np.random.normal(size=input_shape).astype(dp.float_)
     for layer in conv_layers:
         dp.misc.check_bprop(layer, x)
 

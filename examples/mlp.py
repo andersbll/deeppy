@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
+
 import numpy as np
 import sklearn.datasets
 import deeppy as dp
@@ -9,9 +11,9 @@ import deeppy as dp
 def run():
     # Fetch data
     digits = sklearn.datasets.load_digits()
-    X_train = digits.data
+    X_train = digits.data.astype(dp.float_)
     X_train /= np.max(X_train)
-    y_train = digits.target
+    y_train = digits.target.astype(dp.int_)
     n_classes = np.unique(y_train).size
 
     # Setup multi-layer perceptron

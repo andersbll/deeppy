@@ -6,6 +6,9 @@ logging.basicConfig(
 
 import misc
 from .base import (
+    bool_,
+    int_,
+    float_,
     Parameter,
 )
 from .feed_forward import (
