@@ -2,7 +2,6 @@ import numpy as np
 import cudarray as ca
 import itertools
 from .layers import ParamMixin
-from ..helpers import one_hot_encode, one_hot_decode
 
 
 class NeuralNetwork:
@@ -11,9 +10,9 @@ class NeuralNetwork:
         self.layers = layers
 
     def _setup(self, X, Y):
+        # Setup layers sequentially
         if self._initialized:
             return
-        # Setup layers sequentially
         next_shape = X.shape
         for layer in self.layers:
             layer._setup(next_shape)
@@ -43,24 +42,24 @@ class NeuralNetwork:
 
         return self.layers[-1].loss(Y, Y_pred)
 
-    def _loss(self, X, Y_one_hot):
+    def _loss(self, X, Y):
         X_next = X
         for layer in self.layers:
             X_next = layer.fprop(X_next, 'test')
         Y_pred = X_next
-        return self.layers[-1].loss(Y_one_hot, Y_pred)
+        return self.layers[-1].loss(Y, Y_pred)
 
     def predict(self, X):
         """ Calculate an output Y for the given input X. """
         X_next = ca.array(X)
-        for layer in self.layers:
+        for layer in self.layers[:-1]:
             X_next = layer.fprop(X_next, 'test')
-        Y_pred = np.array(X_next)
-        Y_pred = one_hot_decode(Y_pred)
-        return Y_pred
+        Y_pred = self.layers[-1].predict(X_next)
+        return np.array(Y_pred)
 
-    def error(self, X, Y):
+    def error(self, X, Y, batch_size=128):
         """ Calculate error on the given data. """
+        self._setup(X, Y)
         Y_pred = self.predict(X)
         error = Y_pred != Y
         return np.mean(error)

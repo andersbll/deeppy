@@ -1,11 +1,9 @@
 import time
 import cudarray as ca
-from ..helpers import one_hot_encode, one_hot_decode
 
 
 def profile(neuralnet, X, Y, reps=100):
-    Y_one_hot = one_hot_encode(Y)
-    neuralnet._setup(X, Y_one_hot)
+    neuralnet._setup(X, Y)
     layer_input = ca.array(X)
     for layer_idx, layer in enumerate(neuralnet.layers[:-1]):
         start_time = time.time()

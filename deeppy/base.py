@@ -11,12 +11,12 @@ class Parameter(object):
         self.learn_rate = learn_rate
         self.monitor = monitor
         if penalty is None:
-            self.penalty_fun = None
+            self.penalty = None
         elif isinstance(penalty, tuple):
             if len(penalty) == 2:
                 if penalty[0] == 'l2':
-                    self.penalty = 2*penalty[1]
-                    self.penalty_fun = self.l2_penalty
+                    self._l2_penalty = 2*penalty[1]
+                    self.penalty = self.l2_penalty
                 else:
                     raise ValueError('invalid penalty type: %s' % arg[0])
         if norm is None:
@@ -34,7 +34,7 @@ class Parameter(object):
         return self._grad
 
     def l2_penalty(self):
-        return self.penalty*self.values
+        return self._l2_penalty * self.values
 
 
 def parameter(arg):

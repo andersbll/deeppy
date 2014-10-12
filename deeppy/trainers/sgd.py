@@ -1,7 +1,6 @@
 import time
 import numpy as np
 import cudarray as ca
-from ..helpers import one_hot_encode, one_hot_decode
 
 import logging
 logger = logging.getLogger(__name__)
@@ -34,9 +33,7 @@ class StochasticGradientDescent:
         n_samples = Y.shape[0]
         n_batches = n_samples // self.batch_size
 
-        # TODO
-        Y_one_hot = one_hot_encode(Y)
-        model._setup(X, Y_one_hot)
+        model._setup(X[:self.batch_size], Y[:self.batch_size])
         params = model._params()
         param_steps = [ca.zeros_like(p.values) for p in params]
 
@@ -57,8 +54,9 @@ class StochasticGradientDescent:
                 batch_begin = b * self.batch_size
                 batch_end = batch_begin + self.batch_size
                 X_batch = ca.array(X[batch_begin:batch_end])
-                Y_batch = ca.array(Y_one_hot[batch_begin:batch_end])
+                Y_batch = ca.array(Y[batch_begin:batch_end])
 
+                model._bprop(X_batch, Y_batch)
                 cost = np.array(model._bprop(X_batch, Y_batch))
                 batch_costs.append(cost)
 
@@ -66,16 +64,17 @@ class StochasticGradientDescent:
                 for param, last_step in zip(params, param_steps):
                     last_step *= self.learn_momentum
                     step = param.grad
-                    if param.penalty_fun is not None:
-                        step -= param.penalty_fun()
-                    lr = self.learn_rate * param.learn_rate / self.batch_size
-                    last_step += lr * step
+                    if param.penalty is not None:
+                        step -= param.penalty()
+                    step *= self.learn_rate*param.learn_rate/self.batch_size
+                    last_step += step
                     p_values = param.values
                     p_values -= last_step
 
             epoch_cost = np.mean(batch_costs)
             if validation:
                 val_error = model.error(X_valid, Y_valid)
+                model._setup(X[:self.batch_size], Y[:self.batch_size])
                 if val_error < best_score:
                     improvement = val_error / best_score
                     if improvement < self.improvement_thresh:
