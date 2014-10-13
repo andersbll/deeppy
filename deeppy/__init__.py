@@ -21,6 +21,7 @@ from .feed_forward import (
     Convolutional,
     Flatten,
     Pool,
+    LocalResponseNormalization,
 )
 from .fillers import (
     CopyFiller,

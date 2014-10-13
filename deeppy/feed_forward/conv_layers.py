@@ -104,6 +104,25 @@ class Pool(Layer):
         return (b, c) + out_shape
 
 
+class LocalResponseNormalization(Layer):
+    def __init__(self, alpha=1e-4, beta=0.75, n=5, k=1):
+        self.alpha = alpha
+        self.beta = beta
+        self.n = n
+        self.k = k
+
+    def fprop(self, input, phase):
+        input = ca.lrnorm_bc01(input, N=self.n, alpha=self.alpha,
+                               beta=self.beta, k=self.k)
+        return input
+
+    def bprop(self, Y_grad):
+        return Y_grad
+
+    def output_shape(self, input_shape):
+        return input_shape
+
+
 class Flatten(Layer):
     def fprop(self, x, phase):
         self.name = 'flatten'
