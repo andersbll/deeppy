@@ -1,23 +1,19 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
+
 import numpy as np
 import sklearn.datasets
 import deeppy as dp
-
-import logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)-8s %(message)s',
-)
 
 
 def run():
     # Fetch data
     digits = sklearn.datasets.load_digits()
-    X_train = digits.data
+    X_train = digits.data.astype(dp.float_)
     X_train /= np.max(X_train)
-    y_train = digits.target
+    y_train = digits.target.astype(dp.int_)
     n_classes = np.unique(y_train).size
 
     # Setup multi-layer perceptron
@@ -25,25 +21,23 @@ def run():
         layers=[
             dp.FullyConnected(
                 n_output=50,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.000001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.000001)),
             ),
             dp.Activation('sigmoid'),
             dp.FullyConnected(
                 n_output=n_classes,
-                weights=dp.NormalFiller(sigma=0.1),
-                weight_decay=0.000001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.000001)),
             ),
             dp.MultinomialLogReg(),
         ],
     )
 
     # Train neural network
-    print('Training neural network')
     trainer = dp.StochasticGradientDescent(
-        batch_size=32, learn_rate=0.05, learn_momentum=0.95, max_epochs=25
+        batch_size=32, learn_rate=0.1, learn_momentum=0.95, max_epochs=25
     )
-
     trainer.train(nn, X_train, y_train)
 
     # Evaluate on training data

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
-
 from setuptools import setup, find_packages
+
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -15,7 +15,7 @@ setup(
     license='MIT',
     url='http://compute.dtu.dk/~abll',
     packages=find_packages(),
-    install_requires=['numpy', 'cudarray'],
+    install_requires=['numpy', 'scipy', 'cudarray'],
     long_description=read('README.md'),
     classifiers=[
         'Development Status :: 4 - Beta',

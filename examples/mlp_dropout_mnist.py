@@ -27,28 +27,30 @@ def run():
     y_valid = y[n_train:n_train+n_valid]
     X_test = X[n_train+n_valid:]
     y_test = y[n_train+n_valid:]
-
     n_classes = np.unique(y_train).size
 
     # Setup neural network
     nn = dp.NeuralNetwork(
         layers=[
-            dp.FullyConnected(
+            dp.Dropout(0.2),
+            dp.DropoutFullyConnected(
                 n_output=800,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.0001)),
+                dropout=0.5,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
+                                     penalty=('l2', 0.00001), monitor=True),
             ),
             dp.Activation('relu'),
-            dp.FullyConnected(
+            dp.DropoutFullyConnected(
                 n_output=800,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.0001)),
+                dropout=0.5,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
+                                     penalty=('l2', 0.00001), monitor=True),
             ),
             dp.Activation('relu'),
-            dp.FullyConnected(
+            dp.DropoutFullyConnected(
                 n_output=n_classes,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.0001)),
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
+                                     penalty=('l2', 0.00001), monitor=True),
             ),
             dp.MultinomialLogReg(),
         ],
@@ -58,7 +60,7 @@ def run():
     def valid_error_fun():
         return nn.error(X_valid, y_valid)
     trainer = dp.StochasticGradientDescent(
-        batch_size=128, learn_rate=0.1, learn_momentum=0.9, max_epochs=25
+        batch_size=128, learn_rate=0.1, learn_momentum=0.9, max_epochs=50
     )
     trainer.train(nn, X_train, y_train, valid_error_fun)
 
@@ -67,7 +69,7 @@ def run():
              if isinstance(layer, dp.FullyConnected))
     W = np.reshape(W.T, (-1, 28, 28))
     dp.misc.img_save(dp.misc.img_tile(dp.misc.img_stretch(W)),
-                     os.path.join('mnist', 'mlp_weights.png'))
+                     os.path.join('mnist', 'mlp_dropout_weights.png'))
 
     # Evaluate on test data
     error = nn.error(X_test, y_test)

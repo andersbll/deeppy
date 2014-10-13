@@ -1,4 +1,5 @@
 import numpy as np
+import cudarray as ca
 
 
 class Filler(object):
@@ -14,41 +15,35 @@ class ConstantFiller(Filler):
         self.c = c
 
     def array(self, shape):
-        return np.ones(shape)*self.c
+        return ca.ones(shape)*self.c
 
 
 class NormalFiller(Filler):
-    def __init__(self, sigma=1.0, mu=0.0, rng=None):
+    def __init__(self, sigma=1.0, mu=0.0):
         self.sigma = sigma
         self.mu = mu
-        if rng is None:
-            rng = np.random.RandomState()
-        self.rng = rng
 
     def array(self, shape):
-        return self.rng.normal(loc=self.mu, scale=self.sigma, size=shape)
+        return ca.random.normal(loc=self.mu, scale=self.sigma, size=shape)
 
 
 class UniformFiller(Filler):
-    def __init__(self, low, high, rng=None):
+    def __init__(self, low, high):
         self.low = low
         self.high = high
-        if rng is None:
-            rng = np.random.RandomState()
-        self.rng = rng
 
     def array(self, shape):
-        return self.rng.uniform(low=self.low, high=self.high, size=shape)
+        return ca.random.uniform(low=self.low, high=self.high, size=shape)
 
 
 class CopyFiller(Filler):
-    def __init__(self, array):
-        self.arr = np.array(array)
+    def __init__(self, np_array):
+        self.arr = array
 
     def array(self, shape):
         if self.arr.shape != shape:
             raise ValueError('Requested filler shape does not match.')
-        return np.array(self.arr)
+        return ca.array(self.arr)
 
 
 def filler(arg):

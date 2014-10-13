@@ -4,6 +4,7 @@ from .layers import Layer, FullyConnected
 
 class Dropout(Layer):
     def __init__(self, dropout=0.5):
+        self.name = 'dropout'
         self.dropout = dropout
 
     def fprop(self, X, phase):
@@ -32,6 +33,7 @@ class DropoutFullyConnected(FullyConnected):
             n_output=n_output, weights=weights, bias=bias,
             weight_decay=weight_decay
         )
+        self.name = 'fc_drop'
         self.dropout = dropout
 
     def fprop(self, X, phase):

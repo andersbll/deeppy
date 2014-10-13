@@ -1,6 +1,6 @@
+import numpy as np
 import cudarray as ca
-from ..fillers import filler, ConstantFiller
-from ..base import Parameter
+from ..base import parameter
 
 
 class Layer(object):
@@ -42,42 +42,33 @@ class ParamMixin(object):
 
 class FullyConnected(Layer, ParamMixin):
     def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0):
+        self.name = 'fullconn'
         self.n_output = n_output
-        self.weight_filler = filler(weights)
-        self.bias_filler = filler(bias)
-        self.weight_decay = weight_decay
+        self.W = parameter(weights)
+        self.b = parameter(bias)
 
     def _setup(self, input_shape):
         n_input = input_shape[1]
         W_shape = (n_input, self.n_output)
         b_shape = self.n_output
-        self.W = ca.array(self.weight_filler.array(W_shape))
-        self.b = ca.array(self.bias_filler.array(b_shape))
-        self.W_grad = ca.empty_like(self.W)
-        self.b_grad = ca.empty_like(self.b)
+        self.W._setup(W_shape)
+        if not self.W.name:
+            self.W.name = self.name + '_W'
+        self.b._setup(b_shape)
+        if not self.b.name:
+            self.b.name = self.name + '_b'
 
-        if self.weight_decay > 0.0:
-            def penalty_fun():
-                return -2*self.weight_decay*self.W
-        else:
-            penalty_fun = None
-        self.W_param = Parameter(self.W, gradient=self.W_grad, name='W',
-                                 penalty_fun=penalty_fun, monitor=True)
-        self.b_param = Parameter(self.b, gradient=self.b_grad, name='b')
+    def fprop(self, x, phase):
+        self._last_x = x
+        return ca.dot(x, self.W.values) + self.b.values
 
-    def fprop(self, X, phase):
-        self.last_X = X
-        return ca.dot(X, self.W) + self.b
-
-    def bprop(self, Y_grad):
-        n = Y_grad.shape[0]
-        ca.dot(self.last_X.T, Y_grad, out=self.W_grad)
-        self.W_grad /= n
-        ca.mean(Y_grad, axis=0, out=self.b_grad)
-        return ca.dot(Y_grad, self.W.T)
+    def bprop(self, y_grad):
+        ca.dot(self._last_x.T, y_grad, out=self.W.grad)
+        ca.sum(y_grad, axis=0, out=self.b.grad)
+        return ca.dot(y_grad, self.W.values.T)
 
     def params(self):
-        return self.W_param, self.b_param
+        return self.W, self.b
 
     def output_shape(self, input_shape):
         return (input_shape[0], self.n_output)
@@ -85,24 +76,29 @@ class FullyConnected(Layer, ParamMixin):
 
 class Activation(Layer):
     def __init__(self, type):
+        self.name = 'act_'
         if type == 'sigmoid':
+            self.name = self.name+'sigm'
             self.fun = ca.nnet.sigmoid
             self.fun_d = ca.nnet.sigmoid_d
         elif type == 'relu':
+            self.name = self.name+type
             self.fun = ca.nnet.relu
             self.fun_d = ca.nnet.relu_d
         elif type == 'tanh':
-            self.fun = ca.nnet.tanh
+            self.name = self.name+type
+            self.fun = ca.tanh
             self.fun_d = ca.nnet.tanh_d
         else:
             raise ValueError('Invalid activation function.')
 
-    def fprop(self, X, phase):
-        self.last_X = X
-        return self.fun(X)
+    def fprop(self, x, phase):
+        self._last_x = x
+        return self.fun(x)
 
-    def bprop(self, Y_grad):
-        return Y_grad*self.fun_d(self.last_X)
+    def bprop(self, y_grad):
+        self.fun_d(self._last_x, self._last_x)
+        return self._last_x * y_grad
 
     def output_shape(self, input_shape):
         return input_shape
@@ -110,8 +106,14 @@ class Activation(Layer):
 
 class MultinomialLogReg(Layer, LossMixin):
     """ Multinomial logistic regression with a cross-entropy loss function. """
-    def fprop(self, X, phase):
-        return ca.nnet.softmax(X)
+    def __init__(self):
+        self.name = 'logreg'
+
+    def _setup(self, input_shape):
+        self.n_classes = input_shape[1]
+
+    def fprop(self, x, phase):
+        return ca.nnet.softmax(x)
 
     def bprop(self, Y_grad):
         raise NotImplementedError(
@@ -119,13 +121,16 @@ class MultinomialLogReg(Layer, LossMixin):
             + ' It should occur only as the last layer of a NeuralNetwork.'
         )
 
+    def predict(self, x):
+        return ca.nnet.one_hot_decode(self.fprop(x, ''))
+
     def input_grad(self, y, y_pred):
-        # Assumes one-hot encoding.
+        y = ca.nnet.one_hot_encode(y, self.n_classes)
         return -(y - y_pred)
 
     def loss(self, y, y_pred):
-        # Assumes one-hot encoding.
+        y = ca.nnet.one_hot_encode(y, self.n_classes)
         return ca.nnet.categorical_cross_entropy(y, y_pred)
 
     def output_shape(self, input_shape):
-        return input_shape
+        return (input_shape[0],)

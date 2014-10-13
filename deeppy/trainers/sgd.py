@@ -1,10 +1,17 @@
 import time
 import numpy as np
 import cudarray as ca
-from ..helpers import one_hot_encode, one_hot_decode
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+def print_params(param, step):
+    if param.monitor:
+        val_mean_abs = np.mean(np.abs(param.values))
+        step_mean_abs = np.mean(np.abs(step))
+        logger.info('%s:\t%.1e  [%.1e]'
+                    % (param.name, val_mean_abs, step_mean_abs))
 
 
 class StochasticGradientDescent:
@@ -18,17 +25,12 @@ class StochasticGradientDescent:
         self.min_epochs = min_epochs
         self.patience_incr = patience_incr
         self.improvement_thresh = improvement_thresh
-        self.validation = False
 
-    def train(self, model, X, Y, X_valid=None, Y_valid=None):
-        validation = X_valid is not None
-
+    def train(self, model, X, Y, valid_error_fun=None):
         n_samples = Y.shape[0]
         n_batches = n_samples // self.batch_size
 
-        # TODO
-        Y_one_hot = one_hot_encode(Y)
-        model._setup(X, Y_one_hot)
+        model._setup(X, Y)
         params = model._params()
         param_steps = [ca.zeros_like(p.values) for p in params]
 
@@ -49,7 +51,7 @@ class StochasticGradientDescent:
                 batch_begin = b * self.batch_size
                 batch_end = batch_begin + self.batch_size
                 X_batch = ca.array(X[batch_begin:batch_end])
-                Y_batch = ca.array(Y_one_hot[batch_begin:batch_end])
+                Y_batch = ca.array(Y[batch_begin:batch_end])
 
                 cost = np.array(model._bprop(X_batch, Y_batch))
                 batch_costs.append(cost)
@@ -57,24 +59,29 @@ class StochasticGradientDescent:
                 # Gradient updates
                 for param, last_step in zip(params, param_steps):
                     last_step *= self.learn_momentum
-                    last_step -= self.learn_rate * param.gradient
-                    if param.penalty_fun is not None:
-                        last_step += param.penalty_fun()
+                    step = param.grad
+                    if param.penalty is not None:
+                        step -= param.penalty()
+                    step *= self.learn_rate*param.learn_rate/self.batch_size
+                    last_step += step
                     p_values = param.values
-                    p_values += last_step
+                    p_values -= last_step
 
             epoch_cost = np.mean(batch_costs)
-            if validation:
-                val_error = model.error(X_valid, Y_valid)
+            if valid_error_fun is not None:
+                val_error = valid_error_fun()
+                model._setup(X[:self.batch_size], Y[:self.batch_size])
                 if val_error < best_score:
                     improvement = val_error / best_score
                     if improvement < self.improvement_thresh:
                         # increase patience on significant improvement
                         patience = max(patience, epoch*self.patience_incr)
                     best_score = val_error
-                logger.info('epoch %.2f/%.2f' % (epoch, patience)
+                logger.info('epoch %d/%d' % (epoch, patience)
                             + ', cost %f' % epoch_cost
                             + ', val_error %.4f' % val_error)
+                for param, step in zip(params, param_steps):
+                    print_params(param, step)
                 if patience <= epoch:
                     logger.info('SGD: Converged on validation set.')
                     converged = True
@@ -85,7 +92,7 @@ class StochasticGradientDescent:
                         # increase patience on significant improvement
                         patience = max(patience, epoch*self.patience_incr)
                     best_score = epoch_cost
-                logger.info('epoch %i/%i' % (epoch, patience)
+                logger.info('epoch %d/%d' % (epoch, patience)
                             + ', cost %f' % epoch_cost)
                 if patience <= epoch:
                     logger.info('SGD: Converged on training set.')
