@@ -42,7 +42,6 @@ class NeuralNetwork:
         layers = self.layers[self.bprop_until:-1]
         for layer in reversed(layers):
             next_grad = layer.bprop(next_grad)
-
         return self.layers[-1].loss(Y, Y_pred)
 
     def _loss(self, X, Y):
@@ -52,17 +51,26 @@ class NeuralNetwork:
         Y_pred = X_next
         return self.layers[-1].loss(Y, Y_pred)
 
-    def predict(self, X):
+    def predict(self, X, batch_size=0):
         """ Calculate an output Y for the given input X. """
-        X_next = ca.array(X)
-        for layer in self.layers[:-1]:
-            X_next = layer.fprop(X_next, 'test')
-        Y_pred = self.layers[-1].predict(X_next)
-        return np.array(Y_pred)
+        if batch_size == 0:
+            batch_size = X.shape[0]
+        n_samples = X.shape[0]
+        n_batches = n_samples // batch_size
+        Y_pred = []
+        for b in range(n_batches):
+            batch_begin = b * batch_size
+            batch_end = batch_begin + batch_size
+            X_next = ca.array(X[batch_begin:batch_end])
+            for layer in self.layers[:-1]:
+                X_next = layer.fprop(X_next, 'test')
+            Y_pred_batch = self.layers[-1].predict(X_next)
+            Y_pred.append(Y_pred_batch)
+        Y_pred = np.concatenate(Y_pred)
+        return Y_pred
 
-    def error(self, X, Y, batch_size=128):
+    def error(self, X, Y, batch_size=0):
         """ Calculate error on the given data. """
-        self._setup(X, Y)
-        Y_pred = self.predict(X)
+        Y_pred = self.predict(X, batch_size)
         error = Y_pred != Y
         return np.mean(error)
