@@ -79,11 +79,9 @@ def run():
         ],
     )
 
-    X_profile = X_train[:128, ...]
-    y_profile = y_train[:128, ...]
-    dp.misc.profile(nn, X_profile, y_profile)
-
     # Train neural network
+    def valid_error_fun():
+        return nn.error(X_valid, y_valid)
     n_epochs = [8, 8]
     learn_rate = 0.001
     for i, max_epochs in enumerate(n_epochs):
@@ -92,7 +90,7 @@ def run():
             batch_size=128, learn_rate=lr, learn_momentum=0.9,
             max_epochs=max_epochs
         )
-        trainer.train(nn, X_train, y_train, X_valid, y_valid)
+        trainer.train(nn, X_train, y_train, valid_error_fun)
 
     # Visualize convolutional filters to disk
     for l, layer in enumerate(nn.layers):

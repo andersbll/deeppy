@@ -25,15 +25,12 @@ class StochasticGradientDescent:
         self.min_epochs = min_epochs
         self.patience_incr = patience_incr
         self.improvement_thresh = improvement_thresh
-        self.validation = False
 
-    def train(self, model, X, Y, X_valid=None, Y_valid=None):
-        validation = X_valid is not None
-
+    def train(self, model, X, Y, valid_error_fun=None):
         n_samples = Y.shape[0]
         n_batches = n_samples // self.batch_size
 
-        model._setup(X[:self.batch_size], Y[:self.batch_size])
+        model._setup(X, Y)
         params = model._params()
         param_steps = [ca.zeros_like(p.values) for p in params]
 
@@ -56,7 +53,6 @@ class StochasticGradientDescent:
                 X_batch = ca.array(X[batch_begin:batch_end])
                 Y_batch = ca.array(Y[batch_begin:batch_end])
 
-                model._bprop(X_batch, Y_batch)
                 cost = np.array(model._bprop(X_batch, Y_batch))
                 batch_costs.append(cost)
 
@@ -72,8 +68,8 @@ class StochasticGradientDescent:
                     p_values -= last_step
 
             epoch_cost = np.mean(batch_costs)
-            if validation:
-                val_error = model.error(X_valid, Y_valid)
+            if valid_error_fun is not None:
+                val_error = valid_error_fun()
                 model._setup(X[:self.batch_size], Y[:self.batch_size])
                 if val_error < best_score:
                     improvement = val_error / best_score

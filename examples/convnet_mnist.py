@@ -72,10 +72,12 @@ def run():
     )
 
     # Train neural network
+    def valid_error_fun():
+        return nn.error(X_valid, y_valid)
     trainer = dp.StochasticGradientDescent(
         batch_size=128, learn_rate=0.1, learn_momentum=0.9, max_epochs=15
     )
-    trainer.train(nn, X_train, y_train, X_valid, y_valid)
+    trainer.train(nn, X_train, y_train, valid_error_fun)
 
     # Visualize convolutional filters to disk
     for layer_idx, layer in enumerate(nn.layers):
