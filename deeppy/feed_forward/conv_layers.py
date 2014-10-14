@@ -15,22 +15,16 @@ def padding(win_shape, border_mode):
         raise ValueError('invalid mode: "%s"' % mode)
 
 
-def convout_shape(img_shape, filter_shape, padding, strides):
-    return ((img_shape[0] + 2*padding[0] - filter_shape[0])/strides[0] + 1,
-            (img_shape[1] + 2*padding[1] - filter_shape[1])/strides[1] + 1)
-
-
 class Convolutional(Layer, ParamMixin):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
                  strides=(1, 1), border_mode='valid', weight_decay=0.0):
         self.name = 'conv'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
-        self.strides = strides
-        self.padding = padding(filter_shape, border_mode)
         self.W = parameter(weights)
         self.b = parameter(bias)
-        self._tmp_input_shape = None
+        pad = padding(filter_shape, border_mode)
+        self.conv_op = ca.nnet.ConvBC01(pad, strides)
 
     def _setup(self, input_shape):
         n_channels = input_shape[1]
@@ -45,63 +39,43 @@ class Convolutional(Layer, ParamMixin):
 
     def fprop(self, x, phase):
         self.last_x = x
-        convout = ca.nnet.conv_bc01(x, self.W.values, padding=self.padding,
-                                    strides=self.strides)
+        convout = self.conv_op.fprop(x, self.W.values)
         return convout + self.b.values
 
     def bprop(self, y_grad):
         img_shape = self.last_x.shape[2:]
-        ca.nnet.conv_bc01_bprop_filters(
-            self.last_x, y_grad, self.filter_shape, self.padding,
-            self.strides, self.W.grad
-        )
+        _, x_grad = self.conv_op.bprop(self.last_x, self.W.values,
+                                       y_grad, filters_d=self.W.grad)
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
                keepdims=True, out=self.b.grad)
-        x_grad = ca.nnet.conv_bc01_bprop_imgs(self.W.values, y_grad, img_shape,
-                                              self.padding, self.strides)
         return x_grad
 
     def params(self):
         return self.W, self.b
 
     def output_shape(self, input_shape):
-        b, _, img_h, img_w = input_shape
-        out_shape = convout_shape((img_h, img_w), self.filter_shape,
-                                  self.padding, self.strides)
-        return (b, self.n_filters) + out_shape
+        return self.conv_op.output_shape(input_shape, self.n_filters,
+                                         self.filter_shape)
 
 
 class Pool(Layer):
     def __init__(self, win_shape=(3, 3), method='max', strides=(1, 1),
                  border_mode='valid'):
         self.name = 'pool'
-        self.win_shape = win_shape
-        self.strides = strides
-        self.method = method
-        self.padding = padding(win_shape, border_mode)
+        pad = padding(win_shape, border_mode)
+        self.pool_op = ca.nnet.PoolB01(win_shape, pad, strides, method)
 
     def fprop(self, x, phase):
-        self.last_x_shape = x.shape
-        poolout, mask = ca.nnet.pool_b01(
-            imgs=x, win_shape=self.win_shape, padding=self.padding,
-            strides=self.strides, method=self.method
-        )
-        self.last_mask = mask
+        self.last_img_shape = x.shape[2:]
+        poolout = self.pool_op.fprop(x)
         return poolout
 
     def bprop(self, y_grad):
-        x_grad = ca.nnet.pool_b01_bprop(
-            y_grad, self.last_mask, self.last_x_shape[2:],
-            padding=self.padding, win_shape=self.win_shape,
-            strides=self.strides, method=self.method
-        )
+        x_grad = self.pool_op.bprop(self.last_img_shape, y_grad)
         return x_grad
 
     def output_shape(self, input_shape):
-        b, c, img_h, img_w = input_shape
-        out_shape = convout_shape((img_h, img_w), self.win_shape,
-                                  self.padding, self.strides)
-        return (b, c) + out_shape
+        return self.pool_op.output_shape(input_shape)
 
 
 class LocalResponseNormalization(Layer):
