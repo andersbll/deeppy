@@ -52,5 +52,3 @@ docs/_build/
 
 # PyBuilder
 target/
-
-examples/profiler.py
