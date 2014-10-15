@@ -19,7 +19,6 @@ First, install [cudarray]. Then install deeppy with the standard
 
 
 ### TODO
- - Program design that allows for interchangeable learning algorithms (momentum, rprop, etc.).
  - Support for regression problems in feed forward neural network.
  - Other network types (autoencoders, stochastic neural networks, etc.).
  - Dataset module (we don't want to require scikit-learn or skdata)

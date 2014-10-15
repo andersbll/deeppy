@@ -60,7 +60,9 @@ def run():
     def valid_error_fun():
         return nn.error(X_valid, y_valid)
     trainer = dp.StochasticGradientDescent(
-        batch_size=128, learn_rate=0.1, learn_momentum=0.9, max_epochs=50
+        batch_size=128,
+        max_epochs=50,
+        learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
     trainer.train(nn, X_train, y_train, valid_error_fun)
 

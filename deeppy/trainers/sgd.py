@@ -6,21 +6,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def print_params(param, step):
-    if param.monitor:
-        val_mean_abs = np.mean(np.abs(param.values))
-        step_mean_abs = np.mean(np.abs(step))
-        logger.info('%s:\t%.1e  [%.1e]'
-                    % (param.name, val_mean_abs, step_mean_abs))
-
-
 class StochasticGradientDescent:
-    def __init__(self, batch_size, learn_rate, learn_momentum=0.95,
+    def __init__(self, batch_size, learn_rule, learn_momentum=0.95,
                  min_epochs=5, max_epochs=1000, improvement_thresh=0.995,
                  patience_incr=1.5):
         self.batch_size = batch_size
-        self.learn_rate = learn_rate
-        self.learn_momentum = learn_momentum
+        self.learn_rule = learn_rule
         self.max_epochs = max_epochs
         self.min_epochs = min_epochs
         self.patience_incr = patience_incr
@@ -32,8 +23,7 @@ class StochasticGradientDescent:
 
         model._setup(X, Y)
         params = model._params()
-        param_steps = [ca.zeros_like(p.values) for p in params]
-
+        self.learn_rule._setup(params, self.batch_size)
         n_params = np.sum([p.values.size for p in params])
         logger.info('SGD: Model contains %i parameters.' % n_params)
         logger.info('SGD: %d mini-batch gradient updates per epoch.'
@@ -52,20 +42,10 @@ class StochasticGradientDescent:
                 batch_end = batch_begin + self.batch_size
                 X_batch = ca.array(X[batch_begin:batch_end])
                 Y_batch = ca.array(Y[batch_begin:batch_end])
-
                 cost = np.array(model._bprop(X_batch, Y_batch))
                 batch_costs.append(cost)
-
                 # Gradient updates
-                for param, last_step in zip(params, param_steps):
-                    last_step *= self.learn_momentum
-                    step = param.grad
-                    if param.penalty is not None:
-                        step -= param.penalty()
-                    step *= self.learn_rate*param.learn_rate/self.batch_size
-                    last_step += step
-                    p_values = param.values
-                    p_values -= last_step
+                self.learn_rule.step()
 
             epoch_cost = np.mean(batch_costs)
             if valid_error_fun is not None:
@@ -80,8 +60,7 @@ class StochasticGradientDescent:
                 logger.info('epoch %d/%d' % (epoch, patience)
                             + ', cost %f' % epoch_cost
                             + ', val_error %.4f' % val_error)
-                for param, step in zip(params, param_steps):
-                    print_params(param, step)
+                self.learn_rule.monitor()
                 if patience <= epoch:
                     logger.info('SGD: Converged on validation set.')
                     converged = True

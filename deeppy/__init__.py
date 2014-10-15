@@ -28,6 +28,9 @@ from .fillers import (
     ConstantFiller,
     NormalFiller,
 )
+from .trainers.learning_rules import (
+    Momentum,
+)
 from .trainers.sgd import (
     StochasticGradientDescent,
 )

@@ -36,7 +36,9 @@ def run():
 
     # Train neural network
     trainer = dp.StochasticGradientDescent(
-        batch_size=32, learn_rate=0.1, learn_momentum=0.95, max_epochs=25
+        batch_size=32,
+        max_epochs=25,
+        learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.95),
     )
     trainer.train(nn, X_train, y_train)
 

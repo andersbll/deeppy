@@ -87,8 +87,9 @@ def run():
     for i, max_epochs in enumerate(n_epochs):
         lr = learn_rate/10**i
         trainer = dp.StochasticGradientDescent(
-            batch_size=128, learn_rate=lr, learn_momentum=0.9,
-            max_epochs=max_epochs
+            batch_size=128,
+            max_epochs=max_epochs,
+            learn_rule=dp.Momentum(learn_rate=lr, momentum=0.9),
         )
         trainer.train(nn, X_train, y_train, valid_error_fun)
 
