@@ -42,7 +42,7 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
         ca.random.seed(random_seed)
         x = ca.array(np.reshape(x, input_shape))
         out = layer.fprop(ca.array(x), 'train')
-        out_grad = ca.ones_like(out, dtype=np.float32)
+        out_grad = ca.ones_like(out, dtype=ca.float_)
         input_grad = layer.bprop(out_grad)
         return np.ravel(np.array(input_grad))
 
@@ -68,7 +68,7 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
             param_vals *= 0
             param_vals += ca.array(np.reshape(x, param_vals.shape))
             out = layer.fprop(ca.array(x0), 'train')
-            out_grad = ca.ones_like(out, dtype=np.float32)
+            out_grad = ca.ones_like(out, dtype=ca.float_)
             layer.bprop(out_grad)
             param_grad = layer.params()[p_idx].grad
             return np.ravel(np.array(param_grad))
