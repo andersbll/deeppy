@@ -19,9 +19,9 @@ def run():
     X = X[shuffle_idxs, ...]
     y = y[shuffle_idxs, ...]
 
-    n_test = 10000
-    n_valid = 10000
-    n_train = n - n_test - n_valid
+    n_test = 100
+    n_valid = 100
+    n_train = 100
     X_train = X[:n_train]
     y_train = y[:n_train]
     X_valid = X[n_train:n_train+n_valid]
@@ -30,8 +30,13 @@ def run():
     y_test = y[n_train+n_valid:]
 
     n_classes = np.unique(y_train).size
-
-    # Setup neural network
+     # Setup neural network
+    pool_kwargs = {
+        'win_shape': (2, 2),
+        'strides': (2, 2),
+        'border_mode': 'same',
+        'method': 'max',
+    }
     nn = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
@@ -41,28 +46,8 @@ def run():
                 weight_decay=0.00001,
             ),
             dp.Activation('relu'),
-            dp.Pool(
-                win_shape=(2, 2),
-                strides=(2, 2),
-                method='max',
-            ),
-            dp.Convolutional(
-                n_filters=50,
-                filter_shape=(5, 5),
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.00001,
-            ),
-            dp.Activation('relu'),
-            dp.Pool(
-                win_shape=(2, 2),
-                strides=(2, 2),
-                method='max',
-            ),
+            dp.Pool(**pool_kwargs),
             dp.Flatten(),
-            dp.FullyConnected(
-                n_output=500,
-                weights=dp.NormalFiller(sigma=0.01),
-            ),
             dp.FullyConnected(
                 n_output=n_classes,
                 weights=dp.NormalFiller(sigma=0.01),
@@ -75,10 +60,11 @@ def run():
     def valid_error_fun():
         return nn.error(X_valid, y_valid)
     trainer = dp.StochasticGradientDescent(
-        batch_size=128, learn_rate=0.1, learn_momentum=0.9, max_epochs=15
+        batch_size=20, learn_rate=0.1, learn_momentum=0.9, max_epochs=15
     )
+    print("train")
     trainer.train(nn, X_train, y_train, valid_error_fun)
-
+    print("train end")
     # Visualize convolutional filters to disk
     for layer_idx, layer in enumerate(nn.layers):
         if not isinstance(layer, dp.Convolutional):
