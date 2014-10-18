@@ -28,23 +28,7 @@ def run():
                 weight_decay=0.00001,
             ),
             dp.Activation('relu'),
-            dp.Pool(
-                win_shape=(2, 2),
-                strides=(2, 2),
-                method='max',
-            ),
-            dp.Convolutional(
-                n_filters=50,
-                filter_shape=(5, 5),
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.00001,
-            ),
-            dp.Activation('relu'),
-            dp.Pool(
-                win_shape=(2, 2),
-                strides=(2, 2),
-                method='max',
-            ),
+            dp.Pool(**pool_kwargs),
             dp.Flatten(),
             dp.FullyConnected(
                 n_output=500,
@@ -67,7 +51,6 @@ def run():
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
     trainer.train(nn, x_train, y_train, valid_error)
-
     # Visualize convolutional filters to disk
     for layer_idx, layer in enumerate(nn.layers):
         if not isinstance(layer, dp.Convolutional):
