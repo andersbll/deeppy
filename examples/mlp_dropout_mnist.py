@@ -3,31 +3,20 @@
 
 import os
 import numpy as np
-import sklearn.datasets
 import deeppy as dp
 
 
 def run():
     # Fetch data
-    mnist = sklearn.datasets.fetch_mldata('MNIST original', data_home='./data')
-
-    X = mnist.data.astype(dp.float_)/255.0
-    y = mnist.target.astype(dp.int_)
-    n = y.size
-    shuffle_idxs = np.random.random_integers(0, n-1, n)
-    X = X[shuffle_idxs, ...]
-    y = y[shuffle_idxs, ...]
-
-    n_test = 10000
-    n_valid = 10000
-    n_train = n - n_test - n_valid
-    X_train = X[:n_train]
-    y_train = y[:n_train]
-    X_valid = X[n_train:n_train+n_valid]
-    y_valid = y[n_train:n_train+n_valid]
-    X_test = X[n_train+n_valid:]
-    y_test = y[n_train+n_valid:]
-    n_classes = np.unique(y_train).size
+    dataset = dp.data.MNIST()
+    x, y = dataset.data(flat=True)
+    x = x.astype(dp.float_)/255.0
+    y = y.astype(dp.int_)
+    train_idx, test_idx = dataset.split()
+    x_train = x[train_idx]
+    y_train = y[train_idx]
+    x_test = x[test_idx]
+    y_test = y[test_idx]
 
     # Setup neural network
     nn = dp.NeuralNetwork(
@@ -48,7 +37,7 @@ def run():
             ),
             dp.Activation('relu'),
             dp.DropoutFullyConnected(
-                n_output=n_classes,
+                n_output=dataset.n_classes,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
                                      penalty=('l2', 0.00001), monitor=True),
             ),
@@ -57,14 +46,14 @@ def run():
     )
 
     # Train neural network
-    def valid_error_fun():
-        return nn.error(X_valid, y_valid)
+    def valid_error():
+        return nn.error(x_test, y_test)
     trainer = dp.StochasticGradientDescent(
         batch_size=128,
         max_epochs=50,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
-    trainer.train(nn, X_train, y_train, valid_error_fun)
+    trainer.train(nn, x_train, y_train, valid_error)
 
     # Visualize weights from first layer
     W = next(np.array(layer.params()[0].values) for layer in nn.layers
@@ -74,7 +63,7 @@ def run():
                      os.path.join('mnist', 'mlp_dropout_weights.png'))
 
     # Evaluate on test data
-    error = nn.error(X_test, y_test)
+    error = nn.error(x_test, y_test)
     print('Test error rate: %.4f' % error)
 
 

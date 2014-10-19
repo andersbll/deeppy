@@ -4,6 +4,7 @@ logging.basicConfig(
     format='%(levelname)-8s %(message)s',
 )
 
+import data
 import misc
 from .base import (
     bool_,
