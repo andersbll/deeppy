@@ -41,10 +41,21 @@ def run():
             border_mode='valid',
             weights=dp.NormalFiller(sigma=0.01),
         ),
+        dp.Convolutional(
+            n_filters=32,
+            filter_shape=(5, 5),
+            border_mode='full',
+            weights=dp.NormalFiller(sigma=0.01),
+        ),
         dp.Pool(
             win_shape=(3, 3),
             strides=(2, 2),
             method='max',
+        ),
+        dp.Pool(
+            win_shape=(3, 3),
+            strides=(2, 2),
+            method='men',
         )
     ]
     input_shape = (5, 3, 8, 8)
