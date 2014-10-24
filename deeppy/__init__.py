@@ -4,7 +4,8 @@ logging.basicConfig(
     format='%(levelname)-8s %(message)s',
 )
 
-import misc
+from . import data
+from . import misc
 from .base import (
     bool_,
     int_,
@@ -27,6 +28,9 @@ from .fillers import (
     CopyFiller,
     ConstantFiller,
     NormalFiller,
+)
+from .trainers.learning_rules import (
+    Momentum,
 )
 from .trainers.sgd import (
     StochasticGradientDescent,

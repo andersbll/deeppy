@@ -3,12 +3,12 @@
 
 import os
 import numpy as np
-import sklearn.datasets
 import deeppy as dp
 
 
 def run():
     # Fetch data
+<<<<<<< HEAD
     mnist = sklearn.datasets.fetch_mldata('MNIST original', data_home='./data')
 
     X = mnist.data.astype(dp.float_)/255.0-0.5
@@ -37,6 +37,19 @@ def run():
         'border_mode': 'same',
         'method': 'max',
     }
+=======
+    dataset = dp.data.MNIST()
+    x, y = dataset.data()
+    x = x[:, np.newaxis, :, :].astype(dp.float_)/255.0-0.5
+    y = y.astype(dp.int_)
+    train_idx, test_idx = dataset.split()
+    x_train = x[train_idx]
+    y_train = y[train_idx]
+    x_test = x[test_idx]
+    y_test = y[test_idx]
+
+    # Setup neural network
+>>>>>>> master
     nn = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
@@ -49,7 +62,15 @@ def run():
             dp.Pool(**pool_kwargs),
             dp.Flatten(),
             dp.FullyConnected(
+<<<<<<< HEAD
                 n_output=n_classes,
+=======
+                n_output=500,
+                weights=dp.NormalFiller(sigma=0.01),
+            ),
+            dp.FullyConnected(
+                n_output=dataset.n_classes,
+>>>>>>> master
                 weights=dp.NormalFiller(sigma=0.01),
             ),
             dp.MultinomialLogReg(),
@@ -57,14 +78,23 @@ def run():
     )
 
     # Train neural network
-    def valid_error_fun():
-        return nn.error(X_valid, y_valid)
+    def valid_error():
+        return nn.error(x_test, y_test)
     trainer = dp.StochasticGradientDescent(
+<<<<<<< HEAD
         batch_size=20, learn_rate=0.1, learn_momentum=0.9, max_epochs=15
     )
     print("train")
     trainer.train(nn, X_train, y_train, valid_error_fun)
     print("train end")
+=======
+        batch_size=128,
+        max_epochs=15,
+        learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
+    )
+    trainer.train(nn, x_train, y_train, valid_error)
+
+>>>>>>> master
     # Visualize convolutional filters to disk
     for layer_idx, layer in enumerate(nn.layers):
         if not isinstance(layer, dp.Convolutional):
@@ -75,7 +105,7 @@ def run():
                                       'convnet_layer_%i.png' % layer_idx))
 
     # Evaluate on test data
-    error = nn.error(X_test, y_test)
+    error = nn.error(x_test, y_test)
     print('Test error rate: %.4f' % error)
 
 
