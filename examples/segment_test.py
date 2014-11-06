@@ -4,19 +4,31 @@
 import os
 import numpy as np
 import deeppy as dp
+from skimage.io import imshow
+from skimage import io
 
 
 def run():
     # Fetch data
-    dataset = dp.data.MNIST()
-    x, y = dataset.data()
-    x = x[:, np.newaxis, :, :].astype(dp.float_)/255.0-0.5
+     # Setup neural network
+    pool_kwargs = {
+        'win_shape': (2, 2),
+    }
+
+    y = io.imread('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-label.png', plugin='pil');
+    train = io.imread('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-volum.png', plugin='pil');
+
+    y = y == 0
     y = y.astype(dp.int_)
-    train_idx, test_idx = dataset.split()
-    x_train = x[train_idx[:10]]
-    y_train = y[train_idx[:10]]
-    x_test = x[test_idx[:10]]
-    y_test = y[test_idx[:10]]
+    train = train.astype(dp.float_) /255.0-0.5
+    train = np.resize(train, (1,1,1,512,512))
+
+    x_train = train[:,:,:,10:100,10:100]
+    y_train = y[10:100,10:100]
+    y_train = np.resize(y_train, (1, 8100))
+    x_test = train[:,:,:,110:200,110:200]
+    y_test = y[110:200,110:200]
+    y_test = np.resize(y_test, (1, 8100))
 
     # Setup neural network
     nn = dp.NeuralNetwork(
@@ -31,11 +43,11 @@ def run():
             dp.Pool(**pool_kwargs),
             dp.Flatten(),
             dp.FullyConnected(
-                n_output=500,
+                n_output=5,
                 weights=dp.NormalFiller(sigma=0.01),
             ),
             dp.FullyConnected(
-                n_output=dataset.n_classes,
+                n_output=2,
                 weights=dp.NormalFiller(sigma=0.01),
             ),
             dp.MultinomialLogReg(),
@@ -45,20 +57,13 @@ def run():
     # Train neural network
     def valid_error():
         return nn.error(x_test, y_test)
+        
     trainer = dp.StochasticGradientDescent(
-        batch_size=128,
-        max_epochs=15,
+        batch_size=1,
+        max_epochs=4,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
     trainer.train(nn, x_train, y_train, valid_error)
-    # Visualize convolutional filters to disk
-    for layer_idx, layer in enumerate(nn.layers):
-        if not isinstance(layer, dp.Convolutional):
-            continue
-        W = np.array(layer.params()[0].values)
-        dp.misc.img_save(dp.misc.conv_filter_tile(W),
-                         os.path.join('mnist',
-                                      'convnet_layer_%i.png' % layer_idx))
 
     # Evaluate on test data
     error = nn.error(x_test, y_test)
