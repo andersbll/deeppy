@@ -20,7 +20,8 @@ class StochasticGradientDescent:
     def train(self, model, X, Y, valid_error_fun=None):
         n_samples = Y.shape[0]
         n_batches = n_samples // self.batch_size
-
+        print "n_batches"
+        print n_batches
         model._setup(X, Y)
         params = model._params()
         self.learn_rule._setup(params, self.batch_size)

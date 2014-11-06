@@ -12,7 +12,7 @@ from .base import (
     float_,
     Parameter,
 )
-from .feed_forward import (
+from .segmentation import (
     NeuralNetwork,
     FullyConnected,
     Activation,
@@ -22,7 +22,6 @@ from .feed_forward import (
     Convolutional,
     Flatten,
     Pool,
-    LocalResponseNormalization,
 )
 from .fillers import (
     CopyFiller,

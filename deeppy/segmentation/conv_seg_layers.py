@@ -1,5 +1,5 @@
 import numpy as np
-from .layers import Layer, ParamMixin
+from .layers_seg import Layer, ParamMixin
 from ..base import parameter
 import cudarray as ca
 
@@ -24,9 +24,11 @@ class Convolutional(Layer, ParamMixin):
         self.W = parameter(weights)
         self.b = parameter(bias)
         pad = padding(filter_shape, border_mode)
-        self.conv_op = ca.nnet.ConvBC01(pad, strides)
+        self.conv_op = ca.nsnet.ConvBC01()
+        self.indexing_shape = None
 
     def _setup(self, input_shape):
+        self.input_shape = input_shape
         n_channels = input_shape[1]
         W_shape = (self.n_filters, n_channels) + self.filter_shape
         b_shape = (1, self.n_filters, 1, 1)
@@ -54,8 +56,17 @@ class Convolutional(Layer, ParamMixin):
         return self.W, self.b
 
     def output_shape(self, input_shape):
-        return self.conv_op.output_shape(input_shape, self.n_filters,
-                                         self.filter_shape)
+        return self.conv_op.output_shape(input_shape, self.n_filters)
+
+    def output_index(self, input_index):
+        if input_index == None:
+            if self.input_shape[0] != 1:
+                raise ValueError('Must start with full image in one fragment')
+            img_h, img_w = self.input_shape[-2:]
+            input_index = np.arange(img_h*img_w, dtype=np.float)
+            input_index = input_index.reshape((1,)+self.input_shape[-2:])
+
+        return input_index
 
 
 class Pool(Layer):
@@ -63,49 +74,41 @@ class Pool(Layer):
                  border_mode='valid'):
         self.name = 'pool'
         pad = padding(win_shape, border_mode)
-        self.pool_op = ca.nnet.PoolB01(win_shape, pad, strides, method)
+        self.pool_op = ca.nsnet.PoolB01(win_shape)
 
     def fprop(self, x, phase):
-        self.last_img_shape = x.shape[2:]
         poolout = self.pool_op.fprop(x)
         return poolout
 
     def bprop(self, y_grad):
-        x_grad = self.pool_op.bprop(self.last_img_shape, y_grad)
+        print "BPROB"
+        print y_grad.shape
+        x_grad = self.pool_op.bprop(y_grad)
+        print x_grad.shape
         return x_grad
 
     def output_shape(self, input_shape):
         return self.pool_op.output_shape(input_shape)
 
-
-class LocalResponseNormalization(Layer):
-    def __init__(self, alpha=1e-4, beta=0.75, n=5, k=1):
-        self.alpha = alpha
-        self.beta = beta
-        self.n = n
-        self.k = k
-
-    def fprop(self, input, phase):
-        input = ca.lrnorm_bc01(input, N=self.n, alpha=self.alpha,
-                               beta=self.beta, k=self.k)
-        return input
-
-    def bprop(self, Y_grad):
-        return Y_grad
-
-    def output_shape(self, input_shape):
-        return input_shape
+    def output_index(self, input_index):
+        print "pool input_index :"
+        print input_index.shape
+        return self.pool_op.output_index(input_index)
 
 
 class Flatten(Layer):
     def fprop(self, x, phase):
         self.name = 'flatten'
-        self.last_x_shape = x.shape
-        return ca.reshape(x, self.output_shape(x.shape))
+        self.last_x_shape = x.swapaxes(1,3).shape
+        return ca.reshape(x.swapaxes(1,3), self.output_shape(x.shape))
 
     def bprop(self, y_grad):
-        return ca.reshape(y_grad, self.last_x_shape)
+        return ca.reshape(y_grad, self.last_x_shape).swapaxes(1,3)
 
     def output_shape(self, input_shape):
-        print ("flatten size = " + str((input_shape[0], np.prod(input_shape[1:]))))
-        return (input_shape[0], np.prod(input_shape[1:]))
+        return ((input_shape[0] * np.prod(input_shape[2:])), 
+                input_shape[1])
+
+    def output_index(self, input_index):
+        input_index = ca.reshape(input_index.swapaxes(1,2), np.prod(input_index.shape))
+        return input_index

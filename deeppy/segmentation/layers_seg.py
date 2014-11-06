@@ -23,6 +23,12 @@ class Layer(object):
         """
         raise NotImplementedError()
 
+    def output_index(self, input_index):
+        """ Calculate the new index of pixels in order to map 
+        the output to the pixels in original image
+        """
+        return input_index
+
 
 class LossMixin(object):
     def loss(self, Y_true, Y_pred):
@@ -59,10 +65,6 @@ class FullyConnected(Layer, ParamMixin):
             self.b.name = self.name + '_b'
 
     def fprop(self, x, phase):
-        print ("x shape = " + str(x.shape))
-        print ("w shape = " + str(self.W.values.shape))
-        print ("dot shape = " + str((ca.dot(x, self.W.values) + self.b.values).shape))
-        print (ca.dot(x, self.W.values) + self.b.values)
         self._last_x = x
         return ca.dot(x, self.W.values) + self.b.values
 
@@ -117,9 +119,7 @@ class MultinomialLogReg(Layer, LossMixin):
         self.n_classes = input_shape[1]
 
     def fprop(self, x, phase):
-        print ("y Out :")
-        print (ca.nnet.softmax(x).shape)
-        return ca.nnet.softmax(x)
+        return ca.nnet.softmax(x)[self.sort_indices]
 
     def bprop(self, Y_grad):
         raise NotImplementedError(
@@ -137,6 +137,10 @@ class MultinomialLogReg(Layer, LossMixin):
     def loss(self, y, y_pred):
         y = ca.nnet.one_hot_encode(y, self.n_classes)
         return ca.nnet.categorical_cross_entropy(y, y_pred)
+
+    def output_index(self, input_index):
+        self.sort_indices = np.argsort(input_index, axis=0)
+        return input_index
 
     def output_shape(self, input_shape):
         return (input_shape[0],)
