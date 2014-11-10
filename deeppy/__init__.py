@@ -31,6 +31,7 @@ from .fillers import (
 )
 from .trainers.learning_rules import (
     Momentum,
+    RMSProp,
 )
 from .trainers.sgd import (
     StochasticGradientDescent,
