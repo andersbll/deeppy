@@ -76,14 +76,17 @@ def run():
     )
 
     # Train neural network
-    def valid_error():
-        return nn.error(x_test, y_test)
     n_epochs = [8, 8]
     learn_rate = 0.001
+    batch_size = 128
+
+    def valid_error():
+        return nn.error(x_test, y_test, batch_size)
+
     for i, max_epochs in enumerate(n_epochs):
         lr = learn_rate/10**i
         trainer = dp.StochasticGradientDescent(
-            batch_size=128,
+            batch_size=batch_size,
             max_epochs=max_epochs,
             learn_rule=dp.Momentum(learn_rate=lr, momentum=0.9),
         )
@@ -98,7 +101,7 @@ def run():
                          os.path.join('cifar10', 'convnet_layer_%i.png' % l))
 
     # Evaluate on test data
-    error = nn.error(x_test, y_test)
+    error = nn.error(x_test, y_test, batch_size)
     print('Test error rate: %.4f' % error)
 
 
