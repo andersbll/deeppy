@@ -42,8 +42,8 @@ class Momentum(LearningRule):
     def monitor(self):
         for param, step in zip(self.params, self.steps):
             if param.monitor:
-                val_mean_abs = np.array(ca.mean(ca.abs(param.values)))
-                step_mean_abs = np.array(ca.mean(ca.abs(step)))
+                val_mean_abs = np.array(ca.mean(ca.fabs(param.values)))
+                step_mean_abs = np.array(ca.mean(ca.fabs(step)))
                 logger.info('%s:\t%.1e  [%.1e]'
                             % (param.name, val_mean_abs, step_mean_abs))
 
@@ -75,7 +75,7 @@ class RMSProp(LearningRule):
     def monitor(self):
         for param, step in zip(self.params, self.steps):
             if param.monitor:
-                val_mean_abs = np.array(ca.mean(ca.abs(param.values)))
-                step_mean_abs = np.array(ca.mean(ca.abs(step)))
+                val_mean_abs = np.array(ca.mean(ca.fabs(param.values)))
+                step_mean_abs = np.array(ca.mean(ca.fabs(step)))
                 logger.info('%s:\t%.1e  [%.1e]'
                             % (param.name, val_mean_abs, step_mean_abs))
