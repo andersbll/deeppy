@@ -1,10 +1,10 @@
 import numpy as np
-from .layers_seg import Layer, ParamMixin
+from .layers_seg import Layer_seg, ParamMixin_seg
 from ..base import parameter
 import cudarray as ca
 
 
-def padding(win_shape, border_mode):
+def padding_seg(win_shape, border_mode):
     if border_mode == 'valid':
         return (0, 0)
     elif border_mode == 'same':
@@ -15,15 +15,15 @@ def padding(win_shape, border_mode):
         raise ValueError('invalid mode: "%s"' % mode)
 
 
-class Convolutional(Layer, ParamMixin):
+class Convolutional_seg(Layer_seg, ParamMixin_seg):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
-                 strides=(1, 1), border_mode='valid', weight_decay=0.0):
+                 border_mode='valid', weight_decay=0.0):
         self.name = 'conv'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
         self.W = parameter(weights)
         self.b = parameter(bias)
-        pad = padding(filter_shape, border_mode)
+        pad = padding_seg(filter_shape, border_mode)
         self.conv_op = ca.nsnet.ConvBC01()
         self.indexing_shape = None
 
@@ -48,6 +48,7 @@ class Convolutional(Layer, ParamMixin):
         img_shape = self.last_x.shape[2:]
         _, x_grad = self.conv_op.bprop(self.last_x, self.W.values,
                                        y_grad, filters_d=self.W.grad)
+        
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
                keepdims=True, out=self.b.grad)
         return x_grad
@@ -69,34 +70,28 @@ class Convolutional(Layer, ParamMixin):
         return input_index
 
 
-class Pool(Layer):
-    def __init__(self, win_shape=(3, 3), method='max', strides=(1, 1),
+class Pool_seg(Layer_seg):
+    def __init__(self, win_shape=(2, 2), method='max', strides=None,
                  border_mode='valid'):
         self.name = 'pool'
-        pad = padding(win_shape, border_mode)
-        self.pool_op = ca.nsnet.PoolB01(win_shape)
+        self.pool_op = ca.nsnet.PoolB01(win_shape, strides)
 
     def fprop(self, x, phase):
         poolout = self.pool_op.fprop(x)
         return poolout
 
     def bprop(self, y_grad):
-        print "BPROB"
-        print y_grad.shape
         x_grad = self.pool_op.bprop(y_grad)
-        print x_grad.shape
         return x_grad
 
     def output_shape(self, input_shape):
         return self.pool_op.output_shape(input_shape)
 
     def output_index(self, input_index):
-        print "pool input_index :"
-        print input_index.shape
         return self.pool_op.output_index(input_index)
 
 
-class Flatten(Layer):
+class Flatten_seg(Layer_seg):
     def fprop(self, x, phase):
         self.name = 'flatten'
         self.last_x_shape = x.swapaxes(1,3).shape

@@ -13,6 +13,15 @@ from .base import (
     Parameter,
 )
 from .segmentation import (
+    NeuralNetwork_seg,
+    FullyConnected_seg,
+    Activation_seg,
+    MultinomialLogReg_seg,
+    Convolutional_seg,
+    Flatten_seg,
+    Pool_seg,
+)
+from .feed_forward import (
     NeuralNetwork,
     FullyConnected,
     Activation,
