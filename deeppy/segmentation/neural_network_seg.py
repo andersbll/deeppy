@@ -41,8 +41,11 @@ class NeuralNetwork_seg:
         Y = np.reshape(Y, Y.shape[1:])
         # Forward propagation
         X_next = X
+        #print X_next
         for layer in self.layers:
             X_next = layer.fprop(X_next, 'train')
+            print " ----------------------- ------------------ ----- "
+            #print X_next
         Y_pred = X_next
 
         # Back propagation of partial derivatives
@@ -51,7 +54,6 @@ class NeuralNetwork_seg:
         for layer in reversed(layers):
             next_grad = layer.bprop(next_grad)
 
-        print "train"
         return self.layers[-1].loss(Y, Y_pred)
 
     def _loss(self, X, Y):
@@ -61,7 +63,6 @@ class NeuralNetwork_seg:
         for layer in self.layers:
             X_next = layer.fprop(X_next, 'test')
         Y_pred = X_next
-        print ("test")
         return self.layers[-1].loss(Y, Y_pred)
 
     def predict(self, X, batch_size=0):

@@ -76,6 +76,10 @@ class FullyConnected_seg(Layer_seg, ParamMixin_seg):
     def params(self):
         return self.W, self.b
 
+    def output_index(self, input_index):
+        self.sort_indices = np.argsort(input_index, axis=0)
+        return input_index
+
     def output_shape(self, input_shape):
         return (input_shape[0], self.n_output)
 
@@ -140,8 +144,6 @@ class MultinomialLogReg_seg(Layer_seg, LossMixin_seg):
 
     def output_index(self, input_index):
         self.sort_indices = np.argsort(input_index, axis=0)
-        print "sorted "
-        print input_index[self.sort_indices]
         return input_index
 
     def output_shape(self, input_shape):
