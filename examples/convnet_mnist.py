@@ -8,6 +8,13 @@ import deeppy as dp
 
 def run():
     # Fetch data
+     # Setup neural network
+    pool_kwargs = {
+        'win_shape': (2, 2),
+        'strides': (2, 2),
+        'border_mode': 'same',
+        'method': 'max',
+    }
     dataset = dp.data.MNIST()
     x, y = dataset.data()
     x = x[:, np.newaxis, :, :].astype(dp.float_)/255.0-0.5
@@ -31,7 +38,7 @@ def run():
             dp.Pool(**pool_kwargs),
             dp.Flatten(),
             dp.FullyConnected(
-                n_output=500,
+                n_output=200,
                 weights=dp.NormalFiller(sigma=0.01),
             ),
             dp.FullyConnected(
@@ -46,8 +53,8 @@ def run():
     def valid_error():
         return nn.error(x_test, y_test)
     trainer = dp.StochasticGradientDescent(
-        batch_size=128,
-        max_epochs=15,
+        batch_size=2,
+        max_epochs=1,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
     trainer.train(nn, x_train, y_train, valid_error)

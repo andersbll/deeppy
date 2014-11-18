@@ -45,6 +45,7 @@ class NeuralNetwork_seg:
         X_next = X
         for layer in self.layers:
             X_next = layer.fprop(X_next, 'train')
+
         Y_pred = X_next
 
         # Back propagation of partial derivatives

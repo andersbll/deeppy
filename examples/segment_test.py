@@ -40,6 +40,7 @@ def run():
         y_train[im_nr,:] = np.resize(y[0:imageSize,0:imageSize], (imageSize*imageSize))
 
     for im_nr in range(n_test):
+
         x = X[im_nr].astype(dp.float_) /255.0-0.5
         #x = np.arange(imageSize*imageSize, dtype=np.float)
         #x  = x.reshape((imageSize, imageSize))

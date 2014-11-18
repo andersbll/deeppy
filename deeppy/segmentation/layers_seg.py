@@ -145,6 +145,7 @@ class MultinomialLogReg_seg(Layer_seg, LossMixin_seg):
     def loss(self, y, y_pred):
         if self.mask is not None:
             y = y[self.mask]
+
         y = ca.nnet.one_hot_encode(y, self.n_classes)
         return ca.nnet.categorical_cross_entropy(y, y_pred)
 
@@ -156,5 +157,4 @@ class MultinomialLogReg_seg(Layer_seg, LossMixin_seg):
         self.mask = input_index[self.sort_indices].astype(np.int)
 
     def output_shape(self, input_shape):
-        self.output_shape = (input_shape[0],)
         return (input_shape[0],)
