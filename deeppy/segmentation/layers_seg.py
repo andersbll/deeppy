@@ -3,7 +3,7 @@ import cudarray as ca
 from ..base import parameter
 
 
-class Layer(object):
+class Layer_seg(object):
     def _setup(self, input_shape):
         """ Setup layer with parameters that are unknown at __init__(). """
         pass
@@ -30,7 +30,7 @@ class Layer(object):
         return input_index
 
 
-class LossMixin(object):
+class LossMixin_seg(object):
     def loss(self, Y_true, Y_pred):
         """ Calculate mean loss given output and predicted output. """
         raise NotImplementedError()
@@ -40,13 +40,13 @@ class LossMixin(object):
         raise NotImplementedError()
 
 
-class ParamMixin(object):
+class ParamMixin_seg(object):
     def params(self):
         """ Layer parameters. """
         raise NotImplementedError()
 
 
-class FullyConnected(Layer, ParamMixin):
+class FullyConnected_seg(Layer_seg, ParamMixin_seg):
     def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0):
         self.name = 'fullconn'
         self.n_output = n_output
@@ -80,7 +80,7 @@ class FullyConnected(Layer, ParamMixin):
         return (input_shape[0], self.n_output)
 
 
-class Activation(Layer):
+class Activation_seg(Layer_seg):
     def __init__(self, type):
         self.name = 'act_'
         if type == 'sigmoid':
@@ -110,7 +110,7 @@ class Activation(Layer):
         return input_shape
 
 
-class MultinomialLogReg(Layer, LossMixin):
+class MultinomialLogReg_seg(Layer_seg, LossMixin_seg):
     """ Multinomial logistic regression with a cross-entropy loss function. """
     def __init__(self):
         self.name = 'logreg'
@@ -140,6 +140,8 @@ class MultinomialLogReg(Layer, LossMixin):
 
     def output_index(self, input_index):
         self.sort_indices = np.argsort(input_index, axis=0)
+        print "sorted "
+        print input_index[self.sort_indices]
         return input_index
 
     def output_shape(self, input_shape):

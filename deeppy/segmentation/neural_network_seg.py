@@ -1,24 +1,22 @@
 import numpy as np
 import cudarray as ca
 import itertools
-from .layers_seg import ParamMixin
+from .layers_seg import ParamMixin_seg
 
 
-class NeuralNetwork:
+class NeuralNetwork_seg:
     def __init__(self, layers):
         self._initialized = False
         self.layers = layers
         self.bprop_until = next(idx for idx, layer in enumerate(layers)
-                                if isinstance(layer, ParamMixin))
+                                if isinstance(layer, ParamMixin_seg))
 
     def _setup(self, X, Y):
         # Setup layers sequentially
-        X = np.reshape(X, X.shape[1:])
-        Y = np.reshape(Y, Y.shape[1:])
         if self._initialized:
             return
 
-        next_shape = X.shape
+        next_shape = X.shape[1:]
         indexing_shape = None
 
         for layer in self.layers:
@@ -26,14 +24,15 @@ class NeuralNetwork:
             next_shape = layer.output_shape(next_shape)
             indexing_shape = layer.output_index(indexing_shape)
 
-        if next_shape != Y.shape:
+        if next_shape != Y.shape[1:]:
             raise ValueError('Output shape %s does not match Y %s'
                              % (next_shape, Y.shape))
+
         self._initialized = True
 
     def _params(self):
         all_params = [layer.params() for layer in self.layers
-                      if isinstance(layer, ParamMixin)]
+                      if isinstance(layer, ParamMixin_seg)]
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))
 
@@ -41,12 +40,9 @@ class NeuralNetwork:
         X = np.reshape(X, X.shape[1:])
         Y = np.reshape(Y, Y.shape[1:])
         # Forward propagation
-        print "X"
-        print X.shape
         X_next = X
         for layer in self.layers:
             X_next = layer.fprop(X_next, 'train')
-            print X_next.shape
         Y_pred = X_next
 
         # Back propagation of partial derivatives
@@ -55,8 +51,7 @@ class NeuralNetwork:
         for layer in reversed(layers):
             next_grad = layer.bprop(next_grad)
 
-        print "return"
-        print self.layers[-1].loss(Y, Y_pred).shape
+        print "train"
         return self.layers[-1].loss(Y, Y_pred)
 
     def _loss(self, X, Y):
@@ -66,6 +61,7 @@ class NeuralNetwork:
         for layer in self.layers:
             X_next = layer.fprop(X_next, 'test')
         Y_pred = X_next
+        print ("test")
         return self.layers[-1].loss(Y, Y_pred)
 
     def predict(self, X, batch_size=0):

@@ -1,6 +1,6 @@
 import numpy as np
 import cudarray as ca
-from ..feed_forward import ParamMixin
+from ..segmentation import ParamMixin_seg
 
 
 def approx_fprime(xk, f, epsilon, *args):
@@ -50,7 +50,7 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
     print('%s_input: %.2e' % (layer.name, err))
 
     # Check bprop to parameters
-    if isinstance(layer, ParamMixin):
+    if isinstance(layer, ParamMixin_seg):
         def func(x, *args):
             ca.random.seed(random_seed)
             p_idx = args[0]

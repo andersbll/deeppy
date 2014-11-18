@@ -11,46 +11,86 @@ from skimage import io
 def run():
     # Fetch data
      # Setup neural network
-    pool_kwargs = {
+    Pool_seg_kwargs = {
         'win_shape': (2, 2),
     }
 
-    y = io.imread('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-label.png', plugin='pil');
-    train = io.imread('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-volum.png', plugin='pil');
+    Y = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif');
+    X = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-volume.tif');
 
-    y = y == 0
-    y = y.astype(dp.int_)
-    train = train.astype(dp.float_) /255.0-0.5
-    train = np.resize(train, (1,1,1,512,512))
+    n_train = 2
+    n_test = 1
 
-    x_train = train[:,:,:,10:100,10:100]
-    y_train = y[10:100,10:100]
-    y_train = np.resize(y_train, (1, 8100))
-    x_test = train[:,:,:,110:200,110:200]
-    y_test = y[110:200,110:200]
-    y_test = np.resize(y_test, (1, 8100))
+    imageSize = 128
+
+    x_train = np.empty((n_train,1,1,imageSize,imageSize))
+    y_train = np.zeros((n_train,imageSize*imageSize), dtype=int)
+
+    x_test = np.empty((n_test,1,1,imageSize,imageSize))
+    y_test = np.zeros((n_test,imageSize*imageSize), dtype=int)
+
+    for im_nr in range(n_train):
+        x = X[im_nr].astype(dp.float_) /255.0-0.5
+        x_train[im_nr,0,0,:,:] = x[0:imageSize,0:imageSize]
+
+        y = Y[im_nr] == 0
+        y = y.astype(dp.int_)
+        y_train[im_nr,:] = np.resize(y[0:imageSize,0:imageSize], (imageSize*imageSize))
+
+    for im_nr in range(n_test):
+        x = X[im_nr].astype(dp.float_) /255.0-0.5
+        x_test[im_nr,0,0,:,:] = x[0:imageSize,0:imageSize]
+
+        y = Y[im_nr] == 0
+        y = y.astype(dp.int_)
+        y_test[im_nr,:] = np.resize(y[0:imageSize,0:imageSize], (imageSize*imageSize))
 
     # Setup neural network
-    nn = dp.NeuralNetwork(
+    nn = dp.NeuralNetwork_seg(
         layers=[
-            dp.Convolutional(
-                n_filters=2,
+            dp.Convolutional_seg(
+                n_filters=8,
+                filter_shape=(4, 4),
+                weights=dp.NormalFiller(sigma=0.01),
+                weight_decay=0.00001,
+            ),
+            dp.Activation_seg('relu'),
+            dp.Pool_seg(win_shape=(2, 2), strides=(2,2)),
+            dp.Convolutional_seg(
+                n_filters=8,
                 filter_shape=(5, 5),
                 weights=dp.NormalFiller(sigma=0.01),
                 weight_decay=0.00001,
             ),
-            dp.Activation('relu'),
-            dp.Pool(**pool_kwargs),
-            dp.Flatten(),
-            dp.FullyConnected(
-                n_output=5,
+            dp.Activation_seg('relu'),
+            dp.Pool_seg(**Pool_seg_kwargs),
+            dp.Convolutional_seg(
+                n_filters=8,
+                filter_shape=(4, 4),
+                weights=dp.NormalFiller(sigma=0.01),
+                weight_decay=0.00001,
+            ),
+            dp.Activation_seg('relu'),
+            dp.Pool_seg(**Pool_seg_kwargs),
+            dp.Convolutional_seg(
+                n_filters=8,
+                filter_shape=(4, 4),
+                weights=dp.NormalFiller(sigma=0.01),
+                weight_decay=0.00001,
+            ),
+            dp.Activation_seg('relu'),
+            dp.Pool_seg(**Pool_seg_kwargs),
+            dp.Flatten_seg(),
+            dp.FullyConnected_seg(
+                n_output=200,
                 weights=dp.NormalFiller(sigma=0.01),
             ),
-            dp.FullyConnected(
+            dp.Activation_seg('relu'),
+            dp.FullyConnected_seg(
                 n_output=2,
                 weights=dp.NormalFiller(sigma=0.01),
             ),
-            dp.MultinomialLogReg(),
+            dp.MultinomialLogReg_seg(),
         ],
     )
 
