@@ -95,6 +95,9 @@ class Flatten_seg(Layer_seg):
     def fprop(self, x, phase):
         self.name = 'flatten'
         self.last_x_shape = x.swapaxes(1,3).shape
+        print "flattend"
+        print x
+        print ca.reshape(x.swapaxes(1,3), self.output_shape(x.shape))[self.sort_indices]
         return ca.reshape(x.swapaxes(1,3), self.output_shape(x.shape))
 
     def bprop(self, y_grad):
@@ -106,4 +109,5 @@ class Flatten_seg(Layer_seg):
 
     def output_index(self, input_index):
         input_index = ca.reshape(input_index.swapaxes(1,2), np.prod(input_index.shape))
+        self.sort_indices = np.argsort(input_index, axis=0)
         return input_index

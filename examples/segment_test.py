@@ -18,10 +18,10 @@ def run():
     Y = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif');
     X = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-volume.tif');
 
-    n_train = 2
+    n_train = 1
     n_test = 1
 
-    imageSize = 128
+    imageSize = 16
 
     x_train = np.empty((n_train,1,1,imageSize,imageSize))
     y_train = np.zeros((n_train,imageSize*imageSize), dtype=int)
@@ -30,7 +30,9 @@ def run():
     y_test = np.zeros((n_test,imageSize*imageSize), dtype=int)
 
     for im_nr in range(n_train):
-        x = X[im_nr].astype(dp.float_) /255.0-0.5
+        #x = X[im_nr].astype(dp.float_) /255.0-0.5
+        x = np.arange(imageSize*imageSize, dtype=np.float)
+        x  = x.reshape((imageSize, imageSize))
         x_train[im_nr,0,0,:,:] = x[0:imageSize,0:imageSize]
 
         y = Y[im_nr] == 0
@@ -38,7 +40,9 @@ def run():
         y_train[im_nr,:] = np.resize(y[0:imageSize,0:imageSize], (imageSize*imageSize))
 
     for im_nr in range(n_test):
-        x = X[im_nr].astype(dp.float_) /255.0-0.5
+        #x = X[im_nr].astype(dp.float_) /255.0-0.5
+        x = np.arange(imageSize*imageSize, dtype=np.float)
+        x  = x.reshape((imageSize, imageSize))
         x_test[im_nr,0,0,:,:] = x[0:imageSize,0:imageSize]
 
         y = Y[im_nr] == 0
@@ -49,43 +53,27 @@ def run():
     nn = dp.NeuralNetwork_seg(
         layers=[
             dp.Convolutional_seg(
-                n_filters=8,
-                filter_shape=(4, 4),
+                n_filters=1,
+                filter_shape=(1, 1),
                 weights=dp.NormalFiller(sigma=0.01),
                 weight_decay=0.00001,
             ),
-            dp.Activation_seg('relu'),
+            #dp.Activation_seg('relu'),
             dp.Pool_seg(win_shape=(2, 2), strides=(2,2)),
             dp.Convolutional_seg(
-                n_filters=8,
-                filter_shape=(5, 5),
+                n_filters=2,
+                filter_shape=(1, 1),
                 weights=dp.NormalFiller(sigma=0.01),
                 weight_decay=0.00001,
             ),
-            dp.Activation_seg('relu'),
-            dp.Pool_seg(**Pool_seg_kwargs),
-            dp.Convolutional_seg(
-                n_filters=8,
-                filter_shape=(4, 4),
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.00001,
-            ),
-            dp.Activation_seg('relu'),
-            dp.Pool_seg(**Pool_seg_kwargs),
-            dp.Convolutional_seg(
-                n_filters=8,
-                filter_shape=(4, 4),
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.00001,
-            ),
-            dp.Activation_seg('relu'),
+            #dp.Activation_seg('relu'),
             dp.Pool_seg(**Pool_seg_kwargs),
             dp.Flatten_seg(),
             dp.FullyConnected_seg(
                 n_output=200,
                 weights=dp.NormalFiller(sigma=0.01),
             ),
-            dp.Activation_seg('relu'),
+            #dp.Activation_seg('relu'),
             dp.FullyConnected_seg(
                 n_output=2,
                 weights=dp.NormalFiller(sigma=0.01),
@@ -100,14 +88,14 @@ def run():
         
     trainer = dp.StochasticGradientDescent(
         batch_size=1,
-        max_epochs=4,
+        max_epochs=1,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
     trainer.train(nn, x_train, y_train, valid_error)
 
     # Evaluate on test data
-    error = nn.error(x_test, y_test)
-    print('Test error rate: %.4f' % error)
+    #error = nn.error(x_test, y_test)
+    #rint('Test error rate: %.4f' % error)
 
 
 if __name__ == '__main__':
