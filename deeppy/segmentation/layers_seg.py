@@ -118,6 +118,7 @@ class MultinomialLogReg_seg(Layer_seg, LossMixin_seg):
     """ Multinomial logistic regression with a cross-entropy loss function. """
     def __init__(self):
         self.name = 'logreg'
+        self.mask = None
 
     def _setup(self, input_shape):
         self.n_classes = input_shape[1]
@@ -135,10 +136,15 @@ class MultinomialLogReg_seg(Layer_seg, LossMixin_seg):
         return ca.nnet.one_hot_decode(self.fprop(x, ''))
 
     def input_grad(self, y, y_pred):
+        if self.mask is not None:
+            y = y[self.mask]
+
         y = ca.nnet.one_hot_encode(y, self.n_classes)
         return -(y - y_pred)
 
     def loss(self, y, y_pred):
+        if self.mask is not None:
+            y = y[self.mask]
         y = ca.nnet.one_hot_encode(y, self.n_classes)
         return ca.nnet.categorical_cross_entropy(y, y_pred)
 
@@ -146,5 +152,9 @@ class MultinomialLogReg_seg(Layer_seg, LossMixin_seg):
         self.sort_indices = np.argsort(input_index, axis=0)
         return input_index
 
+    def set_mask(self, input_index):
+        self.mask = input_index[self.sort_indices].astype(np.int)
+
     def output_shape(self, input_shape):
+        self.output_shape = (input_shape[0],)
         return (input_shape[0],)

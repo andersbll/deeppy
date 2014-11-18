@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import cudarray as ca
 import itertools
@@ -25,7 +26,8 @@ class NeuralNetwork_seg:
             indexing_shape = layer.output_index(indexing_shape)
 
         if next_shape != Y.shape[1:]:
-            raise ValueError('Output shape %s does not match Y %s'
+            self.layers[-1].set_mask(indexing_shape)
+            warnings.warn('Output shape %s does not match Y %s. Y will be masked'
                              % (next_shape, Y.shape))
 
         self._initialized = True
@@ -41,11 +43,8 @@ class NeuralNetwork_seg:
         Y = np.reshape(Y, Y.shape[1:])
         # Forward propagation
         X_next = X
-        #print X_next
         for layer in self.layers:
             X_next = layer.fprop(X_next, 'train')
-            print " ----------------------- ------------------ ----- "
-            #print X_next
         Y_pred = X_next
 
         # Back propagation of partial derivatives
