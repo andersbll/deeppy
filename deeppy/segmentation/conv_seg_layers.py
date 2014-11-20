@@ -71,7 +71,7 @@ class Convolutional_seg(Layer_seg, ParamMixin_seg):
 
 
 class Pool_seg(Layer_seg):
-    def __init__(self, win_shape=(2, 2), method='max', strides=None,
+    def __init__(self, win_shape=(2, 2), strides=None,
                  border_mode='valid'):
         self.name = 'pool'
         self.pool_op = ca.nsnet.PoolB01(win_shape, strides)

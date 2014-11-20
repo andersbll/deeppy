@@ -42,12 +42,22 @@ class NeuralNetwork_seg:
         X = np.reshape(X, X.shape[1:])
         Y = np.reshape(Y, Y.shape[1:])
         # Forward propagation
+        print "--------------"
+        print "start"
         X_next = X
         for layer in self.layers:
+            #print X_next
             X_next = layer.fprop(X_next, 'train')
+            #print "--------------"
+            #print layer.name
+
 
         Y_pred = X_next
-
+        #print Y_pred
+        Y_pre_decoded = ca.nnet.one_hot_decode(Y_pred)
+        print "Train"
+        print ("predict: class1: %d, class2:%d" % (np.sum(Y_pre_decoded), abs(Y_pre_decoded.size - np.sum(Y_pre_decoded))))
+        print ("True: class1: %d, class2:%d" % (np.sum(Y), abs(Y.size - np.sum(Y))))
         # Back propagation of partial derivatives
         next_grad = self.layers[-1].input_grad(Y, Y_pred)
         layers = self.layers[self.bprop_until:-1]
@@ -65,28 +75,29 @@ class NeuralNetwork_seg:
         Y_pred = X_next
         return self.layers[-1].loss(Y, Y_pred)
 
-    def predict(self, X, batch_size=0):
+    def predict(self, X, Y_shape, batch_size=1):
         """ Calculate an output Y for the given input X. """
         if batch_size == 0:
             batch_size = X.shape[0]
         n_samples = X.shape[0]
         n_batches = n_samples // batch_size
-        Y_pred = []
+        Y_pred = np.empty(Y_shape)
         for b in range(n_batches):
-            batch_begin = b * batch_size
-            batch_end = batch_begin + batch_size
-            X_next = ca.array(X[batch_begin:batch_end])
+            X_next = ca.array(X[b])
             for layer in self.layers[:-1]:
                 X_next = layer.fprop(X_next, 'test')
             Y_pred_batch = self.layers[-1].predict(X_next)
-            Y_pred.append(Y_pred_batch)
-        Y_pred = np.concatenate(Y_pred)
+            Y_pred[b] = (Y_pred_batch)
         return Y_pred
 
-    def error(self, X, Y, batch_size=0):
-        X = np.reshape(X, X.shape[1:])
-        Y = np.reshape(Y, Y.shape[1:])
+    def error(self, X, Y, batch_size=1):
+        #X = np.reshape(X, X.shape[1:])
+        #Y = np.reshape(Y, Y.shape[1:])
         """ Calculate error on the given data. """
-        Y_pred = self.predict(X, batch_size)
+        Y_pred = self.predict(X, Y.shape, batch_size)
+        print "Test"
+        print ("Predict: class1: %d, class2:%d" % (np.sum(Y_pred), abs(Y_pred.size - np.sum(Y_pred))))
+        print ("True: class1: %d, class2:%d" % (np.sum(Y), abs(Y.size - np.sum(Y))))
         error = Y_pred != Y
+
         return np.mean(error)

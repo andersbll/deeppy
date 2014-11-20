@@ -59,10 +59,6 @@ class FullyConnected(Layer, ParamMixin):
             self.b.name = self.name + '_b'
 
     def fprop(self, x, phase):
-        print ("x shape = " + str(x.shape))
-        print ("w shape = " + str(self.W.values.shape))
-        print ("dot shape = " + str((ca.dot(x, self.W.values) + self.b.values).shape))
-        print (ca.dot(x, self.W.values) + self.b.values)
         self._last_x = x
         return ca.dot(x, self.W.values) + self.b.values
 
@@ -117,8 +113,6 @@ class MultinomialLogReg(Layer, LossMixin):
         self.n_classes = input_shape[1]
 
     def fprop(self, x, phase):
-        print ("y Out :")
-        print (ca.nnet.softmax(x).shape)
         return ca.nnet.softmax(x)
 
     def bprop(self, Y_grad):

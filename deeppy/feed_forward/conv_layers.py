@@ -107,5 +107,4 @@ class Flatten(Layer):
         return ca.reshape(y_grad, self.last_x_shape)
 
     def output_shape(self, input_shape):
-        print ("flatten size = " + str((input_shape[0], np.prod(input_shape[1:]))))
         return (input_shape[0], np.prod(input_shape[1:]))

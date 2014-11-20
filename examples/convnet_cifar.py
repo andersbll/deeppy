@@ -18,6 +18,10 @@ def run():
     x, y = dataset.data()
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
+
+    train_idx = train_idx[0:320]
+    test_idx = test_idx[0:320]
+
     x_train = preprocess_imgs(x[train_idx])
     y_train = y[train_idx]
     x_test = preprocess_imgs(x[test_idx])
@@ -63,7 +67,7 @@ def run():
             dp.FullyConnected(
                 n_output=64,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.03)),
+                                     penalty=('l2', 0.03), monitor=True ),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
@@ -78,7 +82,7 @@ def run():
     # Train neural network
     n_epochs = [8, 8]
     learn_rate = 0.001
-    batch_size = 128
+    batch_size = 64
 
     def valid_error():
         return nn.error(x_test, y_test, batch_size)
