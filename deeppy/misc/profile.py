@@ -1,6 +1,8 @@
 import time
 import cudarray as ca
 
+from ..data import to_data
+
 
 def avg_running_time(fun, reps):
     # Memory allocation forces GPU synchronization
@@ -9,15 +11,14 @@ def avg_running_time(fun, reps):
     for _ in range(reps):
         fun()
     ca.empty(1)
-    duration = time.time() - start_time
     return float(time.time() - start_time) / reps
 
 
-def profile(neuralnet, X, Y, reps=50):
-    neuralnet._setup(X, Y)
-    X = ca.array(X)
-    Y = ca.array(Y)
-    layer_input = X
+def profile(neuralnet, data, reps=50):
+    data = to_data(data)
+    neuralnet._setup(data)
+    batch = data.batches().next()
+    layer_input = batch[0]
     total_duration = 0
     for layer_idx, layer in enumerate(neuralnet.layers[:-1]):
         def fprop():
@@ -35,6 +36,6 @@ def profile(neuralnet, X, Y, reps=50):
     print('total_duration: %.6f s' % total_duration)
 
     def nn_bprop():
-        neuralnet._bprop(X, Y)
+        neuralnet._update(batch)
     nn_bprop_duration = avg_running_time(nn_bprop, reps)
     print('neuralnet._bprop(): %.6f s' % nn_bprop_duration)

@@ -7,8 +7,8 @@ import deeppy as dp
 
 
 def run():
-    # Fetch data
-    dataset = dp.data.MNIST()
+    # Prepare data
+    dataset = dp.datasets.MNIST()
     x, y = dataset.data(flat=True)
     x = x.astype(dp.float_)/255.0
     y = y.astype(dp.int_)
@@ -17,6 +17,8 @@ def run():
     y_train = y[train_idx]
     x_test = x[test_idx]
     y_test = y[test_idx]
+    train_data = dp.SupervisedData(x_train, y_train, batch_size=128)
+    test_data = dp.SupervisedData(x_test, y_test)
 
     # Setup neural network
     nn = dp.NeuralNetwork(
@@ -47,13 +49,12 @@ def run():
 
     # Train neural network
     def valid_error():
-        return nn.error(x_test, y_test)
+        return nn.error(test_data)
     trainer = dp.StochasticGradientDescent(
-        batch_size=128,
         max_epochs=50,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
-    trainer.train(nn, x_train, y_train, valid_error)
+    trainer.train(nn, train_data, valid_error)
 
     # Visualize weights from first layer
     W = next(np.array(layer.params()[0].values) for layer in nn.layers
@@ -63,7 +64,7 @@ def run():
                      os.path.join('mnist', 'mlp_dropout_weights.png'))
 
     # Evaluate on test data
-    error = nn.error(x_test, y_test)
+    error = nn.error(test_data)
     print('Test error rate: %.4f' % error)
 
 

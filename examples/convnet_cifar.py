@@ -13,8 +13,9 @@ def preprocess_imgs(imgs):
 
 
 def run():
-    # Fetch data
-    dataset = dp.data.CIFAR10()
+    # Prepare data
+    batch_size = 128
+    dataset = dp.datasets.CIFAR10()
     x, y = dataset.data()
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
@@ -22,6 +23,8 @@ def run():
     y_train = y[train_idx]
     x_test = preprocess_imgs(x[test_idx])
     y_test = y[test_idx]
+    train_data = dp.SupervisedData(x_train, y_train, batch_size=batch_size)
+    test_data = dp.SupervisedData(x_test, y_test, batch_size=batch_size)
 
     # Setup neural network
     pool_kwargs = {
@@ -78,19 +81,16 @@ def run():
     # Train neural network
     n_epochs = [8, 8]
     learn_rate = 0.001
-    batch_size = 128
 
     def valid_error():
-        return nn.error(x_test, y_test, batch_size)
-
+        return nn.error(test_data)
     for i, max_epochs in enumerate(n_epochs):
         lr = learn_rate/10**i
         trainer = dp.StochasticGradientDescent(
-            batch_size=batch_size,
             max_epochs=max_epochs,
             learn_rule=dp.Momentum(learn_rate=lr, momentum=0.9),
         )
-        trainer.train(nn, x_train, y_train, valid_error)
+        trainer.train(nn, train_data, valid_error)
 
     # Visualize convolutional filters to disk
     for l, layer in enumerate(nn.layers):
@@ -101,7 +101,7 @@ def run():
                          os.path.join('cifar10', 'convnet_layer_%i.png' % l))
 
     # Evaluate on test data
-    error = nn.error(x_test, y_test, batch_size)
+    error = nn.error(test_data)
     print('Test error rate: %.4f' % error)
 
 

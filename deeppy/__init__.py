@@ -4,13 +4,17 @@ logging.basicConfig(
     format='%(levelname)-8s %(message)s',
 )
 
-from . import data
+from . import datasets
 from . import misc
 from .base import (
     bool_,
     int_,
     float_,
     Parameter,
+)
+from .data import (
+    Data,
+    SupervisedData,
 )
 from .feed_forward import (
     NeuralNetwork,

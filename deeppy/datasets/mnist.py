@@ -1,6 +1,5 @@
 import os
 import struct
-import pickle
 import numpy as np
 import logging
 
