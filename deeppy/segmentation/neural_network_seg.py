@@ -4,6 +4,9 @@ import cudarray as ca
 import itertools
 from .layers_seg import ParamMixin_seg
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class NeuralNetwork_seg:
     def __init__(self, layers):
@@ -17,16 +20,22 @@ class NeuralNetwork_seg:
         if self._initialized:
             return
 
+        print "Setting UP"
         next_shape = X.shape[1:]
-        indexing_shape = None
+        input_index = None
+
+        if input_index == None:
+            img_h, img_w = X.shape[-2:]
+            input_index = np.arange(img_h*img_w, dtype=np.float)
+            input_index = input_index.reshape((1,)+X.shape[-2:])
 
         for layer in self.layers:
             layer._setup(next_shape)
             next_shape = layer.output_shape(next_shape)
-            indexing_shape = layer.output_index(indexing_shape)
+            input_index = layer.output_index(input_index)
 
         if next_shape != Y.shape[1:]:
-            self.layers[-1].set_mask(indexing_shape)
+            self.layers[-1].set_mask(input_index)
             warnings.warn('Output shape %s does not match Y %s. Y will be masked'
                              % (next_shape, Y.shape))
 
@@ -42,22 +51,23 @@ class NeuralNetwork_seg:
         X = np.reshape(X, X.shape[1:])
         Y = np.reshape(Y, Y.shape[1:])
         # Forward propagation
-        print "--------------"
-        print "start"
+        #print "Train"
+        #print "--------------"
+        #print "start"
         X_next = X
         for layer in self.layers:
             #print X_next
-            X_next = layer.fprop(X_next, 'train')
             #print "--------------"
+            X_next = layer.fprop(X_next, 'train')
             #print layer.name
 
-
+        #print X_next
         Y_pred = X_next
-        #print Y_pred
+        ###print Y_pred
         Y_pre_decoded = ca.nnet.one_hot_decode(Y_pred)
-        print "Train"
-        print ("predict: class1: %d, class2:%d" % (np.sum(Y_pre_decoded), abs(Y_pre_decoded.size - np.sum(Y_pre_decoded))))
-        print ("True: class1: %d, class2:%d" % (np.sum(Y), abs(Y.size - np.sum(Y))))
+        #print "Train"
+        #print ("predict: class1: %d, class2:%d" % (np.sum(Y_pre_decoded), abs(Y_pre_decoded.size - np.sum(Y_pre_decoded))))
+        #print ("True: class1: %d, class2:%d" % (np.sum(Y), abs(Y.size - np.sum(Y))))
         # Back propagation of partial derivatives
         next_grad = self.layers[-1].input_grad(Y, Y_pred)
         layers = self.layers[self.bprop_until:-1]
@@ -84,8 +94,15 @@ class NeuralNetwork_seg:
         Y_pred = np.empty(Y_shape)
         for b in range(n_batches):
             X_next = ca.array(X[b])
+            ##print "--------------"
+            ##print "start"
             for layer in self.layers[:-1]:
+                ##print X_next
                 X_next = layer.fprop(X_next, 'test')
+                ##print "--------------"
+                ##print layer.name
+
+            ##print X_next
             Y_pred_batch = self.layers[-1].predict(X_next)
             Y_pred[b] = (Y_pred_batch)
         return Y_pred
@@ -94,10 +111,11 @@ class NeuralNetwork_seg:
         #X = np.reshape(X, X.shape[1:])
         #Y = np.reshape(Y, Y.shape[1:])
         """ Calculate error on the given data. """
+        ##print "Test"
         Y_pred = self.predict(X, Y.shape, batch_size)
-        print "Test"
-        print ("Predict: class1: %d, class2:%d" % (np.sum(Y_pred), abs(Y_pred.size - np.sum(Y_pred))))
-        print ("True: class1: %d, class2:%d" % (np.sum(Y), abs(Y.size - np.sum(Y))))
+        logger.info('Test')
+        logger.info('Predict: class1: %d, class2:%d' % (np.sum(Y_pred), abs(Y_pred.size - np.sum(Y_pred))))
+        logger.info('True: class1: %d, class2:%d' % (np.sum(Y), abs(Y.size - np.sum(Y))))
         error = Y_pred != Y
 
         return np.mean(error)
