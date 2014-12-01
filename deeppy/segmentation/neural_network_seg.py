@@ -52,19 +52,15 @@ class NeuralNetwork_seg:
         Y = np.reshape(Y, Y.shape[1:])
         # Forward propagation
         #print "Train"
-        #print "--------------"
-        #print "start"
         X_next = X
         for layer in self.layers:
-            #print X_next
-            #print "--------------"
             X_next = layer.fprop(X_next, 'train')
-            #print layer.name
 
-        #print X_next
+        print layer.name
+        print X_next[0:10,:]
         Y_pred = X_next
         ###print Y_pred
-        Y_pre_decoded = ca.nnet.one_hot_decode(Y_pred)
+        #Y_pre_decoded = ca.nnet.one_hot_decode(Y_pred)
         #print "Train"
         #print ("predict: class1: %d, class2:%d" % (np.sum(Y_pre_decoded), abs(Y_pre_decoded.size - np.sum(Y_pre_decoded))))
         #print ("True: class1: %d, class2:%d" % (np.sum(Y), abs(Y.size - np.sum(Y))))
