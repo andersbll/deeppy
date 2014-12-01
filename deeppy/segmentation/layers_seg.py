@@ -66,6 +66,7 @@ class FullyConnected_seg(Layer_seg, ParamMixin_seg):
 
     def fprop(self, x, phase):
         self._last_x = x
+        #print ca.dot(x, self.W.values) + self.b.values
         return ca.dot(x, self.W.values) + self.b.values
 
     def bprop(self, y_grad):

@@ -28,12 +28,13 @@ class Momentum(LearningRule):
         self.steps = [ca.zeros_like(p.values) for p in params]
 
     def step(self):
+        print "updateing parameters"
         for param, last_step in zip(self.params, self.steps):
             last_step *= self.momentum
             step = param.grad
             if param.penalty is not None:
                 step -= param.penalty()
-            step_rate = self.learn_rate * param.learn_rate / self.batch_size
+            step_rate = self.learn_rate * param.learn_rate /self.batch_size
             step *= step_rate
             last_step += step
             p_values = param.values
