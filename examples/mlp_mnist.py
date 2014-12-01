@@ -17,8 +17,8 @@ def run():
     y_train = y[train_idx]
     x_test = x[test_idx]
     y_test = y[test_idx]
-    train_data = dp.SupervisedData(x_train, y_train, batch_size=128)
-    test_data = dp.SupervisedData(x_test, y_test)
+    train_input = dp.SupervisedInput(x_train, y_train, batch_size=128)
+    test_input = dp.SupervisedInput(x_test, y_test)
 
     # Setup neural network
     nn = dp.NeuralNetwork(
@@ -46,12 +46,12 @@ def run():
 
     # Train neural network
     def valid_error():
-        return nn.error(test_data)
+        return nn.error(test_input)
     trainer = dp.StochasticGradientDescent(
         max_epochs=25,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
-    trainer.train(nn, train_data, valid_error)
+    trainer.train(nn, train_input, valid_error)
 
     # Visualize weights from first layer
     W = next(np.array(layer.params()[0].values) for layer in nn.layers
@@ -61,7 +61,7 @@ def run():
                      os.path.join('mnist', 'mlp_weights.png'))
 
     # Evaluate on test data
-    error = nn.error(test_data)
+    error = nn.error(test_input)
     print('Test error rate: %.4f' % error)
 
 

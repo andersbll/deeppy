@@ -5,7 +5,7 @@ import cudarray as ca
 import logging
 logger = logging.getLogger(__name__)
 
-from ..data import to_data
+from ..input import to_input
 
 
 class StochasticGradientDescent:
@@ -17,15 +17,15 @@ class StochasticGradientDescent:
         self.patience_incr = patience_incr
         self.improvement_thresh = improvement_thresh
 
-    def train(self, model, data, valid_error_fun=None):
-        data = to_data(data)
-        model._setup(data)
+    def train(self, model, input, valid_error_fun=None):
+        input = to_input(input)
+        model._setup(input)
         params = model._params()
-        self.learn_rule._setup(params, data.batch_size)
+        self.learn_rule._setup(params, input.batch_size)
         n_params = np.sum([p.values.size for p in params])
         logger.info('SGD: Model contains %i parameters.' % n_params)
         logger.info('SGD: %d mini-batch gradient updates per epoch.'
-                    % data.n_batches)
+                    % input.n_batches)
 
         epoch = 0
         converged = False
@@ -36,7 +36,7 @@ class StochasticGradientDescent:
             epoch += 1
 
             batch_costs = []
-            for batch in data.batches():
+            for batch in input.supervised_batches():
                 cost = np.array(ca.mean(model._update(batch)))
                 batch_costs.append(cost)
                 # Update gradient

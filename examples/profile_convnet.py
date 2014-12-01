@@ -20,7 +20,7 @@ def run():
     train_idx, test_idx = dataset.split()
     x_train = preprocess_imgs(x[train_idx])
     y_train = y[train_idx]
-    train_data = dp.SupervisedData(x_train, y_train, batch_size=batch_size)
+    train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
 
     # Setup neural network
     pool_kwargs = {
@@ -74,7 +74,7 @@ def run():
         ],
     )
 
-    dp.misc.profile(nn, train_data)
+    dp.misc.profile(nn, train_input)
 
 
 if __name__ == '__main__':

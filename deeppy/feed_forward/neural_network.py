@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 from .layers import ParamMixin
-from ..data import to_data, Data
+from ..input import to_input
 
 
 class NeuralNetwork:
@@ -11,17 +11,17 @@ class NeuralNetwork:
         self.bprop_until = next(idx for idx, layer in enumerate(layers)
                                 if isinstance(layer, ParamMixin))
 
-    def _setup(self, data):
+    def _setup(self, input):
         # Setup layers sequentially
         if self._initialized:
             return
-        next_shape = data.x_shape
+        next_shape = input.x_shape
         for layer in self.layers:
             layer._setup(next_shape)
             next_shape = layer.output_shape(next_shape)
-        if next_shape != data.y_shape:
+        if next_shape != input.y_shape:
             raise ValueError('Output shape %s does not match Y %s'
-                             % (next_shape, data.y_shape))
+                             % (next_shape, input.y_shape))
         self._initialized = True
 
     def _params(self):
@@ -50,12 +50,12 @@ class NeuralNetwork:
             input_shape = layer.output_shape(input_shape)
         return input_shape
 
-    def predict(self, data):
+    def predict(self, input):
         """ Calculate the output for the given input x. """
-        data = to_data(data)
-        y = np.empty(self._output_shape(data.x.shape))
+        input = to_input(input)
+        y = np.empty(self._output_shape(input.x.shape))
         y_offset = 0
-        for x_batch in data.batches():
+        for x_batch in input.batches():
             x_next = x_batch
             for layer in self.layers[:-1]:
                 x_next = layer.fprop(x_next, 'test')
@@ -65,12 +65,12 @@ class NeuralNetwork:
             y_offset += batch_size
         return y
 
-    def error(self, data):
-        data = to_data(data)
-        """ Calculate error on the given data. """
-        y_pred = self.predict(Data(data.x, data.batch_size))
+    def error(self, input):
+        input = to_input(input)
+        """ Calculate error on the given input. """
+        y_pred = self.predict(input)
 #        print(y_pred)
         # XXX: this only works for classification
         # TODO: support regression
-        error = y_pred != data.y
+        error = y_pred != input.y
         return np.mean(error)

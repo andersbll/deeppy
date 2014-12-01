@@ -12,9 +12,9 @@ from .base import (
     float_,
     Parameter,
 )
-from .data import (
-    Data,
-    SupervisedData,
+from .input import (
+    Input,
+    SupervisedInput,
 )
 from .feed_forward import (
     NeuralNetwork,

@@ -1,7 +1,7 @@
 import time
 import cudarray as ca
 
-from ..data import to_data
+from ..input import to_input
 
 
 def avg_running_time(fun, reps):
@@ -14,10 +14,10 @@ def avg_running_time(fun, reps):
     return float(time.time() - start_time) / reps
 
 
-def profile(neuralnet, data, reps=50):
-    data = to_data(data)
-    neuralnet._setup(data)
-    batch = data.batches().next()
+def profile(neuralnet, input, reps=50):
+    input = to_input(input)
+    neuralnet._setup(input)
+    batch = next(input.supervised_batches())
     layer_input = batch[0]
     total_duration = 0
     for layer_idx, layer in enumerate(neuralnet.layers[:-1]):
