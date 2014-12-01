@@ -28,7 +28,6 @@ class Momentum(LearningRule):
         self.steps = [ca.zeros_like(p.values) for p in params]
 
     def step(self):
-        print "updateing parameters"
         for param, last_step in zip(self.params, self.steps):
             last_step *= self.momentum
             step = param.grad
