@@ -34,10 +34,9 @@ class Momentum(LearningRule):
             if param.penalty is not None:
                 step -= param.penalty()
             step_rate = self.learn_rate * param.learn_rate / self.batch_size
-            step *= step_rate
+            step *= -step_rate
             last_step += step
-            p_values = param.values
-            p_values -= last_step
+            param.step(last_step)
 
     def monitor(self):
         for param, step in zip(self.params, self.steps):
@@ -69,8 +68,7 @@ class RMSProp(LearningRule):
             rms_grad += (1.0 - self.decay) * step**2
             scaling = ca.maximum(ca.sqrt(rms_grad), self.max_scaling_inv)
             step_rate = self.learn_rate * param.learn_rate / self.batch_size
-            p_values = param.values
-            p_values -= step / scaling * step_rate
+            param.step(step / scaling * (-step_rate))
 
     def monitor(self):
         for param, step in zip(self.params, self.steps):

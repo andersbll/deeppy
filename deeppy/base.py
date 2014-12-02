@@ -23,7 +23,7 @@ class Parameter(object):
                     self._l2_penalty = 2*penalty[1]
                     self.penalty = self.l2_penalty
                 else:
-                    raise ValueError('invalid penalty type: %s' % arg[0])
+                    raise ValueError('invalid penalty type: %s' % penalty[0])
         if norm is None:
             self.norm_fun = None
         self.values = None
@@ -37,6 +37,9 @@ class Parameter(object):
         if self._grad is None:
             self._grad = ca.empty_like(self.values)
         return self._grad
+
+    def step(self, step):
+        self.values += step
 
     def l2_penalty(self):
         return self._l2_penalty * self.values
