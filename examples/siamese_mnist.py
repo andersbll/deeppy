@@ -12,8 +12,7 @@ import deeppy as dp
 
 
 def run():
-    # Prepare data
-    n_samples = 100000
+    # Fetch MNIST data
     dataset = dp.datasets.MNIST()
     x, y = dataset.data(flat=True)
     x = x.astype(dp.float_)/255.0
@@ -23,12 +22,15 @@ def run():
     y_train = y[train_idx]
     x_test = x[test_idx]
     y_test = y[test_idx]
-    x1 = np.empty((n_samples, 28*28), dtype=dp.float_)
+
+    # Generate image pairs
+    n_pairs = 100000
+    x1 = np.empty((n_pairs, 28*28), dtype=dp.float_)
     x2 = np.empty_like(x1, dtype=dp.float_)
-    y = np.empty(n_samples, dtype=dp.int_)
+    y = np.empty(n_pairs, dtype=dp.int_)
     n_imgs = x_train.shape[0]
     n = 0
-    while n < n_samples:
+    while n < n_pairs:
         i = random.randint(0, n_imgs-1)
         j = random.randint(0, n_imgs-1)
         if i == j:
@@ -41,11 +43,12 @@ def run():
             y[n] = 0
         n += 1
 
+    # Input to network
     train_input = dp.SupervisedSiameseInput(x1, x2, y, batch_size=128)
     test_input = dp.SupervisedInput(x_test, y_test)
 
-    # Setup neural network
-    nn = dp.SiameseNetwork(
+    # Setup network
+    net = dp.SiameseNetwork(
         siamese_layers=[
             dp.Dropout(),
             dp.FullyConnected(
@@ -69,15 +72,15 @@ def run():
         loss_layer=dp.ContrastiveLoss(),
     )
 
-    # Train neural network
+    # Train network
     trainer = dp.StochasticGradientDescent(
         max_epochs=5,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
-    trainer.train(nn, train_input)
+    trainer.train(net, train_input)
 
-    # Feature space
-    feat = nn.features(test_input)
+    # Visualize feature space
+    feat = net.features(test_input)
     colors = ['tomato', 'lawngreen', 'royalblue', 'gold', 'saddlebrown',
               'violet', 'turquoise', 'mediumpurple', 'darkorange', 'darkgray']
     plt.figure()
