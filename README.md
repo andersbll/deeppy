@@ -34,9 +34,9 @@ First, install [CUDArray][cudarray]. Then install DeepPy with the standard
 
 ### Influences
 Thanks to the following projects for showing the way.
- - [scikit-learn][http://scikit-learn.org/]
- - [Caffe][http://caffe.berkeleyvision.org/]
- - [Pylearn2][http://deeplearning.net/software/pylearn2/]
+ - [scikit-learn](http://scikit-learn.org/)
+ - [Caffe](http://caffe.berkeleyvision.org/)
+ - [Pylearn2](http://deeplearning.net/software/pylearn2/)
 
 
 [cudarray]: http://github.com/andersbll/cudarray
