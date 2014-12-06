@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import os
+import random
+import matplotlib
+# Use non-GUI rendering backend.
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+import deeppy as dp
+
+
+def run():
+    # Prepare data
+    n_samples = 100000
+    dataset = dp.datasets.MNIST()
+    x, y = dataset.data(flat=True)
+    x = x.astype(dp.float_)/255.0
+    y = y.astype(dp.int_)
+    train_idx, test_idx = dataset.split()
+    x_train = x[train_idx]
+    y_train = y[train_idx]
+    x_test = x[test_idx]
+    y_test = y[test_idx]
+    x1 = np.empty((n_samples, 28*28), dtype=dp.float_)
+    x2 = np.empty_like(x1, dtype=dp.float_)
+    y = np.empty(n_samples, dtype=dp.int_)
+    n_imgs = x_train.shape[0]
+    n = 0
+    while n < n_samples:
+        i = random.randint(0, n_imgs-1)
+        j = random.randint(0, n_imgs-1)
+        if i == j:
+            continue
+        x1[n, ...] = x_train[i]
+        x2[n, ...] = x_train[j]
+        if y_train[i] == y_train[j]:
+            y[n] = 1
+        else:
+            y[n] = 0
+        n += 1
+
+    train_input = dp.SupervisedSiameseInput(x1, x2, y, batch_size=128)
+    test_input = dp.SupervisedInput(x_test, y_test)
+
+    # Setup neural network
+    nn = dp.SiameseNetwork(
+        siamese_layers=[
+            dp.Dropout(),
+            dp.FullyConnected(
+                n_output=800,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.02),
+                                     penalty=('l2', 0.00001), monitor=True),
+            ),
+            dp.Activation('relu'),
+            dp.FullyConnected(
+                n_output=800,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.02),
+                                     penalty=('l2', 0.00001), monitor=True),
+            ),
+            dp.Activation('relu'),
+            dp.FullyConnected(
+                n_output=2,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.00001), monitor=True),
+            ),
+        ],
+        loss_layer=dp.ContrastiveLoss(),
+    )
+
+    # Train neural network
+    trainer = dp.StochasticGradientDescent(
+        max_epochs=5,
+        learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
+    )
+    trainer.train(nn, train_input)
+
+    # Feature space
+    feat = nn.features(test_input)
+    colors = ['tomato', 'lawngreen', 'royalblue', 'gold', 'saddlebrown',
+              'violet', 'turquoise', 'mediumpurple', 'darkorange', 'darkgray']
+    plt.figure()
+    for i in range(10):
+        plt.scatter(feat[y_test == i, 0], feat[y_test == i, 1], s=3,
+                    c=colors[i], linewidths=0)
+    plt.legend([str(i) for i in range(10)], scatterpoints=1, markerscale=4)
+    plt.savefig(os.path.join('mnist', 'siamese_dists.png'), dpi=200)
+
+
+if __name__ == '__main__':
+    run()

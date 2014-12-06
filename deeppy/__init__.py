@@ -33,6 +33,12 @@ from .fillers import (
     ConstantFiller,
     NormalFiller,
 )
+from .siamese import (
+    ContrastiveLoss,
+    SiameseNetwork,
+    SiameseInput,
+    SupervisedSiameseInput,
+)
 from .trainers.learning_rules import (
     Momentum,
     RMSProp,
