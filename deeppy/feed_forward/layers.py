@@ -1,4 +1,3 @@
-import numpy as np
 import cudarray as ca
 from ..base import parameter
 
@@ -39,6 +38,9 @@ class ParamMixin(object):
         """ Layer parameters. """
         raise NotImplementedError()
 
+    def set_params(self):
+        raise NotImplementedError()
+
 
 class FullyConnected(Layer, ParamMixin):
     def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0):
@@ -60,15 +62,18 @@ class FullyConnected(Layer, ParamMixin):
 
     def fprop(self, x, phase):
         self._last_x = x
-        return ca.dot(x, self.W.values) + self.b.values
+        return ca.dot(x, self.W.array) + self.b.array
 
     def bprop(self, y_grad):
-        ca.dot(self._last_x.T, y_grad, out=self.W.grad)
-        ca.sum(y_grad, axis=0, out=self.b.grad)
-        return ca.dot(y_grad, self.W.values.T)
+        ca.dot(self._last_x.T, y_grad, out=self.W.grad_array)
+        ca.sum(y_grad, axis=0, out=self.b.grad_array)
+        return ca.dot(y_grad, self.W.array.T)
 
     def params(self):
         return self.W, self.b
+
+    def set_params(self, params):
+        self.W, self.b = params
 
     def output_shape(self, input_shape):
         return (input_shape[0], self.n_output)

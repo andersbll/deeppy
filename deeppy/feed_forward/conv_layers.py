@@ -12,7 +12,7 @@ def padding(win_shape, border_mode):
     elif border_mode == 'full':
         return (win_shape[0]-1, win_shape[1]-1)
     else:
-        raise ValueError('invalid mode: "%s"' % mode)
+        raise ValueError('invalid mode: "%s"' % border_mode)
 
 
 class Convolutional(Layer, ParamMixin):
@@ -39,19 +39,21 @@ class Convolutional(Layer, ParamMixin):
 
     def fprop(self, x, phase):
         self.last_x = x
-        convout = self.conv_op.fprop(x, self.W.values)
-        return convout + self.b.values
+        convout = self.conv_op.fprop(x, self.W.array)
+        return convout + self.b.array
 
     def bprop(self, y_grad):
-        img_shape = self.last_x.shape[2:]
-        _, x_grad = self.conv_op.bprop(self.last_x, self.W.values,
-                                       y_grad, filters_d=self.W.grad)
+        _, x_grad = self.conv_op.bprop(self.last_x, self.W.array,
+                                       y_grad, filters_d=self.W.grad_array)
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
-               keepdims=True, out=self.b.grad)
+               keepdims=True, out=self.b.grad_array)
         return x_grad
 
     def params(self):
         return self.W, self.b
+
+    def set_params(self, params):
+        self.W, self.b = params
 
     def output_shape(self, input_shape):
         return self.conv_op.output_shape(input_shape, self.n_filters,

@@ -30,7 +30,7 @@ class Momentum(LearningRule):
     def step(self):
         for param, last_step in zip(self.params, self.steps):
             last_step *= self.momentum
-            step = param.grad
+            step = param.grad()
             if param.penalty is not None:
                 step -= param.penalty()
             step_rate = self.learn_rate * param.learn_rate / self.batch_size
@@ -42,9 +42,11 @@ class Momentum(LearningRule):
         for param, step in zip(self.params, self.steps):
             if param.monitor:
                 val_mean_abs = np.array(ca.mean(ca.fabs(param.values)))
+                grad_mean_abs = np.array(ca.mean(ca.fabs(param.grad())))
                 step_mean_abs = np.array(ca.mean(ca.fabs(step)))
-                logger.info('%s:\t%.1e  [%.1e]'
-                            % (param.name, val_mean_abs, step_mean_abs))
+                logger.info('%s:\t%.1e  [%.1e, %.1e]'
+                            % (param.name, val_mean_abs, grad_mean_abs,
+                               step_mean_abs))
 
 
 class RMSProp(LearningRule):
@@ -62,7 +64,7 @@ class RMSProp(LearningRule):
     def step(self):
         for param, rms_grad in zip(self.params, self.steps):
             rms_grad *= self.decay
-            step = param.grad
+            step = param.grad()
             if param.penalty is not None:
                 step -= param.penalty()
             rms_grad += (1.0 - self.decay) * step**2
@@ -74,6 +76,8 @@ class RMSProp(LearningRule):
         for param, step in zip(self.params, self.steps):
             if param.monitor:
                 val_mean_abs = np.array(ca.mean(ca.fabs(param.values)))
+                grad_mean_abs = np.array(ca.mean(ca.fabs(param.grad())))
                 step_mean_abs = np.array(ca.mean(ca.fabs(step)))
-                logger.info('%s:\t%.1e  [%.1e]'
-                            % (param.name, val_mean_abs, step_mean_abs))
+                logger.info('%s:\t%.1e  [%.1e, %.1e]'
+                            % (param.name, val_mean_abs, grad_mean_abs,
+                               step_mean_abs))

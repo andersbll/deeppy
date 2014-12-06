@@ -28,21 +28,75 @@ class Parameter(object):
             self.norm_fun = None
         self.values = None
         self._grad = None
+        self.shares = []
 
     def _setup(self, shape):
         self.values = self.filler.array(shape)
 
     @property
-    def grad(self):
+    def array(self):
+        return self.values
+
+    @property
+    def grad_array(self):
+        ''' Returns the gradient array. '''
         if self._grad is None:
-            self._grad = ca.empty_like(self.values)
+            self._grad = ca.empty_like(self.array)
+        return self._grad
+
+    def grad(self):
+        ''' Returns a parameter step calculated from the gradient.
+        This differs from grad_array() as the parameter may be shared such
+        that its gradient has multiple sources. '''
+        for param in self.shares:
+            self._grad += param.grad_array
         return self._grad
 
     def step(self, step):
+        ''' Update the parameter values according to the given step. '''
         self.values += step
 
     def l2_penalty(self):
         return self._l2_penalty * self.values
+
+    def share(self):
+        param = SharedParameter(self)
+        self.shares.append(param)
+        return param
+
+
+class SharedParameter(Parameter):
+    def __init__(self, parent):
+        self.parent = parent
+        self._grad = None
+
+    def _setup(self, shape):
+        raise RuntimeError('_setup() should not be called for SharedParameter')
+
+    @property
+    def name(self):
+        return self.parent.name
+
+    @property
+    def learn_rate(self):
+        return self.parent.learn_rate
+
+    @property
+    def monitor(self):
+        return self.parent.monitor
+
+    @property
+    def array(self):
+        return self.parent.array
+
+    def grad(self):
+        raise RuntimeError('grad() should not be called for SharedParameter.')
+
+    def l2_penalty(self):
+        return self.parent.l2_penalty()
+
+    def share(self):
+        return self.parent.share()
 
 
 def parameter(arg):
