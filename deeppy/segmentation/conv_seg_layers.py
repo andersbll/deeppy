@@ -45,7 +45,6 @@ class Convolutional_seg(Layer_seg, ParamMixin_seg):
         return convout + self.b.values
 
     def bprop(self, y_grad):
-        img_shape = self.last_x.shape[2:]
         _, x_grad = self.conv_op.bprop(self.last_x, self.W.values,
                                        y_grad, filters_d=self.W.grad)
         
@@ -69,6 +68,11 @@ class Convolutional_seg(Layer_seg, ParamMixin_seg):
 
         return input_index
 
+    def print_info(self):
+        print self.name
+        print "filtershape :%s" % (self.filter_shape,)
+        print "wight sigma : %f" % self.W.filler.sigma
+
 
 class Pool_seg(Layer_seg):
     def __init__(self, win_shape=(2, 2), strides=None,
@@ -90,21 +94,27 @@ class Pool_seg(Layer_seg):
     def output_index(self, input_index):
         return self.pool_op.output_index(input_index)
 
+    def print_info(self):
+        print self.name
+        print "win_shape :%s" % (self.pool_op.win_shape,)
+        print "strides : %s" % (self.pool_op.strides, )
+
 
 class Flatten_seg(Layer_seg):
-    def fprop(self, x, phase):
+    def __init__(self, win_shape=(1, 1)):
         self.name = 'flatten'
-        self.last_x_shape = x.swapaxes(1,3).shape
-        return ca.reshape(x.swapaxes(1,3), self.output_shape(x.shape))
+        self.flatten_op = ca.nsnet.FlattenBC01(win_shape)
+
+    def fprop(self, x, phase):
+        flattenOut = self.flatten_op.fprop(x)
+        return flattenOut
 
     def bprop(self, y_grad):
-        return ca.reshape(y_grad, self.last_x_shape).swapaxes(1,3)
+        x_grad = self.flatten_op.bprop(y_grad)
+        return x_grad
 
     def output_shape(self, input_shape):
-        return ((input_shape[0] * np.prod(input_shape[2:])), 
-                input_shape[1])
+        return self.flatten_op.output_shape(input_shape)
 
     def output_index(self, input_index):
-        input_index = ca.reshape(input_index.swapaxes(1,2), np.prod(input_index.shape))
-        self.sort_indices = np.argsort(input_index, axis=0)
-        return input_index
+        return self.flatten_op.output_index(input_index)

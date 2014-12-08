@@ -43,7 +43,6 @@ class Convolutional(Layer, ParamMixin):
         return convout + self.b.values
 
     def bprop(self, y_grad):
-        img_shape = self.last_x.shape[2:]
         _, x_grad = self.conv_op.bprop(self.last_x, self.W.values,
                                        y_grad, filters_d=self.W.grad)
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,

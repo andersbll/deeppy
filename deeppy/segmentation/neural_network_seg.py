@@ -26,7 +26,7 @@ class NeuralNetwork_seg:
 
         if input_index == None:
             img_h, img_w = X.shape[-2:]
-            input_index = np.arange(img_h*img_w, dtype=np.float)
+            input_index = np.arange(img_h*img_w, dtype=np.int_)
             input_index = input_index.reshape((1,)+X.shape[-2:])
 
         for layer in self.layers:
@@ -35,7 +35,6 @@ class NeuralNetwork_seg:
             input_index = layer.output_index(input_index)
 
         if next_shape != Y.shape[1:]:
-            self.layers[-1].set_mask(input_index)
             warnings.warn('Output shape %s does not match Y %s. Y will be masked'
                              % (next_shape, Y.shape))
 
@@ -56,8 +55,8 @@ class NeuralNetwork_seg:
         for layer in self.layers:
             X_next = layer.fprop(X_next, 'train')
 
-        print layer.name
-        print X_next[0:10,:]
+        #print layer.name
+        #print X_next[0:10,:]
         Y_pred = X_next
         ###print Y_pred
         #Y_pre_decoded = ca.nnet.one_hot_decode(Y_pred)

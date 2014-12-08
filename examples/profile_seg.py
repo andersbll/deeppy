@@ -10,17 +10,21 @@ import cPickle as pickle
 import matplotlib.pyplot as plt
 
 
+def preprocess_imgs(imgs):
+    imgs = imgs.astype(dp.float_)
+    imgs -= np.mean(imgs, axis=0, keepdims=True)
+    # Convert images to BC01 format
+    imgs = np.transpose(imgs, (0, 3, 1, 2))
+    return imgs
+
+
 def run():
     # Fetch data
-     # Setup neural network
-    #/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif 
-    #Y = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif');
-    #X = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-volume.tif');
     Y = pickle.load(open( './img/Y.pic', "rb" ))
     X = pickle.load(open( './img/X.pic', "rb" ))
 
-    n_train = 20
-    n_test = 5
+    n_train = 1
+    n_test = 1
 
     imageSize = 128
 
@@ -69,7 +73,7 @@ def run():
             ),
             dp.Activation_seg('relu'),
             dp.Pool_seg(),
-            dp.Flatten_seg(win_shape=(3,3)),
+            dp.Flatten_seg(),
             dp.FullyConnected_seg(
                 n_output=50,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
@@ -87,50 +91,13 @@ def run():
 
     #0.2592
     # Train neural network
-    n_epochs = [16, 16, 24]
-    learn_rate = 0.01
+    n_epochs = [8, 16, 24]
+    learn_rate = 0.001
     batch_size = 1
 
-    print "n_taning : %d , n_test: %d" % (n_train, n_test)
-    print "n_epochs %s" % (n_epochs,)
-
-    print "-------------------"
-    for l in nn.layers:
-        l.print_info()
-        print "-------------------"
-
-
-
-    def valid_error():
-        return nn.error(x_test, y_test)
-
-    for i, max_epochs in enumerate(n_epochs):
-        lr = learn_rate /10.0**i
-        print ("learn_rate: %f" % lr)
-        trainer = dp.StochasticGradientDescent(
-            batch_size=batch_size,
-            max_epochs=max_epochs,
-            learn_rule=dp.Momentum(learn_rate=lr, momentum=0.9),
-        )
-        trainer.train(nn, x_train, y_train, valid_error)
-    # Evaluate on test data
-    #error = nn.error(x_test, y_test)
-    #rint('Test error rate: %.4f' % error)
-    #Must beat
-    ##0.1990
-    print "predict image"
-    predictimage = nn.predict( X=x_test[0:1,:,:,:,:], Y_shape=y_test[0:1,:].shape)
-    predictimage = np.reshape(predictimage, (128,128))
-
-    print "error"
-    print nn.error(x_test[0:1,:,:,:,:], y_test[0:1,:])
-
-    io.imsave('./testImages/testedimgcorduroy_pebbles8-33.png',np.reshape(x_test[0], (128,128)))
-    yHey = np.reshape(y_test[0], (128,128))
-    yHey *= 255
-    io.imsave('./testImages/testedimgcorduroy_True_pebbles8-33.png', yHey)
-    io.imsave('./testImages/testedimg_predictioncorduroy_pebbles8-33.png', predictimage)
-
+    X_profile = x_train[:batch_size, ...]
+    y_profile = y_train[:batch_size, ...]
+    dp.misc.profile(nn, X_profile, y_profile)
 
 
 if __name__ == '__main__':
