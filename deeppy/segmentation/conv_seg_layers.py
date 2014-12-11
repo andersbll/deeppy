@@ -70,9 +70,11 @@ class Convolutional_seg(Layer_seg, ParamMixin_seg):
 
     def print_info(self):
         print self.name
+        print "n_filters : %f" % self.n_filters
         print "filtershape :%s" % (self.filter_shape,)
         print "wight sigma : %f" % self.W.filler.sigma
-
+        if self.W.penalty != None:
+            print " L2 pen : %f" % self.W._l2_penalty
 
 class Pool_seg(Layer_seg):
     def __init__(self, win_shape=(2, 2), strides=None,
@@ -118,3 +120,7 @@ class Flatten_seg(Layer_seg):
 
     def output_index(self, input_index):
         return self.flatten_op.output_index(input_index)
+
+    def print_info(self):
+        print self.name
+        print "window shape :%s" % (self.flatten_op.win_shape,)

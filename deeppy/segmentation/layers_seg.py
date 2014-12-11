@@ -86,6 +86,8 @@ class FullyConnected_seg(Layer_seg, ParamMixin_seg):
         print self.name
         print "n_output :%d" % self.n_output
         print "wight sigma : %f" % self.W.filler.sigma
+        if self.W.penalty != None:
+            print " L2 pen : %f" % self.W._l2_penalty
 
 class Activation_seg(Layer_seg):
     def __init__(self, type):
