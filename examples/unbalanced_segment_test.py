@@ -16,8 +16,8 @@ def run():
     #/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif 
     #Y = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif');
     #X = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-volume.tif');
-    Y = pickle.load(open( './img/Y.pic', "rb" ))
-    X = pickle.load(open( './img/X.pic', "rb" ))
+    Y = pickle.load(open( './img/Y_unbalanced.pic', "rb" ))
+    X = pickle.load(open( './img/X_unbalanced.pic', "rb" ))
 
     n_train = 200
     n_test = 50
@@ -125,11 +125,11 @@ def run():
     print "error"
     print nn.error(x_test[0:1,:,:,:,:], y_test[0:1,:])
 
-    io.imsave('./testImages/testedimgcorduroy_pebbles8-33.png',np.reshape(x_test[0], (128,128)))
+    io.imsave('./testImages/testedimgcorduroy_pebbles8-33_unbalanced.png',np.reshape(x_test[0], (128,128)))
     yHey = np.reshape(y_test[0], (128,128))
     yHey *= 255
-    io.imsave('./testImages/testedimgcorduroy_True_pebbles8-33.png', yHey)
-    io.imsave('./testImages/testedimg_predictioncorduroy_pebbles8-33.png', predictimage)
+    io.imsave('./testImages/testedimgcorduroy_True_pebbles8-33_unbalanced.png', yHey)
+    io.imsave('./testImages/testedimg_predictioncorduroy_pebbles8-33_unbalanced.png', predictimage)
 
 
 
