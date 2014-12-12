@@ -26,8 +26,8 @@ def run():
             dp.Convolutional(
                 n_filters=20,
                 filter_shape=(5, 5),
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.00001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.00001)),
             ),
             dp.Activation('relu'),
             dp.Pool(
@@ -38,8 +38,8 @@ def run():
             dp.Convolutional(
                 n_filters=50,
                 filter_shape=(5, 5),
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.00001,
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                                     penalty=('l2', 0.00001)),
             ),
             dp.Activation('relu'),
             dp.Pool(

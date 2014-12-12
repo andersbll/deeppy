@@ -17,7 +17,7 @@ def padding(win_shape, border_mode):
 
 class Convolutional(Layer, ParamMixin):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
-                 strides=(1, 1), border_mode='valid', weight_decay=0.0):
+                 strides=(1, 1), border_mode='valid'):
         self.name = 'conv'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
