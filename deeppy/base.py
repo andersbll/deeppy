@@ -48,9 +48,10 @@ class Parameter(object):
         ''' Returns a parameter step calculated from the gradient.
         This differs from grad_array() as the parameter may be shared such
         that its gradient has multiple sources. '''
+        grad = self.grad_array
         for param in self.shares:
-            self._grad += param.grad_array
-        return self._grad
+            grad += param.grad_array
+        return grad
 
     def step(self, step):
         ''' Update the parameter values according to the given step. '''

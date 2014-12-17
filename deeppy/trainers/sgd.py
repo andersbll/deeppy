@@ -22,7 +22,7 @@ class StochasticGradientDescent:
         model._setup(input)
         params = model._params()
         self.learn_rule._setup(params, input.batch_size)
-        n_params = np.sum([p.values.size for p in params])
+        n_params = np.sum([p.array.size for p in params])
         logger.info('SGD: Model contains %i parameters.' % n_params)
         logger.info('SGD: %d mini-batch gradient updates per epoch.'
                     % input.n_batches)
