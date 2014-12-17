@@ -33,6 +33,10 @@ from .fillers import (
     CopyFiller,
     ConstantFiller,
     NormalFiller,
+    UniformFiller,
+)
+from .preprocess import (
+    UniformScaler,
 )
 from .siamese import (
     ContrastiveLoss,

@@ -6,23 +6,23 @@ import numpy as np
 import deeppy as dp
 
 
-def preprocess_imgs(imgs):
-    imgs = imgs.astype(dp.float_)
-    imgs -= np.mean(imgs, axis=0, keepdims=True)
-    return imgs
-
-
 def run():
     # Prepare data
     batch_size = 128
     dataset = dp.datasets.CIFAR10()
     x, y = dataset.data()
+    x = x.astype(dp.float_)
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
-    x_train = preprocess_imgs(x[train_idx])
+    x_train = x[train_idx]
     y_train = y[train_idx]
-    x_test = preprocess_imgs(x[test_idx])
+    x_test = x[test_idx]
     y_test = y[test_idx]
+
+    scaler = dp.UniformScaler(feature_wise=True)
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.transform(x_test)
+
     train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
     test_input = dp.SupervisedInput(x_test, y_test, batch_size=batch_size)
 

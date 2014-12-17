@@ -12,16 +12,20 @@ import deeppy as dp
 
 
 def run():
-    # Fetch MNIST data
+    # Prepare MNIST data
     dataset = dp.datasets.MNIST()
     x, y = dataset.data(flat=True)
-    x = x.astype(dp.float_)/255.0
+    x = x.astype(dp.float_)
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
     x_train = x[train_idx]
     y_train = y[train_idx]
     x_test = x[test_idx]
     y_test = y[test_idx]
+
+    scaler = dp.UniformScaler(high=255.)
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.transform(x_test)
 
     # Generate image pairs
     n_pairs = 100000
