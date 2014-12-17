@@ -29,6 +29,7 @@ from .feed_forward import (
     LocalResponseNormalization,
 )
 from .fillers import (
+    AutoFiller,
     CopyFiller,
     ConstantFiller,
     NormalFiller,

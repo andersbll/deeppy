@@ -38,12 +38,30 @@ class UniformFiller(Filler):
 
 class CopyFiller(Filler):
     def __init__(self, np_array):
-        self.arr = array
+        self.arr = np_array
 
     def array(self, shape):
         if self.arr.shape != shape:
             raise ValueError('Requested filler shape does not match.')
         return ca.array(self.arr)
+
+
+class AutoFiller(Filler):
+    def __init__(self, gain=1.0):
+        self.gain = gain
+
+    def array(self, shape):
+        ndim = len(shape)
+        if ndim == 2:
+            # FullyConnected weights
+            scale = 1.0 / np.sqrt(shape[0])
+        elif ndim == 4:
+            # Convolution filter
+            scale = 1.0 / np.sqrt(np.prod(shape[1:]))
+        else:
+            raise ValueError('AutoFiller does not support ndim %i' % ndim)
+        scale = self.gain * scale / np.sqrt(3)
+        return ca.random.uniform(low=-scale, high=scale, size=shape)
 
 
 def filler(arg):

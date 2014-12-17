@@ -53,19 +53,19 @@ def run():
             dp.Dropout(),
             dp.FullyConnected(
                 n_output=800,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.02),
+                weights=dp.Parameter(dp.AutoFiller(),
                                      penalty=('l2', 0.00001), monitor=True),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=800,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.02),
+                weights=dp.Parameter(dp.AutoFiller(),
                                      penalty=('l2', 0.00001), monitor=True),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=2,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                weights=dp.Parameter(dp.AutoFiller(),
                                      penalty=('l2', 0.00001), monitor=True),
             ),
         ],
@@ -74,7 +74,7 @@ def run():
 
     # Train network
     trainer = dp.StochasticGradientDescent(
-        max_epochs=5,
+        max_epochs=10,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
     trainer.train(net, train_input)
@@ -88,6 +88,8 @@ def run():
         plt.scatter(feat[y_test == i, 0], feat[y_test == i, 1], s=3,
                     c=colors[i], linewidths=0)
     plt.legend([str(i) for i in range(10)], scatterpoints=1, markerscale=4)
+    if not os.path.exists('mnist'):
+        os.mkdirs('mnist')
     plt.savefig(os.path.join('mnist', 'siamese_dists.png'), dpi=200)
 
 
