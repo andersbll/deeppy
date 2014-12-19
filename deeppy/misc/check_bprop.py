@@ -70,7 +70,7 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
             out = layer.fprop(ca.array(x0), 'train')
             out_grad = ca.ones_like(out, dtype=np.float32)
             layer.bprop(out_grad)
-            param_grad = layer.params()[p_idx].grad
+            param_grad = layer.params()[p_idx].grad()
             return np.ravel(np.array(param_grad))
 
         for p_idx, p in enumerate(layer.params()):
