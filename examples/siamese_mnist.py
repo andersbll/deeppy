@@ -57,29 +57,26 @@ def run():
             dp.Dropout(),
             dp.FullyConnected(
                 n_output=800,
-                weights=dp.Parameter(dp.AutoFiller(),
-                                     penalty=('l2', 0.00001), monitor=True),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=800,
-                weights=dp.Parameter(dp.AutoFiller(),
-                                     penalty=('l2', 0.00001), monitor=True),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=2,
-                weights=dp.Parameter(dp.AutoFiller(),
-                                     penalty=('l2', 0.00001), monitor=True),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
             ),
         ],
-        loss_layer=dp.ContrastiveLoss(),
+        loss_layer=dp.ContrastiveLoss(margin=0.5),
     )
 
     # Train network
     trainer = dp.StochasticGradientDescent(
         max_epochs=10,
-        learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
+        learn_rule=dp.RMSProp(learn_rate=0.001),
     )
     trainer.train(net, train_input)
 

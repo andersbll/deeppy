@@ -29,14 +29,14 @@ def run():
         'border_mode': 'same',
         'method': 'max',
     }
-    nn = dp.NeuralNetwork(
+    net = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
                 n_filters=32,
                 filter_shape=(5, 5),
                 border_mode='same',
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.0001),
-                                     penalty=('l2', 0.004), monitor=True),
+                                     weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
@@ -45,7 +45,7 @@ def run():
                 filter_shape=(5, 5),
                 border_mode='same',
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
-                                     penalty=('l2', 0.004), monitor=True),
+                                     weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
@@ -54,7 +54,7 @@ def run():
                 filter_shape=(5, 5),
                 border_mode='same',
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
-                                     penalty=('l2', 0.004), monitor=True),
+                                     weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
@@ -62,19 +62,19 @@ def run():
             dp.FullyConnected(
                 n_output=64,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.03)),
+                                     weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=dataset.n_classes,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.03)),
+                                     weight_decay=0.004),
             ),
             dp.MultinomialLogReg(),
         ],
     )
 
-    dp.misc.profile(nn, train_input)
+    dp.misc.profile(net, train_input)
 
 
 if __name__ == '__main__':

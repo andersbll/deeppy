@@ -8,7 +8,6 @@ import deeppy as dp
 
 def run():
     # Prepare data
-    batch_size = 128
     dataset = dp.datasets.CIFAR10()
     x, y = dataset.data()
     x = x.astype(dp.float_)
@@ -23,6 +22,7 @@ def run():
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
 
+    batch_size = 128
     train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
     test_input = dp.SupervisedInput(x_test, y_test, batch_size=batch_size)
 
@@ -33,14 +33,14 @@ def run():
         'border_mode': 'same',
         'method': 'max',
     }
-    nn = dp.NeuralNetwork(
+    net = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
                 n_filters=32,
                 filter_shape=(5, 5),
                 border_mode='same',
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.0001),
-                                     penalty=('l2', 0.004), monitor=True),
+                                     weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
@@ -49,7 +49,7 @@ def run():
                 filter_shape=(5, 5),
                 border_mode='same',
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
-                                     penalty=('l2', 0.004), monitor=True),
+                                     weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
@@ -58,7 +58,7 @@ def run():
                 filter_shape=(5, 5),
                 border_mode='same',
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
-                                     penalty=('l2', 0.004), monitor=True),
+                                     weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
@@ -66,34 +66,33 @@ def run():
             dp.FullyConnected(
                 n_output=64,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.03)),
+                                     weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=dataset.n_classes,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.03)),
+                                     weight_decay=0.004),
             ),
             dp.MultinomialLogReg(),
         ],
     )
 
     # Train neural network
+    def val_error():
+        return net.error(test_input)
     n_epochs = [8, 8]
     learn_rate = 0.001
-
-    def valid_error():
-        return nn.error(test_input)
     for i, max_epochs in enumerate(n_epochs):
         lr = learn_rate/10**i
         trainer = dp.StochasticGradientDescent(
             max_epochs=max_epochs,
             learn_rule=dp.Momentum(learn_rate=lr, momentum=0.9),
         )
-        trainer.train(nn, train_input, valid_error)
+        trainer.train(net, train_input, val_error)
 
     # Visualize convolutional filters to disk
-    for l, layer in enumerate(nn.layers):
+    for l, layer in enumerate(net.layers):
         if not isinstance(layer, dp.Convolutional):
             continue
         W = np.array(layer.params()[0].values)
@@ -101,7 +100,7 @@ def run():
                          os.path.join('cifar10', 'convnet_layer_%i.png' % l))
 
     # Evaluate on test data
-    error = nn.error(test_input)
+    error = net.error(test_input)
     print('Test error rate: %.4f' % error)
 
 

@@ -9,23 +9,13 @@ float_ = ca.float_
 
 
 class Parameter(object):
-    def __init__(self, fill, name='', learn_rate=1.0, penalty=None,
-                 norm=None, monitor=False):
+    def __init__(self, fill, name='', learn_rate=1.0, weight_decay=0.0,
+                 monitor=False):
         self.filler = filler(fill)
         self.name = name
         self.learn_rate = learn_rate
         self.monitor = monitor
-        if penalty is None:
-            self.penalty = None
-        elif isinstance(penalty, tuple):
-            if len(penalty) == 2:
-                if penalty[0] == 'l2':
-                    self._l2_penalty = 2*penalty[1]
-                    self.penalty = self.l2_penalty
-                else:
-                    raise ValueError('invalid penalty type: %s' % penalty[0])
-        if norm is None:
-            self.norm_fun = None
+        self.weight_decay = weight_decay
         self.values = None
         self._grad = None
         self.shares = []
@@ -57,8 +47,11 @@ class Parameter(object):
         ''' Update the parameter values according to the given step. '''
         self.values += step
 
-    def l2_penalty(self):
-        return self._l2_penalty * self.values
+    def penalty(self):
+        if self.weight_decay == 0.0:
+            return None
+        else:
+            return 2*self.weight_decay * self.values
 
     def share(self):
         param = SharedParameter(self)
@@ -92,9 +85,6 @@ class SharedParameter(Parameter):
 
     def grad(self):
         raise RuntimeError('grad() should not be called for SharedParameter.')
-
-    def l2_penalty(self):
-        return self.parent.l2_penalty()
 
     def share(self):
         return self.parent.share()

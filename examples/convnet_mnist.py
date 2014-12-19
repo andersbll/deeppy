@@ -10,7 +10,7 @@ def run():
     # Prepare data
     dataset = dp.datasets.MNIST()
     x, y = dataset.data()
-    x = x[:, np.newaxis, :, :].astype(dp.float_)/255.0-0.5
+    x = x[:, np.newaxis, :, :].astype(dp.float_)/255.0
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
     x_train = x[train_idx]
@@ -24,37 +24,35 @@ def run():
     nn = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
-                n_filters=20,
+                n_filters=32,
                 filter_shape=(5, 5),
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.00001)),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
             dp.Activation('relu'),
             dp.Pool(
-                win_shape=(2, 2),
+                win_shape=(3, 3),
                 strides=(2, 2),
                 method='max',
             ),
             dp.Convolutional(
-                n_filters=50,
+                n_filters=64,
                 filter_shape=(5, 5),
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.00001)),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
             dp.Activation('relu'),
             dp.Pool(
-                win_shape=(2, 2),
+                win_shape=(3, 3),
                 strides=(2, 2),
                 method='max',
             ),
             dp.Flatten(),
             dp.FullyConnected(
-                n_output=500,
-                weights=dp.NormalFiller(sigma=0.01),
+                n_output=128,
+                weights=dp.Parameter(dp.AutoFiller()),
             ),
             dp.FullyConnected(
                 n_output=dataset.n_classes,
-                weights=dp.NormalFiller(sigma=0.01),
+                weights=dp.Parameter(dp.AutoFiller()),
             ),
             dp.MultinomialLogReg(),
         ],
@@ -65,7 +63,7 @@ def run():
         return nn.error(test_input)
     trainer = dp.StochasticGradientDescent(
         max_epochs=15,
-        learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
+        learn_rule=dp.Momentum(learn_rate=0.01, momentum=0.9),
     )
     trainer.train(nn, train_input, valid_error)
 
