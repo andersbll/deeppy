@@ -13,13 +13,15 @@ def preprocess_imgs(imgs):
 
 def run():
     # Prepare data
-    batch_size = 128
     dataset = dp.datasets.CIFAR10()
     x, y = dataset.data()
+    x = x.astype(dp.float_)
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
-    x_train = preprocess_imgs(x[train_idx])
+    x_train = x[train_idx]
     y_train = y[train_idx]
+
+    batch_size = 128
     train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
 
     # Setup neural network

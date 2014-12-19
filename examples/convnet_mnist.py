@@ -10,18 +10,24 @@ def run():
     # Prepare data
     dataset = dp.datasets.MNIST()
     x, y = dataset.data()
-    x = x[:, np.newaxis, :, :].astype(dp.float_)/255.0
+    x = x.astype(dp.float_)[:, np.newaxis, :, :]
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
     x_train = x[train_idx]
     y_train = y[train_idx]
     x_test = x[test_idx]
     y_test = y[test_idx]
-    train_input = dp.SupervisedInput(x_train, y_train, batch_size=128)
+
+    scaler = dp.UniformScaler(high=255.)
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.transform(x_test)
+
+    batch_size = 128
+    train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
     test_input = dp.SupervisedInput(x_test, y_test)
 
     # Setup neural network
-    nn = dp.NeuralNetwork(
+    net = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
                 n_filters=32,
@@ -59,25 +65,24 @@ def run():
     )
 
     # Train neural network
-    def valid_error():
-        return nn.error(test_input)
+    def val_error():
+        return net.error(test_input)
     trainer = dp.StochasticGradientDescent(
         max_epochs=15,
         learn_rule=dp.Momentum(learn_rate=0.01, momentum=0.9),
     )
-    trainer.train(nn, train_input, valid_error)
+    trainer.train(net, train_input, val_error)
 
     # Visualize convolutional filters to disk
-    for layer_idx, layer in enumerate(nn.layers):
+    for l, layer in enumerate(net.layers):
         if not isinstance(layer, dp.Convolutional):
             continue
         W = np.array(layer.params()[0].values)
-        dp.misc.img_save(dp.misc.conv_filter_tile(W),
-                         os.path.join('mnist',
-                                      'convnet_layer_%i.png' % layer_idx))
+        filepath = os.path.join('mnist', 'conv_layer_%i.png' % l)
+        dp.misc.img_save(dp.misc.conv_filter_tile(W), filepath)
 
     # Evaluate on test data
-    error = nn.error(test_input)
+    error = net.error(test_input)
     print('Test error rate: %.4f' % error)
 
 

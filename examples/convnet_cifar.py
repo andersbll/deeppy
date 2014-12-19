@@ -96,8 +96,8 @@ def run():
         if not isinstance(layer, dp.Convolutional):
             continue
         W = np.array(layer.params()[0].values)
-        dp.misc.img_save(dp.misc.conv_filter_tile(W),
-                         os.path.join('cifar10', 'convnet_layer_%i.png' % l))
+        filepath = os.path.join('cifar10', 'conv_layer_%i.png' % l)
+        dp.misc.img_save(dp.misc.conv_filter_tile(W), filepath)
 
     # Evaluate on test data
     error = net.error(test_input)

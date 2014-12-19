@@ -13,12 +13,12 @@ def run():
         dp.Activation('tanh'),
         dp.FullyConnected(
             n_output=3,
-            weights=dp.NormalFiller(sigma=0.01),
+            weights=dp.AutoFiller(),
         ),
         dp.Dropout(0.2),
         dp.DropoutFullyConnected(
             n_output=10,
-            weights=dp.NormalFiller(sigma=0.01),
+            weights=dp.AutoFiller(),
             dropout=0.5,
         ),
     ]
@@ -33,13 +33,13 @@ def run():
             n_filters=32,
             filter_shape=(3, 3),
             border_mode='same',
-            weights=dp.NormalFiller(sigma=0.01),
+            weights=dp.AutoFiller(),
         ),
         dp.Convolutional(
             n_filters=32,
             filter_shape=(5, 5),
             border_mode='valid',
-            weights=dp.NormalFiller(sigma=0.01),
+            weights=dp.AutoFiller(),
         ),
         dp.Pool(
             win_shape=(3, 3),
