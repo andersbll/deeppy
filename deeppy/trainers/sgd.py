@@ -54,7 +54,8 @@ class StochasticGradientDescent:
                 logger.info('epoch %d/%d' % (epoch, patience)
                             + ', cost %f' % epoch_cost
                             + ', val_error %.4f' % val_error)
-                self.learn_rule.monitor()
+                for p in params:
+                    p.monitor()
                 if patience <= epoch:
                     logger.info('SGD: Converged on validation set.')
                     converged = True
@@ -67,7 +68,8 @@ class StochasticGradientDescent:
                     best_score = epoch_cost
                 logger.info('epoch %d/%d' % (epoch, patience)
                             + ', cost %f' % epoch_cost)
-                self.learn_rule.monitor()
+                for p in params:
+                    p.monitor()
                 if patience <= epoch:
                     logger.info('SGD: Converged on training set.')
                     converged = True

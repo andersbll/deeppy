@@ -1,8 +1,4 @@
-import numpy as np
 import cudarray as ca
-
-import logging
-logger = logging.getLogger(__name__)
 
 
 class LearningRule(object):
@@ -10,9 +6,6 @@ class LearningRule(object):
         raise NotImplementedError()
 
     def step(self):
-        raise NotImplementedError()
-
-    def monitor(self):
         raise NotImplementedError()
 
 
@@ -31,22 +24,13 @@ class Momentum(LearningRule):
         for param, last_step in zip(self.params, self.steps):
             last_step *= self.momentum
             step = param.grad()
-            if param.penalty is not None:
-                step -= param.penalty()
+            penalty = param.penalty()
+            if penalty is not None:
+                step -= penalty
             step_rate = self.learn_rate * param.learn_rate / self.batch_size
             step *= -step_rate
             last_step += step
             param.step(last_step)
-
-    def monitor(self):
-        for param, step in zip(self.params, self.steps):
-            if param.monitor:
-                val_mean_abs = np.array(ca.mean(ca.fabs(param.values)))
-                grad_mean_abs = np.array(ca.mean(ca.fabs(param.grad())))
-                step_mean_abs = np.array(ca.mean(ca.fabs(step)))
-                logger.info('%s:\t%.1e  [%.1e, %.1e]'
-                            % (param.name, val_mean_abs, grad_mean_abs,
-                               step_mean_abs))
 
 
 class RMSProp(LearningRule):
@@ -65,19 +49,10 @@ class RMSProp(LearningRule):
         for param, rms_grad in zip(self.params, self.steps):
             rms_grad *= self.decay
             step = param.grad()
-            if param.penalty is not None:
-                step -= param.penalty()
+            penalty = param.penalty()
+            if penalty is not None:
+                step -= penalty
             rms_grad += (1.0 - self.decay) * step**2
             scaling = ca.maximum(ca.sqrt(rms_grad), self.max_scaling_inv)
             step_rate = self.learn_rate * param.learn_rate / self.batch_size
             param.step(step / scaling * (-step_rate))
-
-    def monitor(self):
-        for param, step in zip(self.params, self.steps):
-            if param.monitor:
-                val_mean_abs = np.array(ca.mean(ca.fabs(param.values)))
-                grad_mean_abs = np.array(ca.mean(ca.fabs(param.grad())))
-                step_mean_abs = np.array(ca.mean(ca.fabs(step)))
-                logger.info('%s:\t%.1e  [%.1e, %.1e]'
-                            % (param.name, val_mean_abs, grad_mean_abs,
-                               step_mean_abs))

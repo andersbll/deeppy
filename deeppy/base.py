@@ -2,6 +2,9 @@ import numpy as np
 import cudarray as ca
 from .fillers import filler, Filler
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 bool_ = ca.bool_
 int_ = ca.int_
@@ -14,10 +17,11 @@ class Parameter(object):
         self.filler = filler(fill)
         self.name = name
         self.learn_rate = learn_rate
-        self.monitor = monitor
+        self._monitor = monitor
         self.weight_decay = weight_decay
         self.values = None
         self._grad = None
+        self._last_step = None
         self.shares = []
 
     def _setup(self, shape):
@@ -45,6 +49,8 @@ class Parameter(object):
 
     def step(self, step):
         ''' Update the parameter values according to the given step. '''
+        if self._monitor:
+            self._last_step = step
         self.values += step
 
     def penalty(self):
@@ -52,6 +58,15 @@ class Parameter(object):
             return None
         else:
             return 2*self.weight_decay * self.values
+
+    def monitor(self):
+        if not self._monitor:
+            return
+        val_mean_abs = np.array(ca.mean(ca.fabs(self.values)))
+        grad_mean_abs = np.array(ca.mean(ca.fabs(self.grad_array)))
+        step_mean_abs = np.array(ca.mean(ca.fabs(self._last_step)))
+        logger.info('%s:\t%.1e  [%.1e, %.1e]'
+                    % (self.name, val_mean_abs, grad_mean_abs, step_mean_abs))
 
     def share(self):
         param = SharedParameter(self)
@@ -77,7 +92,7 @@ class SharedParameter(Parameter):
 
     @property
     def monitor(self):
-        return self.parent.monitor
+        self.parent.monitor()
 
     @property
     def array(self):
