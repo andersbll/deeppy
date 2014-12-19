@@ -19,24 +19,24 @@ class Parameter(object):
         self.learn_rate = learn_rate
         self._monitor = monitor
         self.weight_decay = weight_decay
-        self.values = None
-        self._grad = None
+        self._array = None
+        self._grad_array = None
         self._last_step = None
         self.shares = []
 
     def _setup(self, shape):
-        self.values = self.filler.array(shape)
+        self._array = self.filler.array(shape)
 
     @property
     def array(self):
-        return self.values
+        return self._array
 
     @property
     def grad_array(self):
         ''' Returns the gradient array. '''
-        if self._grad is None:
-            self._grad = ca.empty_like(self.array)
-        return self._grad
+        if self._grad_array is None:
+            self._grad_array = ca.empty_like(self.array)
+        return self._grad_array
 
     def grad(self):
         ''' Returns a parameter step calculated from the gradient.
@@ -51,19 +51,19 @@ class Parameter(object):
         ''' Update the parameter values according to the given step. '''
         if self._monitor:
             self._last_step = step
-        self.values += step
+        self._array += step
 
     def penalty(self):
         if self.weight_decay == 0.0:
             return None
         else:
-            return 2*self.weight_decay * self.values
+            return 2*self.weight_decay * self._array
 
     def monitor(self):
         if not self._monitor:
             return
-        val_mean_abs = np.array(ca.mean(ca.fabs(self.values)))
-        grad_mean_abs = np.array(ca.mean(ca.fabs(self.grad_array)))
+        val_mean_abs = np.array(ca.mean(ca.fabs(self._array)))
+        grad_mean_abs = np.array(ca.mean(ca.fabs(self._grad_array)))
         step_mean_abs = np.array(ca.mean(ca.fabs(self._last_step)))
         logger.info('%s:\t%.1e  [%.1e, %.1e]'
                     % (self.name, val_mean_abs, grad_mean_abs, step_mean_abs))
@@ -77,7 +77,7 @@ class Parameter(object):
 class SharedParameter(Parameter):
     def __init__(self, parent):
         self.parent = parent
-        self._grad = None
+        self._grad_array = None
 
     def _setup(self, shape):
         raise RuntimeError('_setup() should not be called for SharedParameter')

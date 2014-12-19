@@ -57,7 +57,7 @@ def run():
     trainer.train(net, train_input, val_error)
 
     # Visualize weights from first layer
-    W = next(np.array(layer.params()[0].values) for layer in net.layers
+    W = next(np.array(layer.params()[0].array) for layer in net.layers
              if isinstance(layer, dp.FullyConnected))
     W = np.reshape(W.T, (-1, 28, 28))
     filepath = os.path.join('mnist', 'mlp_weights.png')

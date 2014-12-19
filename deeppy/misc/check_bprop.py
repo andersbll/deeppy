@@ -54,7 +54,7 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
         def func(x, *args):
             ca.random.seed(random_seed)
             p_idx = args[0]
-            param_vals = layer.params()[p_idx].values
+            param_vals = layer.params()[p_idx].array
             param_vals *= 0
             param_vals += ca.array(np.reshape(x, param_vals.shape))
             out = layer.fprop(ca.array(x0), 'train')
@@ -64,7 +64,7 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
         def grad(x, *args):
             ca.random.seed(random_seed)
             p_idx = args[0]
-            param_vals = layer.params()[p_idx].values
+            param_vals = layer.params()[p_idx].array
             param_vals *= 0
             param_vals += ca.array(np.reshape(x, param_vals.shape))
             out = layer.fprop(ca.array(x0), 'train')
@@ -75,6 +75,6 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
 
         for p_idx, p in enumerate(layer.params()):
             args = p_idx
-            x = np.array(layer.params()[p_idx].values)
+            x = np.array(layer.params()[p_idx].array)
             err = check_grad(func, grad, np.ravel(x), eps, args)
             print('%s: %.2e' % (p.name, err))
