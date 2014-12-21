@@ -3,6 +3,7 @@ import numpy as np
 import itertools
 from ..feed_forward.layers import ParamMixin
 from ..input import to_input
+from ..base import float_
 
 
 class SiameseNetwork(object):
@@ -74,3 +75,20 @@ class SiameseNetwork(object):
             feats[idx:idx+batch_size, ...] = feats_batch
             idx += batch_size
         return feats
+
+    def distances(self, input):
+        input = to_input(input)
+        dists = np.empty((input.n_samples,), dtype=float_)
+        offset = 0
+        for batch in input.batches():
+            x1, x2 = batch
+            for layer in self.layers:
+                x1 = layer.fprop(x1, 'test')
+            for layer in self.layers2:
+                x2 = layer.fprop(x2, 'test')
+            dists_batch = self.loss_layer.fprop(x1, x2, 'test')
+            dists_batch = np.ravel(np.array(dists_batch))
+            batch_size = x1.shape[0]
+            dists[offset:offset+batch_size, ...] = dists_batch
+            offset += batch_size
+        return dists
