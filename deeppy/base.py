@@ -84,7 +84,7 @@ class SharedParameter(Parameter):
         self._grad_array = None
 
     def _setup(self, shape):
-        raise RuntimeError('_setup() should not be called for SharedParameter')
+        pass
 
     @property
     def name(self):
