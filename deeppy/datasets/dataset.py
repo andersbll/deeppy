@@ -46,17 +46,20 @@ class Dataset(object):
                                        % url)
         touch(checkpoint)
 
-    def _unpack(self):
+    def _unpack(self, separate_dirs=False):
         ''' Unpack all archive files in data_dir. '''
         checkpoint = os.path.join(self.data_dir, self._unpack_checkpoint)
         if os.path.exists(checkpoint):
             return
         to_be_removed = []
-        target_dir = os.path.abspath(self.data_dir)
         for filename in os.listdir(self.data_dir):
             filepath = os.path.join(self.data_dir, filename)
             if is_archive(filepath):
                 logger.info('Unpacking %s' % filepath)
+                target_dir = os.path.abspath(self.data_dir)
+                if separate_dirs:
+                    dirname, _ = os.path.splitext(filename)
+                    target_dir = os.path.join(target_dir, dirname)
                 archive_extract(filepath, target_dir)
                 to_be_removed.append(filepath)
         for filepath in to_be_removed:
