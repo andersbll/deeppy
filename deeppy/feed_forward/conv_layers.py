@@ -99,6 +99,65 @@ class LocalResponseNormalization(Layer):
         return input_shape
 
 
+class LocalContrastNormalization(Layer):
+    @staticmethod
+    def gaussian_kernel(sigma, size=None):
+        if size is None:
+            size = int(np.ceil(sigma*2.))
+            if size % 2 == 0:
+                size += 1
+        xs = np.linspace(-size/2., size/2., size)
+        kernel = 1/(np.sqrt(2*np.pi))*np.exp(-xs**2/(2*sigma**2))/sigma
+        return kernel/np.sum(kernel)
+
+    def __init__(self, kernel, eps=0.1, strides=(1, 1)):
+        self.eps = eps
+        if kernel.ndim == 1:
+            kernel = np.outer(kernel, kernel)
+        if kernel.shape[-2] % 2 == 0 or kernel.shape[-1] % 2 == 0:
+            raise ValueError('only odd kernel sizes are supported')
+        self.kernel = kernel
+        pad = padding(kernel.shape[-2:], 'same')
+        self.conv_op = ca.nnet.ConvBC01(pad, strides)
+
+    def _setup(self, input_shape):
+        n_channels = input_shape[1]
+        if self.kernel.ndim == 2:
+            self.kernel = np.repeat(self.kernel[np.newaxis, np.newaxis, ...],
+                                    n_channels, axis=1)
+        elif self.kernel.ndim == 3:
+            self.kernel = self.kernel[np.newaxis, :]
+        self.ca_kernel = ca.array(self.kernel)
+
+    def fprop(self, x, phase):
+        n_channels = x.shape[1]
+
+        # Calculate local mean
+        tmp = self.conv_op.fprop(x, self.ca_kernel)
+        if n_channels > 1:
+            ca.divide(tmp, n_channels, tmp)
+
+        # Center input with local mean
+        centered = ca.subtract(x, tmp)
+
+        # Calculate local standard deviation
+        tmp = ca.power(centered, 2)
+        tmp = self.conv_op.fprop(tmp, self.ca_kernel)
+        if n_channels > 1:
+            ca.divide(tmp, n_channels, tmp)
+        ca.sqrt(tmp, tmp)
+
+        # Scale centered input with standard deviation
+        return centered / (tmp + self.eps)
+
+    def bprop(self, Y_grad):
+        raise NotImplementedError('LocalContrastNormalization supports only '
+                                  'usage as a preprocessing layer.')
+
+    def output_shape(self, input_shape):
+        return input_shape
+
+
 class Flatten(Layer):
     def fprop(self, x, phase):
         self.name = 'flatten'

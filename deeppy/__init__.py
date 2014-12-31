@@ -20,6 +20,7 @@ from .feed_forward import (
     Convolutional,
     Flatten,
     Pool,
+    LocalContrastNormalization,
     LocalResponseNormalization,
 )
 from .fillers import (
