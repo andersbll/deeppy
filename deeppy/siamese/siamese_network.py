@@ -30,6 +30,10 @@ class SiameseNetwork(object):
         for layer in self.layers:
             layer._setup(next_shape)
             next_shape = layer.output_shape(next_shape)
+        next_shape = input.x_shape
+        for layer in self.layers2:
+            layer._setup(next_shape)
+            next_shape = layer.output_shape(next_shape)
         next_shape = self.loss_layer.output_shape(next_shape)
         self._initialized = True
 
