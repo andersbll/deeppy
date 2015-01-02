@@ -8,8 +8,9 @@ class NeuralNetwork:
     def __init__(self, layers):
         self._initialized = False
         self.layers = layers
-        self.bprop_until = next(idx for idx, layer in enumerate(layers)
-                                if isinstance(layer, ParamMixin))
+        self.bprop_until = next((idx for idx, l in enumerate(self.layers)
+                                 if isinstance(l, ParamMixin)),
+                                len(self.layers))
 
     def _setup(self, input):
         # Setup layers sequentially

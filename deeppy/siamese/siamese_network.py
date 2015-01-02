@@ -19,8 +19,9 @@ class SiameseNetwork(object):
                 params = [p.share() for p in params]
                 layer2.set_params(params)
         self.loss_layer = loss_layer
-        self.bprop_until = next(idx for idx, layer in enumerate(self.layers)
-                                if isinstance(layer, ParamMixin))
+        self.bprop_until = next((idx for idx, l in enumerate(self.layers)
+                                 if isinstance(l, ParamMixin)),
+                                len(self.layers))
 
     def _setup(self, input):
         # Setup layers sequentially
