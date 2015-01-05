@@ -42,8 +42,9 @@ class NeuralNetwork:
         # Back propagation of partial derivatives
         next_grad = self.layers[-1].input_grad(y, y_pred)
         layers = self.layers[self.bprop_until:-1]
-        for layer in reversed(layers):
+        for layer in reversed(layers[1:]):
             next_grad = layer.bprop(next_grad)
+        layers[0].bprop(next_grad, to_x=False)
         return self.layers[-1].loss(y, y_pred)
 
     def _output_shape(self, input_shape):

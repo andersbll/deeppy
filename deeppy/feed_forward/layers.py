@@ -41,6 +41,10 @@ class ParamMixin(object):
     def set_params(self):
         raise NotImplementedError()
 
+    def bprop(self, y_grad, to_x=True):
+        """ Backprop to parameters and input. """
+        raise NotImplementedError()
+
 
 class FullyConnected(Layer, ParamMixin):
     def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0):
@@ -64,10 +68,11 @@ class FullyConnected(Layer, ParamMixin):
         self._last_x = x
         return ca.dot(x, self.W.array) + self.b.array
 
-    def bprop(self, y_grad):
+    def bprop(self, y_grad, to_x=True):
         ca.dot(self._last_x.T, y_grad, out=self.W.grad_array)
         ca.sum(y_grad, axis=0, out=self.b.grad_array)
-        return ca.dot(y_grad, self.W.array.T)
+        if to_x:
+            return ca.dot(y_grad, self.W.array.T)
 
     def params(self):
         return self.W, self.b

@@ -56,11 +56,14 @@ class SiameseNetwork(object):
         # Back propagation of partial derivatives
         grad1, grad2 = self.loss_layer.input_grad(y, dists)
         layers = self.layers[self.bprop_until:]
-        for layer in reversed(layers):
+        for layer in reversed(layers[1:]):
             grad1 = layer.bprop(grad1)
+        layers[0].bprop(grad1, to_x=False)
+
         layers2 = self.layers2[self.bprop_until:]
-        for layer in reversed(layers2):
+        for layer in reversed(layers2[1:]):
             grad2 = layer.bprop(grad2)
+        layers2[0].bprop(grad2, to_x=False)
 
         return self.loss_layer.loss(y, dists)
 

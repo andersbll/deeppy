@@ -42,9 +42,11 @@ class Convolutional(Layer, ParamMixin):
         convout = self.conv_op.fprop(x, self.W.array)
         return convout + self.b.array
 
-    def bprop(self, y_grad):
-        _, x_grad = self.conv_op.bprop(self.last_x, self.W.array,
-                                       y_grad, filters_d=self.W.grad_array)
+    def bprop(self, y_grad, to_x=True):
+        _, x_grad = self.conv_op.bprop(
+            self.last_x, self.W.array, y_grad, to_imgs=to_x,
+            filters_d=self.W.grad_array
+        )
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
                keepdims=True, out=self.b.grad_array)
         return x_grad
