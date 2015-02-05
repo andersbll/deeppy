@@ -47,7 +47,7 @@ class Convolutional_seg(Layer_seg, ParamMixin_seg):
     def bprop(self, y_grad):
         _, x_grad = self.conv_op.bprop(self.last_x, self.W.values,
                                        y_grad, filters_d=self.W.grad)
-        
+
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
                keepdims=True, out=self.b.grad)
         return x_grad
@@ -77,8 +77,7 @@ class Convolutional_seg(Layer_seg, ParamMixin_seg):
             print " L2 pen : %f" % self.W._l2_penalty
 
 class Pool_seg(Layer_seg):
-    def __init__(self, win_shape=(2, 2), strides=None,
-                 border_mode='valid'):
+    def __init__(self, win_shape=(2, 2), strides=None):
         self.name = 'pool'
         self.pool_op = ca.nsnet.PoolB01(win_shape, strides)
 
@@ -119,7 +118,8 @@ class Flatten_seg(Layer_seg):
         return self.flatten_op.output_shape(input_shape)
 
     def output_index(self, input_index):
-        return self.flatten_op.output_index(input_index)
+        self.flatten_op.output_index(input_index)
+        return None
 
     def print_info(self):
         print self.name
