@@ -20,13 +20,17 @@ def preprocess_imgs(imgs):
 
 def run():
     # Fetch data
-    Y = pickle.load(open( './img/Y.pic', "rb" ))
-    X = pickle.load(open( './img/X.pic', "rb" ))
+     # Setup neural network
+    #/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif 
+    Y = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif');
+    X = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-volume.tif');
+    #Y = pickle.load(open( './img/Y.pic', "rb" ))
+    #X = pickle.load(open( './img/X.pic', "rb" ))
 
     n_train = 1
     n_test = 1
 
-    imageSize = 128
+    imageSize = 512
 
     x_train = np.empty((n_train,1,1,imageSize,imageSize))
     y_train = np.zeros((n_train,imageSize*imageSize), dtype=int)
@@ -38,9 +42,9 @@ def run():
         x = X[im_nr].astype(dp.float_)
         #x = np.arange(imageSize*imageSize, dtype=np.float)
         #x  = x.reshape((imageSize, imageSize))
-        x_train[im_nr,0,0,:,:] = x[0:imageSize,0:imageSize] - 0.5
+        x_train[im_nr,0,0,:,:] = x[0:imageSize,0:imageSize] / 255 - 0.5
 
-        y = Y[im_nr]
+        y = Y[im_nr] - 255
         y = y.astype(dp.int_)
         y_train[im_nr,:] = np.resize(y[0:imageSize,0:imageSize], (imageSize*imageSize))
 
@@ -48,9 +52,9 @@ def run():
         x = X[im_nr+n_train].astype(dp.float_)
         #x = np.arange(imageSize*imageSize, dtype=np.float)
         #x  = x.reshape((imageSize, imageSize))
-        x_test[im_nr,0,0,:,:] = x[0:imageSize,0:imageSize] - 0.5
+        x_test[im_nr,0,0,:,:] = x[0:imageSize,0:imageSize] / 255 - 0.5
 
-        y = Y[im_nr+n_train]
+        y = Y[im_nr+n_train] - 255
         y = y.astype(dp.int_)
         y_test[im_nr,:] = np.resize(y[0:imageSize,0:imageSize], (imageSize*imageSize))
 
@@ -95,8 +99,8 @@ def run():
     learn_rate = 0.001
     batch_size = 1
 
-    X_profile = x_train[:batch_size, ...]
-    y_profile = y_train[:batch_size, ...]
+    X_profile = x_train
+    y_profile = y_train
     dp.misc.profile(nn, X_profile, y_profile)
 
 

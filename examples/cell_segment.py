@@ -14,15 +14,15 @@ def run():
     # Fetch data
      # Setup neural network
     #/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif 
-    Y = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-labels.tif');
-    X = io.MultiImage('/Users/lasse/Documents/DTU/Master/RemoteCode/deeppy/examples/img/train-volume.tif');
+    Y = io.MultiImage('./img/train-labels.tif');
+    X = io.MultiImage('./img/train-volume.tif');
     #Y = pickle.load(open( './img/Y.pic', "rb" ))
     #X = pickle.load(open( './img/X.pic', "rb" ))
 
-    n_train = 20
-    n_test = 10
+    n_train = 2
+    n_test = 1
 
-    imageSize = 256
+    imageSize = 64
 
     x_train = np.empty((n_train,1,1,imageSize,imageSize))
     y_train = np.zeros((n_train,imageSize*imageSize), dtype=int)
@@ -55,16 +55,24 @@ def run():
         layers=[
             dp.Convolutional_seg(
                 n_filters=10,
-                filter_shape=(12, 12),
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
+                filter_shape=(4, 4),
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.001),
                                       monitor=False),
             ),
             dp.Activation_seg('relu'),
-            dp.Pool_seg(win_shape=(4, 4), strides=(2,2)),
+            dp.Pool_seg(),
             dp.Convolutional_seg(
                 n_filters=10,
                 filter_shape=(5, 5),
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.001),
+                                      monitor=True),
+            ),
+            dp.Activation_seg('relu'),
+            dp.Pool_seg(),
+            dp.Convolutional_seg(
+                n_filters=10,
+                filter_shape=(4, 4),
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.001),
                                       monitor=True),
             ),
             dp.Activation_seg('relu'),
@@ -72,13 +80,13 @@ def run():
             dp.Flatten_seg(win_shape=(3,3)),
             dp.FullyConnected_seg(
                 n_output=100,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.001),
                                       penalty=('l2', 0.008), monitor=True),
             ),
             dp.Activation_seg('relu'),
             dp.FullyConnected_seg(
                 n_output=2,
-                weights=dp.Parameter(dp.NormalFiller(sigma=1),
+                weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
                                       penalty=('l2', 0.008), monitor=False),
             ),
             dp.MultinomialLogReg_seg(),
@@ -88,7 +96,7 @@ def run():
     #0.2592
     # Train neural network
     n_epochs = [20, 8]
-    learn_rate = 0.01
+    learn_rate = 0.001
     batch_size = 1
 
     print "n_taning : %d , n_test: %d" % (n_train, n_test)
