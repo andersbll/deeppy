@@ -32,7 +32,8 @@ class NeuralNetwork_seg:
         for layer in self.layers:
             layer._setup(next_shape)
             next_shape = layer.output_shape(next_shape)
-            input_index = layer.output_index(input_index)
+            if (input_index != None):
+                input_index = layer.output_index(input_index)
 
         if next_shape != Y.shape[1:]:
             warnings.warn('Output shape %s does not match Y %s. Y will be masked'
