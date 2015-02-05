@@ -7,12 +7,44 @@ import deeppy as dp
 
 def run():
     np.random.seed(3)
+    layers = [
+        dp.Activation('relu'),
+        dp.Activation('sigmoid'),
+        dp.Activation('tanh'),
+        dp.FullyConnected(
+            n_output=3,
+            weights=dp.AutoFiller(),
+        ),
+        dp.Dropout(0.2),
+        dp.DropoutFullyConnected(
+            n_output=10,
+            weights=dp.AutoFiller(),
+            dropout=0.5,
+        ),
+    ]
+
+    input_shape = (1, 5)
+    x = np.random.normal(size=input_shape).astype(dp.float_)
+    for layer in layers:
+        dp.misc.check_bprop(layer, x)
+
     conv_layers = [
         dp.Convolutional(
-            n_filters=1,
-            filter_shape=(4, 4),
-            strides=(1,1),
-            weights=dp.NormalFiller(sigma=0.01)
+            n_filters=32,
+            filter_shape=(3, 3),
+            border_mode='same',
+            weights=dp.AutoFiller(),
+        ),
+        dp.Convolutional(
+            n_filters=32,
+            filter_shape=(5, 5),
+            border_mode='valid',
+            weights=dp.AutoFiller(),
+        ),
+        dp.Pool(
+            win_shape=(3, 3),
+            strides=(2, 2),
+            method='max',
         )
     ]
     input_shape = (1, 1, 8, 8)

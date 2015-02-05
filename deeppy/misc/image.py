@@ -20,7 +20,8 @@ def img_save(img, path, stretch=True):
     sp.misc.imsave(path, img)
 
 
-def img_tile(imgs, aspect_ratio=1.0, tile_shape=None):
+def img_tile(imgs, aspect_ratio=1.0, tile_shape=None, border=1,
+             border_color=0):
     ''' Tile images in a grid.
 
     If tile_shape is provided only as many images as specified in tile_shape
@@ -46,12 +47,12 @@ def img_tile(imgs, aspect_ratio=1.0, tile_shape=None):
         grid_shape = np.array(tile_shape)
 
     # Tile image shape
-    spacing = 1
     tile_img_shape = np.array(imgs.shape[1:])
-    tile_img_shape[:2] = (img_shape[:2] + spacing) * grid_shape[:2] - spacing
+    tile_img_shape[:2] = (img_shape[:2] + border) * grid_shape[:2] - border
 
     # Assemble tile image
-    tile_img = np.zeros(tile_img_shape)
+    tile_img = np.empty(tile_img_shape)
+    tile_img[:] = border_color
     for i in range(grid_shape[0]):
         for j in range(grid_shape[1]):
             img_idx = j + i*grid_shape[1]
@@ -59,8 +60,8 @@ def img_tile(imgs, aspect_ratio=1.0, tile_shape=None):
                 # No more images - stop filling out the grid.
                 break
             img = imgs[img_idx]
-            yoff = (img_shape[0] + spacing) * i
-            xoff = (img_shape[1] + spacing) * j
+            yoff = (img_shape[0] + border) * i
+            xoff = (img_shape[1] + border) * j
             tile_img[yoff:yoff+img_shape[0], xoff:xoff+img_shape[1], ...] = img
 
     return tile_img

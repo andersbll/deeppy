@@ -7,17 +7,10 @@ import deeppy as dp
 
 
 def run():
-    # Fetch data
-     # Setup neural network
-    pool_kwargs = {
-        'win_shape': (2, 2),
-        'strides': (2, 2),
-        'border_mode': 'same',
-        'method': 'max',
-    }
-    dataset = dp.data.MNIST()
+    # Prepare data
+    dataset = dp.datasets.MNIST()
     x, y = dataset.data()
-    x = x[:, np.newaxis, :, :].astype(dp.float_)/255.0-0.5
+    x = x.astype(dp.float_)[:, np.newaxis, :, :]
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
     x_train = x[train_idx[:10]]
@@ -25,50 +18,71 @@ def run():
     x_test = x[test_idx[:10]]
     y_test = y[test_idx[:10]]
 
+    scaler = dp.UniformScaler(high=255.)
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.transform(x_test)
+
+    batch_size = 128
+    train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
+    test_input = dp.SupervisedInput(x_test, y_test)
+
     # Setup neural network
-    nn = dp.NeuralNetwork(
+    net = dp.NeuralNetwork(
         layers=[
             dp.Convolutional(
-                n_filters=2,
+                n_filters=32,
                 filter_shape=(5, 5),
-                weights=dp.NormalFiller(sigma=0.01),
-                weight_decay=0.00001,
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
             dp.Activation('relu'),
-            dp.Pool(**pool_kwargs),
+            dp.Pool(
+                win_shape=(3, 3),
+                strides=(2, 2),
+                method='max',
+            ),
+            dp.Convolutional(
+                n_filters=64,
+                filter_shape=(5, 5),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
+            ),
+            dp.Activation('relu'),
+            dp.Pool(
+                win_shape=(3, 3),
+                strides=(2, 2),
+                method='max',
+            ),
             dp.Flatten(),
             dp.FullyConnected(
-                n_output=200,
-                weights=dp.NormalFiller(sigma=0.01),
+                n_output=128,
+                weights=dp.Parameter(dp.AutoFiller()),
             ),
             dp.FullyConnected(
                 n_output=dataset.n_classes,
-                weights=dp.NormalFiller(sigma=0.01),
+                weights=dp.Parameter(dp.AutoFiller()),
             ),
             dp.MultinomialLogReg(),
         ],
     )
 
     # Train neural network
-    def valid_error():
-        return nn.error(x_test, y_test)
+    def val_error():
+        return net.error(test_input)
     trainer = dp.StochasticGradientDescent(
-        batch_size=2,
-        max_epochs=1,
-        learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
+        max_epochs=15,
+        learn_rule=dp.Momentum(learn_rate=0.01, momentum=0.9),
     )
-    trainer.train(nn, x_train, y_train, valid_error)
+    trainer.train(net, train_input, val_error)
+
     # Visualize convolutional filters to disk
-    for layer_idx, layer in enumerate(nn.layers):
+    for l, layer in enumerate(net.layers):
         if not isinstance(layer, dp.Convolutional):
             continue
-        W = np.array(layer.params()[0].values)
-        dp.misc.img_save(dp.misc.conv_filter_tile(W),
-                         os.path.join('mnist',
-                                      'convnet_layer_%i.png' % layer_idx))
+        W = np.array(layer.params()[0].array)
+        filepath = os.path.join('mnist', 'conv_layer_%i.png' % l)
+        dp.misc.img_save(dp.misc.conv_filter_tile(W), filepath)
 
     # Evaluate on test data
-    error = nn.error(x_test, y_test)
+    error = net.error(test_input)
     print('Test error rate: %.4f' % error)
 
 

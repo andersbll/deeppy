@@ -7,10 +7,10 @@ import deeppy as dp
 
 
 def run():
-    # Fetch data
-    dataset = dp.data.MNIST()
+    # Prepare data
+    dataset = dp.datasets.MNIST()
     x, y = dataset.data(flat=True)
-    x = x.astype(dp.float_)/255.0
+    x = x.astype(dp.float_)
     y = y.astype(dp.int_)
     train_idx, test_idx = dataset.split()
     x_train = x[train_idx]
@@ -18,49 +18,53 @@ def run():
     x_test = x[test_idx]
     y_test = y[test_idx]
 
+    scaler = dp.UniformScaler(high=255.)
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.transform(x_test)
+
+    batch_size = 128
+    train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
+    test_input = dp.SupervisedInput(x_test, y_test)
+
     # Setup neural network
-    nn = dp.NeuralNetwork(
+    net = dp.NeuralNetwork(
         layers=[
             dp.FullyConnected(
                 n_output=800,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.0001)),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=800,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.0001)),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
                 n_output=dataset.n_classes,
-                weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
-                                     penalty=('l2', 0.0001)),
+                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
             dp.MultinomialLogReg(),
         ],
     )
 
     # Train neural network
-    def valid_error():
-        return nn.error(x_test, y_test)
+    def val_error():
+        return net.error(test_input)
     trainer = dp.StochasticGradientDescent(
-        batch_size=128,
         max_epochs=25,
         learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
     )
-    trainer.train(nn, x_train, y_train, valid_error)
+    trainer.train(net, train_input, val_error)
 
     # Visualize weights from first layer
-    W = next(np.array(layer.params()[0].values) for layer in nn.layers
+    W = next(np.array(layer.params()[0].array) for layer in net.layers
              if isinstance(layer, dp.FullyConnected))
     W = np.reshape(W.T, (-1, 28, 28))
-    dp.misc.img_save(dp.misc.img_tile(dp.misc.img_stretch(W)),
-                     os.path.join('mnist', 'mlp_weights.png'))
+    filepath = os.path.join('mnist', 'mlp_weights.png')
+    dp.misc.img_save(dp.misc.img_tile(dp.misc.img_stretch(W)), filepath)
 
     # Evaluate on test data
-    error = nn.error(x_test, y_test)
+    error = net.error(test_input)
     print('Test error rate: %.4f' % error)
 
 

@@ -12,12 +12,12 @@ def padding(win_shape, border_mode):
     elif border_mode == 'full':
         return (win_shape[0]-1, win_shape[1]-1)
     else:
-        raise ValueError('invalid mode: "%s"' % mode)
+        raise ValueError('invalid mode: "%s"' % border_mode)
 
 
 class Convolutional(Layer, ParamMixin):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
-                 strides=(1, 1), border_mode='valid', weight_decay=0.0):
+                 strides=(1, 1), border_mode='valid'):
         self.name = 'conv'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
@@ -39,18 +39,23 @@ class Convolutional(Layer, ParamMixin):
 
     def fprop(self, x, phase):
         self.last_x = x
-        convout = self.conv_op.fprop(x, self.W.values)
-        return convout + self.b.values
+        convout = self.conv_op.fprop(x, self.W.array)
+        return convout + self.b.array
 
-    def bprop(self, y_grad):
-        _, x_grad = self.conv_op.bprop(self.last_x, self.W.values,
-                                       y_grad, filters_d=self.W.grad)
+    def bprop(self, y_grad, to_x=True):
+        _, x_grad = self.conv_op.bprop(
+            self.last_x, self.W.array, y_grad, to_imgs=to_x,
+            filters_d=self.W.grad_array
+        )
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
-               keepdims=True, out=self.b.grad)
+               keepdims=True, out=self.b.grad_array)
         return x_grad
 
     def params(self):
         return self.W, self.b
+
+    def set_params(self, params):
+        self.W, self.b = params
 
     def output_shape(self, input_shape):
         return self.conv_op.output_shape(input_shape, self.n_filters,
@@ -91,6 +96,65 @@ class LocalResponseNormalization(Layer):
 
     def bprop(self, Y_grad):
         return Y_grad
+
+    def output_shape(self, input_shape):
+        return input_shape
+
+
+class LocalContrastNormalization(Layer):
+    @staticmethod
+    def gaussian_kernel(sigma, size=None):
+        if size is None:
+            size = int(np.ceil(sigma*2.))
+            if size % 2 == 0:
+                size += 1
+        xs = np.linspace(-size/2., size/2., size)
+        kernel = 1/(np.sqrt(2*np.pi))*np.exp(-xs**2/(2*sigma**2))/sigma
+        return kernel/np.sum(kernel)
+
+    def __init__(self, kernel, eps=0.1, strides=(1, 1)):
+        self.eps = eps
+        if kernel.ndim == 1:
+            kernel = np.outer(kernel, kernel)
+        if kernel.shape[-2] % 2 == 0 or kernel.shape[-1] % 2 == 0:
+            raise ValueError('only odd kernel sizes are supported')
+        self.kernel = kernel
+        pad = padding(kernel.shape[-2:], 'same')
+        self.conv_op = ca.nnet.ConvBC01(pad, strides)
+
+    def _setup(self, input_shape):
+        n_channels = input_shape[1]
+        if self.kernel.ndim == 2:
+            self.kernel = np.repeat(self.kernel[np.newaxis, np.newaxis, ...],
+                                    n_channels, axis=1)
+        elif self.kernel.ndim == 3:
+            self.kernel = self.kernel[np.newaxis, :]
+        self.ca_kernel = ca.array(self.kernel)
+
+    def fprop(self, x, phase):
+        n_channels = x.shape[1]
+
+        # Calculate local mean
+        tmp = self.conv_op.fprop(x, self.ca_kernel)
+        if n_channels > 1:
+            ca.divide(tmp, n_channels, tmp)
+
+        # Center input with local mean
+        centered = ca.subtract(x, tmp)
+
+        # Calculate local standard deviation
+        tmp = ca.power(centered, 2)
+        tmp = self.conv_op.fprop(tmp, self.ca_kernel)
+        if n_channels > 1:
+            ca.divide(tmp, n_channels, tmp)
+        ca.sqrt(tmp, tmp)
+
+        # Scale centered input with standard deviation
+        return centered / (tmp + self.eps)
+
+    def bprop(self, Y_grad):
+        raise NotImplementedError('LocalContrastNormalization supports only '
+                                  'usage as a preprocessing layer.')
 
     def output_shape(self, input_shape):
         return input_shape

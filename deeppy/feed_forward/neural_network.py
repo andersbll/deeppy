@@ -1,27 +1,28 @@
 import numpy as np
-import cudarray as ca
 import itertools
 from .layers import ParamMixin
+from ..input import to_input
 
 
 class NeuralNetwork:
     def __init__(self, layers):
         self._initialized = False
         self.layers = layers
-        self.bprop_until = next(idx for idx, layer in enumerate(layers)
-                                if isinstance(layer, ParamMixin))
+        self.bprop_until = next((idx for idx, l in enumerate(self.layers)
+                                 if isinstance(l, ParamMixin)),
+                                len(self.layers))
 
-    def _setup(self, X, Y):
+    def _setup(self, input):
         # Setup layers sequentially
         if self._initialized:
             return
-        next_shape = X.shape
+        next_shape = input.x_shape
         for layer in self.layers:
             layer._setup(next_shape)
             next_shape = layer.output_shape(next_shape)
-        if next_shape != Y.shape:
+        if next_shape != input.y_shape:
             raise ValueError('Output shape %s does not match Y %s'
-                             % (next_shape, Y.shape))
+                             % (next_shape, input.y_shape))
         self._initialized = True
 
     def _params(self):
@@ -30,51 +31,48 @@ class NeuralNetwork:
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))
 
-    def _bprop(self, X, Y):
+    def _update(self, batch):
         # Forward propagation
-        X_next = X
+        x, y = batch
+        x_next = x
         for layer in self.layers:
-            X_next = layer.fprop(X_next, 'train')
-        Y_pred = X_next
+            x_next = layer.fprop(x_next, 'train')
+        y_pred = x_next
 
         # Back propagation of partial derivatives
-        next_grad = self.layers[-1].input_grad(Y, Y_pred)
+        next_grad = self.layers[-1].input_grad(y, y_pred)
         layers = self.layers[self.bprop_until:-1]
-        for layer in reversed(layers):
+        for layer in reversed(layers[1:]):
             next_grad = layer.bprop(next_grad)
-        return self.layers[-1].loss(Y, Y_pred)
-
-    def _loss(self, X, Y):
-        X_next = X
-        for layer in self.layers:
-            X_next = layer.fprop(X_next, 'test')
-        Y_pred = X_next
-        return self.layers[-1].loss(Y, Y_pred)
+        layers[0].bprop(next_grad, to_x=False)
+        return self.layers[-1].loss(y, y_pred)
 
     def _output_shape(self, input_shape):
         for layer in self.layers:
             input_shape = layer.output_shape(input_shape)
         return input_shape
 
-    def predict(self, X, batch_size=0):
-        """ Calculate an output Y for the given input X. """
-        if batch_size == 0:
-            batch_size = X.shape[0]
-        n_samples = X.shape[0]
-        n_batches = int(np.ceil(float(n_samples) / batch_size))
-        Y = np.empty(self._output_shape(X.shape))
-        for b in range(n_batches):
-            batch_begin = min(b * batch_size, n_samples-batch_size)
-            batch_end = batch_begin + batch_size
-            X_next = ca.array(X[batch_begin:batch_end])
+    def predict(self, input):
+        """ Calculate the output for the given input x. """
+        input = to_input(input)
+        y = np.empty(self._output_shape(input.x.shape))
+        y_offset = 0
+        for x_batch in input.batches():
+            x_next = x_batch
             for layer in self.layers[:-1]:
-                X_next = layer.fprop(X_next, 'test')
-            Y_batch = np.array(self.layers[-1].predict(X_next))
-            Y[batch_begin:batch_end, ...] = Y_batch
-        return Y
+                x_next = layer.fprop(x_next, 'test')
+            y_batch = np.array(self.layers[-1].predict(x_next))
+            batch_size = x_batch.shape[0]
+            y[y_offset:y_offset+batch_size, ...] = y_batch
+            y_offset += batch_size
+        return y
 
-    def error(self, X, Y, batch_size=0):
-        """ Calculate error on the given data. """
-        Y_pred = self.predict(X, batch_size)
-        error = Y_pred != Y
+    def error(self, input):
+        input = to_input(input)
+        """ Calculate error on the given input. """
+        y_pred = self.predict(input)
+#        print(y_pred)
+        # XXX: this only works for classification
+        # TODO: support regression
+        error = y_pred != input.y
         return np.mean(error)

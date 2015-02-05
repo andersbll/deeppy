@@ -1,10 +1,4 @@
-import logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)-8s %(message)s',
-)
-
-from . import data
+from . import datasets
 from . import misc
 from .base import (
     bool_,
@@ -21,6 +15,10 @@ from .segmentation import (
     Flatten_seg,
     Pool_seg,
 )
+from .input import (
+    Input,
+    SupervisedInput,
+)
 from .feed_forward import (
     NeuralNetwork,
     FullyConnected,
@@ -31,11 +29,24 @@ from .feed_forward import (
     Convolutional,
     Flatten,
     Pool,
+    LocalContrastNormalization,
+    LocalResponseNormalization,
 )
 from .fillers import (
+    AutoFiller,
     CopyFiller,
     ConstantFiller,
     NormalFiller,
+    UniformFiller,
+)
+from .preprocess import (
+    UniformScaler,
+)
+from .siamese import (
+    ContrastiveLoss,
+    SiameseNetwork,
+    SiameseInput,
+    SupervisedSiameseInput,
 )
 from .trainers.learning_rules import (
     Momentum,
