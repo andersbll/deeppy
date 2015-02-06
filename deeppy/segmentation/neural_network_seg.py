@@ -3,6 +3,7 @@ import numpy as np
 import cudarray as ca
 import itertools
 from .layers_seg import ParamMixin_seg
+from ..input import to_input
 
 import logging
 logger = logging.getLogger(__name__)
@@ -12,22 +13,19 @@ class NeuralNetwork_seg:
     def __init__(self, layers):
         self._initialized = False
         self.layers = layers
-        self.bprop_until = next(idx for idx, layer in enumerate(layers)
-                                if isinstance(layer, ParamMixin_seg))
+        self.bprop_until = next((idx for idx, l in enumerate(self.layers)
+                                 if isinstance(l, ParamMixin_seg)),
+                                len(self.layers))
 
-    def _setup(self, X, Y):
+    def _setup(self, input):
         # Setup layers sequentially
         if self._initialized:
             return
+        next_shape = input.x_shape
 
-        print "Setting UP"
-        next_shape = X.shape[1:]
-        input_index = None
-
-        if input_index == None:
-            img_h, img_w = X.shape[-2:]
-            input_index = np.arange(img_h*img_w, dtype=np.int_)
-            input_index = input_index.reshape((1,)+X.shape[-2:])
+        img_h, img_w = input.x_shape[-2:]
+        input_index = np.arange(img_h*img_w, dtype=np.int_)
+        input_index = input_index.reshape((1,)+input.x_shape[-2:])
 
         for layer in self.layers:
             layer._setup(next_shape)
@@ -35,10 +33,9 @@ class NeuralNetwork_seg:
             if (input_index != None):
                 input_index = layer.output_index(input_index)
 
-        if next_shape != Y.shape[1:]:
-            warnings.warn('Output shape %s does not match Y %s. Y will be masked'
-                             % (next_shape, Y.shape))
-
+        if next_shape != input.y_shape:
+            raise ValueError('Output shape %s does not match Y %s'
+                             % (next_shape, input.y_shape))
         self._initialized = True
 
     def _params(self):
@@ -47,71 +44,55 @@ class NeuralNetwork_seg:
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))
 
-    def _bprop(self, X, Y):
-        X = np.reshape(X, X.shape[1:])
-        Y = np.reshape(Y, Y.shape[1:])
+    def _update(self, batch):
         # Forward propagation
-        #print "Train"
-        X_next = X
+        x, y = batch
+        x_next = x
         for layer in self.layers:
-            X_next = layer.fprop(X_next, 'train')
+            x_next = layer.fprop(x_next, 'train')
+        y_pred = x_next
 
-        #print layer.name
-        #print X_next[0:10,:]
-        Y_pred = X_next
-        ###print Y_pred
-        #Y_pre_decoded = ca.nnet.one_hot_decode(Y_pred)
-        #print "Train"
-        #print ("predict: class1: %d, class2:%d" % (np.sum(Y_pre_decoded), abs(Y_pre_decoded.size - np.sum(Y_pre_decoded))))
-        #print ("True: class1: %d, class2:%d" % (np.sum(Y), abs(Y.size - np.sum(Y))))
         # Back propagation of partial derivatives
-        next_grad = self.layers[-1].input_grad(Y, Y_pred)
+        next_grad = self.layers[-1].input_grad(y, y_pred)
         layers = self.layers[self.bprop_until:-1]
-        for layer in reversed(layers):
+        for layer in reversed(layers[1:]):
             next_grad = layer.bprop(next_grad)
+        layers[0].bprop(next_grad, to_x=False)
 
-        return self.layers[-1].loss(Y, Y_pred)
+        return self.layers[-1].loss(y, y_pred)
 
-    def _loss(self, X, Y):
-        X = np.reshape(X, X.shape[1:])
-        Y = np.reshape(Y, Y.shape[1:])
-        X_next = X
+    def _output_shape(self, input_shape):
+        print input_shape
         for layer in self.layers:
-            X_next = layer.fprop(X_next, 'test')
-        Y_pred = X_next
-        return self.layers[-1].loss(Y, Y_pred)
+            input_shape = layer.output_shape(input_shape)
+            print input_shape
+        return input_shape
 
-    def predict(self, X, Y_shape, batch_size=1):
-        """ Calculate an output Y for the given input X. """
-        if batch_size == 0:
-            batch_size = X.shape[0]
-        n_samples = X.shape[0]
-        n_batches = n_samples // batch_size
-        Y_pred = np.empty(Y_shape)
-        for b in range(n_batches):
-            X_next = ca.array(X[b])
-            ##print "--------------"
-            ##print "start"
+    def predict(self, input):
+        """ Calculate the output for the given input x. """
+        input = to_input(input)
+        y = np.empty((input.x.shape[0],)+self._output_shape(input.x_shape))
+        y_offset = 0
+        for x_batch in input.batches():
+            x_next = x_batch[0]
             for layer in self.layers[:-1]:
-                ##print X_next
-                X_next = layer.fprop(X_next, 'test')
-                ##print "--------------"
-                ##print layer.name
+                x_next = layer.fprop(x_next, 'test')
+            y_batch = np.array(self.layers[-1].predict(x_next))
+            batch_size = x_batch.shape[0]
+            y[y_offset:y_offset+batch_size, ...] = y_batch
+            y_offset += batch_size
+        return y
 
-            ##print X_next
-            Y_pred_batch = self.layers[-1].predict(X_next)
-            Y_pred[b] = (Y_pred_batch)
-        return Y_pred
+    def error(self, input):
+        input = to_input(input)
+        """ Calculate error on the given input. """
+        y_pred = self.predict(input)
 
-    def error(self, X, Y, batch_size=1):
-        #X = np.reshape(X, X.shape[1:])
-        #Y = np.reshape(Y, Y.shape[1:])
-        """ Calculate error on the given data. """
-        ##print "Test"
-        Y_pred = self.predict(X, Y.shape, batch_size)
         logger.info('Test')
-        logger.info('Predict: class1: %d, class2:%d' % (np.sum(Y_pred), abs(Y_pred.size - np.sum(Y_pred))))
-        logger.info('True: class1: %d, class2:%d' % (np.sum(Y), abs(Y.size - np.sum(Y))))
-        error = Y_pred != Y
-
+        logger.info('Predict: class1: %d, class2:%d' % (np.sum(y_pred), abs(y_pred.size - np.sum(y_pred))))
+        logger.info('True: class1: %d, class2:%d' % (np.sum(input.y), abs(input.y.size - np.sum(input.y))))
+#        print(y_pred)
+        # XXX: this only works for classification
+        # TODO: support regression
+        error = y_pred != input.y
         return np.mean(error)

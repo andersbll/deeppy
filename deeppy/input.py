@@ -21,7 +21,7 @@ class Input(object):
 
     @property
     def x_shape(self):
-        return (self.batch_size,) + self.x.shape[1:]
+        return self.x.shape[1:]
 
 
 class SupervisedMixin(object):
@@ -44,11 +44,13 @@ class SupervisedInput(Input, SupervisedMixin):
         for batch_start, batch_stop in self._batch_slices():
             x_batch = ca.array(self.x[batch_start:batch_stop])
             y_batch = ca.array(self.y[batch_start:batch_stop])
+            x_batch = np.reshape(x_batch, self.x.shape[1:])
+            y_batch = np.reshape(y_batch, self.y.shape[1:])
             yield x_batch, y_batch
 
     @property
     def y_shape(self):
-        return (self.batch_size,) + self.y.shape[1:]
+        return self.y.shape[1:]
 
 
 def to_input(arg):

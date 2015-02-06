@@ -4,6 +4,10 @@ from .layers import ParamMixin
 from ..input import to_input
 
 
+
+
+
+
 class NeuralNetwork:
     def __init__(self, layers):
         self._initialized = False
