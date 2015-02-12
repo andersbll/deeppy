@@ -29,14 +29,18 @@ class NeuralNetwork_seg:
 
         for layer in self.layers:
             layer._setup(next_shape)
-            next_shape = layer.output_shape(next_shape)
+            #Must be befor Next Shape
             if (input_index != None):
                 input_index = layer.output_index(input_index)
+
+            next_shape = layer.output_shape(next_shape)
 
         if next_shape != input.y_shape:
             raise ValueError('Output shape %s does not match Y %s'
                              % (next_shape, input.y_shape))
         self._initialized = True
+
+        print "setup Done"
 
     def _params(self):
         all_params = [layer.params() for layer in self.layers
@@ -62,10 +66,8 @@ class NeuralNetwork_seg:
         return self.layers[-1].loss(y, y_pred)
 
     def _output_shape(self, input_shape):
-        print input_shape
         for layer in self.layers:
             input_shape = layer.output_shape(input_shape)
-            print input_shape
         return input_shape
 
     def predict(self, input):
