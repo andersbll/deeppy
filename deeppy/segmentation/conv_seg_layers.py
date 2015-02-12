@@ -17,14 +17,16 @@ def padding_seg(win_shape, border_mode):
 
 class Convolutional_seg(Layer_seg, ParamMixin_seg):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
-                 border_mode='valid', weight_decay=0.0):
+                 border_mode='same', weight_decay=0.0):
         self.name = 'conv'
+        border_mode='same'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
         self.W = parameter(weights)
         self.b = parameter(bias)
         pad = padding_seg(filter_shape, border_mode)
-        self.conv_op = ca.nsnet.ConvBC01()
+        strides = (1,1)
+        self.conv_op = ca.nsnet.ConvBC01(pad, strides)
         self.indexing_shape = None
 
     def _setup(self, input_shape):
@@ -58,7 +60,7 @@ class Convolutional_seg(Layer_seg, ParamMixin_seg):
         return self.W, self.b
 
     def output_shape(self, input_shape):
-        return self.conv_op.output_shape(input_shape, self.n_filters)
+        return self.conv_op.output_shape(input_shape, self.n_filters, self.filter_shape)
 
     def output_index(self, input_index):
         if input_index == None:
