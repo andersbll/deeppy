@@ -44,8 +44,8 @@ class SupervisedInput(Input, SupervisedMixin):
         for batch_start, batch_stop in self._batch_slices():
             x_batch = ca.array(self.x[batch_start:batch_stop])
             y_batch = ca.array(self.y[batch_start:batch_stop])
-            x_batch = np.reshape(x_batch, self.x.shape[1:])
-            y_batch = np.reshape(y_batch, self.y.shape[1:])
+            x_batch = ca.reshape(x_batch, self.x.shape[1:])
+            y_batch = ca.reshape(y_batch, self.y.shape[1:])
             yield x_batch, y_batch
 
     @property
