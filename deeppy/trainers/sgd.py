@@ -46,7 +46,8 @@ class StochasticGradientDescent:
 
             epoch_cost = np.mean(batch_costs)
             if valid_error_fun is not None:
-                val_error = valid_error_fun()
+                val_error = valid_error_fun(best_score, epoch)
+
                 if val_error < best_score:
                     improvement = val_error / best_score
                     if improvement < self.improvement_thresh:
