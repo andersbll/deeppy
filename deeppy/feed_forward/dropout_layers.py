@@ -43,7 +43,7 @@ class DropoutFullyConnected(FullyConnected):
                 self.mask = self.dropout < ca.random.uniform(size=Y.shape)
                 Y *= self.mask
             elif phase == 'test':
-                Y *= 1.0 - self.dropout
+                Y *= (1.0 - self.dropout)
         return Y
 
     def bprop(self, y_grad, to_x=True):
