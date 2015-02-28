@@ -3,6 +3,7 @@ import numpy as np
 import cudarray as ca
 import itertools
 from .layers_seg import ParamMixin_seg
+from ..feed_forward import ParamMixin
 from ..input import to_input
 
 import logging
@@ -44,8 +45,10 @@ class NeuralNetwork_seg:
 
     def _params(self):
         all_params = [layer.params() for layer in self.layers
-                      if isinstance(layer, ParamMixin_seg)]
+                      if isinstance(layer, ParamMixin_seg) or isinstance(layer, ParamMixin)]
         # Concatenate lists in list
+        print "number of params: %s" % len(all_params)
+        logger.info("number of params: %s" % len(all_params))
         return list(itertools.chain.from_iterable(all_params))
 
     def _update(self, batch):
