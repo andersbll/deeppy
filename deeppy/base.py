@@ -28,6 +28,14 @@ class Parameter(object):
         self._last_step = None
         self.shares = []
 
+    @classmethod
+    def from_any(cls, arg):
+        if isinstance(arg, Parameter):
+            return arg
+        elif isinstance(arg, (int, float, np.ndarray, Filler)):
+            return cls(arg)
+        raise ValueError('Invalid parameter arguments')
+
     def _setup(self, shape):
         self._array = self.filler.array(shape)
 
@@ -107,11 +115,3 @@ class SharedParameter(Parameter):
 
     def share(self):
         return self.parent.share()
-
-
-def parameter(arg):
-    if isinstance(arg, Parameter):
-        return arg
-    elif isinstance(arg, (int, float, np.ndarray, Filler)):
-        return Parameter(arg)
-    raise ValueError('Invalid parameter arguments')

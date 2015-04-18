@@ -1,5 +1,5 @@
 import cudarray as ca
-from ..base import parameter
+from ..base import Parameter
 
 
 class Layer(object):
@@ -50,8 +50,8 @@ class FullyConnected(Layer, ParamMixin):
     def __init__(self, n_output, weights, bias=0.0):
         self.name = 'fullconn'
         self.n_output = n_output
-        self.W = parameter(weights)
-        self.b = parameter(bias)
+        self.W = Parameter.from_any(weights)
+        self.b = Parameter.from_any(bias)
 
     def _setup(self, input_shape):
         n_input = input_shape[1]

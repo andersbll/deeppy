@@ -1,6 +1,6 @@
 import numpy as np
 from .layers import Layer, ParamMixin
-from ..base import parameter
+from ..base import Parameter
 import cudarray as ca
 
 
@@ -21,8 +21,8 @@ class Convolutional(Layer, ParamMixin):
         self.name = 'conv'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
-        self.W = parameter(weights)
-        self.b = parameter(bias)
+        self.W = Parameter.from_any(weights)
+        self.b = Parameter.from_any(bias)
         pad = padding(filter_shape, border_mode)
         self.conv_op = ca.nnet.ConvBC01(pad, strides)
 
