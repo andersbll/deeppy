@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 from .layers import ParamMixin
-from ..input import to_input
+from ..input import Input
 
 
 class NeuralNetwork:
@@ -54,7 +54,7 @@ class NeuralNetwork:
 
     def predict(self, input):
         """ Calculate the output for the given input x. """
-        input = to_input(input)
+        input = Input.from_any(input)
         y = np.empty(self._output_shape(input.x.shape))
         y_offset = 0
         for x_batch in input.batches():
@@ -68,7 +68,7 @@ class NeuralNetwork:
         return y
 
     def error(self, input):
-        input = to_input(input)
+        input = Input.from_any(input)
         """ Calculate error on the given input. """
         y_pred = self.predict(input)
 #        print(y_pred)

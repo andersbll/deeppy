@@ -9,6 +9,16 @@ class Input(object):
         self.n_samples = x.shape[0]
         self.n_batches = int(np.ceil(float(self.n_samples) / self.batch_size))
 
+    @classmethod
+    def from_any(cls, arg):
+        if isinstance(arg, Input):
+            return arg
+        elif isinstance(arg, np.ndarray):
+            return cls(arg)
+        elif isinstance(arg, tuple):
+            return SupervisedInput(arg[0], arg[1], 128)
+        raise ValueError('Invalid input arguments')
+
     def _batch_slices(self):
         for b in range(self.n_batches):
             batch_start = b * self.batch_size
@@ -49,13 +59,3 @@ class SupervisedInput(Input, SupervisedMixin):
     @property
     def y_shape(self):
         return (self.batch_size,) + self.y.shape[1:]
-
-
-def to_input(arg):
-    if isinstance(arg, Input):
-        return arg
-    elif isinstance(arg, np.ndarray):
-        return Input(arg)
-    elif isinstance(arg, tuple):
-        return SupervisedInput(arg[0], arg[1])
-    raise ValueError('Invalid input arguments')

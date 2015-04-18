@@ -5,7 +5,7 @@ import cudarray as ca
 import logging
 logger = logging.getLogger(__name__)
 
-from ..input import to_input
+from ..input import Input
 
 
 class StochasticGradientDescent:
@@ -18,7 +18,7 @@ class StochasticGradientDescent:
         self.improvement_thresh = improvement_thresh
 
     def train(self, model, input, valid_error_fun=None):
-        input = to_input(input)
+        input = Input.from_any(input)
         model._setup(input)
         params = model._params()
         self.learn_rule._setup(params, input.batch_size)

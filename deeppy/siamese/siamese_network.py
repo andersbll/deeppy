@@ -2,7 +2,7 @@ from copy import copy
 import numpy as np
 import itertools
 from ..feed_forward.layers import ParamMixin
-from ..input import to_input
+from ..input import Input
 from ..base import float_
 
 
@@ -68,7 +68,7 @@ class SiameseNetwork(object):
         return self.loss_layer.loss(y, dists)
 
     def features(self, input):
-        input = to_input(input)
+        input = Input.from_any(input)
         next_shape = input.x.shape
         for layer in self.layers:
             next_shape = layer.output_shape(next_shape)
@@ -85,7 +85,6 @@ class SiameseNetwork(object):
         return feats
 
     def distances(self, input):
-        input = to_input(input)
         dists = np.empty((input.n_samples,), dtype=float_)
         offset = 0
         for batch in input.batches():
