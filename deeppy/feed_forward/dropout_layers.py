@@ -27,11 +27,9 @@ class Dropout(Layer):
 
 
 class DropoutFullyConnected(FullyConnected):
-    def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0,
-                 dropout=0.5):
+    def __init__(self, n_output, weights, bias=0.0, dropout=0.5):
         super(DropoutFullyConnected, self).__init__(
-            n_output=n_output, weights=weights, bias=bias,
-            weight_decay=weight_decay
+            n_output=n_output, weights=weights, bias=bias
         )
         self.name = 'fc_drop'
         self.dropout = dropout
