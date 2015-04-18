@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 from setuptools import setup, find_packages
+import deeppy
 
 
 def read(fname):
@@ -8,7 +9,7 @@ def read(fname):
 
 setup(
     name='deeppy',
-    version='0.1',
+    version=deeppy.__version__,
     author='Anders Boesen Lindbo Larsen',
     author_email='abll@dtu.dk',
     description="Deep learning in Python",
