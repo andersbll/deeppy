@@ -83,24 +83,8 @@ class SharedParameter(Parameter):
     def _setup(self, shape):
         pass
 
-    @property
-    def name(self):
-        return self.parent.name
-
-    @property
-    def learn_rate(self):
-        return self.parent.learn_rate
-
-    @property
-    def monitor(self):
-        self.parent.monitor()
-
-    @property
-    def array(self):
-        return self.parent.array
-
-    def grad(self):
-        raise RuntimeError('grad() should not be called for SharedParameter.')
-
-    def share(self):
-        return self.parent.share()
+    # Wrap parent Parameter methods
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return getattr(self, attr)
+        return getattr(self.parent, attr)
