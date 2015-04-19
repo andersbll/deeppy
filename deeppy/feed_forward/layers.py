@@ -1,5 +1,5 @@
 import cudarray as ca
-from ..base import Parameter
+from ..parameter import Parameter
 
 
 class Layer(object):

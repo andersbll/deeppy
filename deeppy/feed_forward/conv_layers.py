@@ -1,6 +1,6 @@
 import numpy as np
 from .layers import Layer, ParamMixin
-from ..base import Parameter
+from ..parameter import Parameter
 import cudarray as ca
 
 

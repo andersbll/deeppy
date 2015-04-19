@@ -6,7 +6,6 @@ from .base import (
     bool_,
     int_,
     float_,
-    Parameter,
 )
 from .input import (
     Input,
@@ -32,6 +31,10 @@ from .fillers import (
     NormalFiller,
     UniformFiller,
 )
+from .parameter import (
+    Parameter,
+)
+
 from .preprocess import (
     UniformScaler,
 )
