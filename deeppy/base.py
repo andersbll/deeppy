@@ -1,7 +1,7 @@
 import numpy as np
 import cudarray as ca
 import logging
-from .fillers import filler, Filler
+from .fillers import Filler
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -18,7 +18,7 @@ float_ = ca.float_
 class Parameter(object):
     def __init__(self, fill, name='', learn_rate=1.0, weight_decay=0.0,
                  monitor=False):
-        self.filler = filler(fill)
+        self.filler = Filler.from_any(fill)
         self.name = name
         self.learn_rate = learn_rate
         self._monitor = monitor

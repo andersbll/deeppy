@@ -6,6 +6,22 @@ class Filler(object):
     def __init__(self):
         raise NotImplementedError()
 
+    @classmethod
+    def from_any(cls, arg):
+        if isinstance(arg, Filler):
+            return arg
+        elif isinstance(arg, (int, float)):
+            return ConstantFiller(arg)
+        elif isinstance(arg, np.ndarray):
+            return CopyFiller(arg)
+        elif isinstance(arg, tuple):
+            if len(arg) == 2:
+                if arg[0] == 'normal':
+                    return NormalFiller(**arg[1])
+                elif arg[0] == 'uniform':
+                    return UniformFiller(**arg[1])
+        raise ValueError('Invalid fillter arguments')
+
     def array(self, shape):
         raise NotImplementedError()
 
@@ -62,19 +78,3 @@ class AutoFiller(Filler):
             raise ValueError('AutoFiller does not support ndim %i' % ndim)
         scale = self.gain * scale / np.sqrt(3)
         return ca.random.uniform(low=-scale, high=scale, size=shape)
-
-
-def filler(arg):
-    if isinstance(arg, Filler):
-        return arg
-    elif isinstance(arg, (int, float)):
-        return ConstantFiller(arg)
-    elif isinstance(arg, np.ndarray):
-        return CopyFiller(arg)
-    elif isinstance(arg, tuple):
-        if len(arg) == 2:
-            if arg[0] == 'normal':
-                return NormalFiller(**arg[1])
-            elif arg[0] == 'uniform':
-                return UniformFiller(**arg[1])
-    raise ValueError('Invalid fillter arguments')
