@@ -2,11 +2,11 @@ from copy import copy
 import numpy as np
 import itertools
 from ..feed_forward.layers import ParamMixin
+from ..base import Model, float_
 from ..input import Input
-from ..base import float_
 
 
-class SiameseNetwork(object):
+class SiameseNetwork(Model):
     def __init__(self, siamese_layers, loss):
         self._initialized = False
         self.layers = siamese_layers

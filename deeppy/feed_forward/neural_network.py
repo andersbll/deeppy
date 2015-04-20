@@ -1,10 +1,11 @@
 import numpy as np
 import itertools
 from .layers import ParamMixin
+from ..base import Model
 from ..input import Input
 
 
-class NeuralNetwork:
+class NeuralNetwork(Model):
     def __init__(self, layers, loss):
         self._initialized = False
         self.layers = layers

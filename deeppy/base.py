@@ -13,3 +13,15 @@ logging.basicConfig(
 bool_ = ca.bool_
 int_ = ca.int_
 float_ = ca.float_
+
+
+class Model(object):
+    def _setup(self, input):
+        pass
+
+    @property
+    def _params(self):
+        raise NotImplementedError()
+
+    def _update(self, batch):
+        raise NotImplementedError()
