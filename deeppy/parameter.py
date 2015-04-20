@@ -24,7 +24,7 @@ class Parameter(object):
     def from_any(cls, arg):
         if isinstance(arg, Parameter):
             return arg
-        elif isinstance(arg, (int, float, np.ndarray, Filler)):
+        elif isinstance(arg, (int, float, np.ndarray, ca.ndarray, Filler)):
             return cls(arg)
         raise ValueError('Invalid parameter arguments')
 

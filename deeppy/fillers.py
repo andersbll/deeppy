@@ -12,7 +12,7 @@ class Filler(object):
             return arg
         elif isinstance(arg, (int, float)):
             return ConstantFiller(arg)
-        elif isinstance(arg, np.ndarray):
+        elif isinstance(arg, (np.ndarray, ca.ndarray)):
             return CopyFiller(arg)
         elif isinstance(arg, tuple):
             if len(arg) == 2:
@@ -57,8 +57,12 @@ class CopyFiller(Filler):
         self.arr = np_array
 
     def array(self, shape):
+        if isinstance(shape, int):
+            # XXX: Is there a better way to normalize NumPy shapes?
+            shape = (shape,)
         if self.arr.shape != shape:
-            raise ValueError('Requested filler shape does not match.')
+            raise ValueError('Shape mismatch: expected %s but got %s'
+                             % (str(self.arr.shape), str(shape)))
         return ca.array(self.arr)
 
 
