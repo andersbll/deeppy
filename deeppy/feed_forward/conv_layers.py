@@ -51,10 +51,12 @@ class Convolutional(Layer, ParamMixin):
                keepdims=True, out=self.b.grad_array)
         return x_grad
 
-    def params(self):
+    @property
+    def _params(self):
         return self.W, self.b
 
-    def set_params(self, params):
+    @_params.setter
+    def _params(self, params):
         self.W, self.b = params
 
     def output_shape(self, input_shape):

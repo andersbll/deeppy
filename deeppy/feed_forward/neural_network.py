@@ -26,8 +26,9 @@ class NeuralNetwork:
                              % (next_shape, input.y_shape))
         self._initialized = True
 
+    @property
     def _params(self):
-        all_params = [layer.params() for layer in self.layers
+        all_params = [layer._params for layer in self.layers
                       if isinstance(layer, ParamMixin)]
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))

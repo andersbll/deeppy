@@ -24,11 +24,14 @@ class Layer(object):
 
 
 class ParamMixin(object):
-    def params(self):
-        """ Layer parameters. """
+    @property
+    def _params(self):
+        """ Return list of the Layer's parameters. """
         raise NotImplementedError()
 
-    def set_params(self):
+    @_params.setter
+    def _params(self, params):
+        """ Replace the Layer's parameters. """
         raise NotImplementedError()
 
     def bprop(self, y_grad, to_x=True):
@@ -64,10 +67,12 @@ class FullyConnected(Layer, ParamMixin):
         if to_x:
             return ca.dot(y_grad, self.W.array.T)
 
-    def params(self):
+    @property
+    def _params(self):
         return self.W, self.b
 
-    def set_params(self, params):
+    @_params.setter
+    def _params(self, params):
         self.W, self.b = params
 
     def output_shape(self, input_shape):

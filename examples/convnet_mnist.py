@@ -77,7 +77,7 @@ def run():
     for l, layer in enumerate(net.layers):
         if not isinstance(layer, dp.Convolutional):
             continue
-        W = np.array(layer.params()[0].array)
+        W = np.array(layer.W.array)
         filepath = os.path.join('mnist', 'conv_layer_%i.png' % l)
         dp.misc.img_save(dp.misc.conv_filter_tile(W), filepath)
 

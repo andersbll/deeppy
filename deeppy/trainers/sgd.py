@@ -20,7 +20,7 @@ class StochasticGradientDescent:
     def train(self, model, input, valid_error_fun=None):
         input = Input.from_any(input)
         model._setup(input)
-        params = model._params()
+        params = model._params
         self.learn_rule._setup(params, input.batch_size)
         n_params = np.sum([p.array.size for p in params])
         logger.info('SGD: Model contains %i parameters.' % n_params)

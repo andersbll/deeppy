@@ -15,9 +15,7 @@ class SiameseNetwork(object):
         for layer1, layer2 in zip(self.layers, self.layers2):
             if isinstance(layer1, ParamMixin):
                 # Replace weights in layers2 with shared weights
-                params = layer1.params()
-                params = [p.share() for p in params]
-                layer2.set_params(params)
+                layer2._params = [p.share() for p in layer1._params]
         self.loss = loss
         self.bprop_until = next((idx for idx, l in enumerate(self.layers)
                                  if isinstance(l, ParamMixin)),
@@ -38,8 +36,9 @@ class SiameseNetwork(object):
         next_shape = self.loss.output_shape(next_shape)
         self._initialized = True
 
+    @property
     def _params(self):
-        all_params = [layer.params() for layer in self.layers
+        all_params = [layer._params for layer in self.layers
                       if isinstance(layer, ParamMixin)]
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))
