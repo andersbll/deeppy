@@ -70,7 +70,7 @@ def run():
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
             ),
         ],
-        loss_layer=dp.ContrastiveLoss(margin=0.5),
+        loss=dp.ContrastiveLoss(margin=0.5),
     )
 
     # Train network

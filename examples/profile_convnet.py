@@ -72,8 +72,8 @@ def run():
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
                                      weight_decay=0.004),
             ),
-            dp.MultinomialLogReg(),
         ],
+        loss=dp.MultinomialLogReg(),
     )
 
     dp.misc.profile(net, train_input)

@@ -49,8 +49,8 @@ def run():
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
                                      weight_decay=0.00001),
             ),
-            dp.MultinomialLogReg(),
         ],
+        loss=dp.MultinomialLogReg(),
     )
 
     # Train neural network

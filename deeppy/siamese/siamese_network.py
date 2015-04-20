@@ -7,7 +7,7 @@ from ..base import float_
 
 
 class SiameseNetwork(object):
-    def __init__(self, siamese_layers, loss_layer):
+    def __init__(self, siamese_layers, loss):
         self._initialized = False
         self.layers = siamese_layers
         # Create second array of layers
@@ -18,7 +18,7 @@ class SiameseNetwork(object):
                 params = layer1.params()
                 params = [p.share() for p in params]
                 layer2.set_params(params)
-        self.loss_layer = loss_layer
+        self.loss = loss
         self.bprop_until = next((idx for idx, l in enumerate(self.layers)
                                  if isinstance(l, ParamMixin)),
                                 len(self.layers))
@@ -35,7 +35,7 @@ class SiameseNetwork(object):
         for layer in self.layers2:
             layer._setup(next_shape)
             next_shape = layer.output_shape(next_shape)
-        next_shape = self.loss_layer.output_shape(next_shape)
+        next_shape = self.loss.output_shape(next_shape)
         self._initialized = True
 
     def _params(self):
@@ -51,10 +51,9 @@ class SiameseNetwork(object):
             x1 = layer.fprop(x1, 'train')
         for layer in self.layers2:
             x2 = layer.fprop(x2, 'train')
-        dists = self.loss_layer.fprop(x1, x2, 'train')
 
         # Back propagation of partial derivatives
-        grad1, grad2 = self.loss_layer.input_grad(y, dists)
+        grad1, grad2 = self.loss.input_grad(y, x1, x2)
         layers = self.layers[self.bprop_until:]
         for layer in reversed(layers[1:]):
             grad1 = layer.bprop(grad1)
@@ -65,7 +64,7 @@ class SiameseNetwork(object):
             grad2 = layer.bprop(grad2)
         layers2[0].bprop(grad2, to_x=False)
 
-        return self.loss_layer.loss(y, dists)
+        return self.loss.loss(y, x1, x2)
 
     def features(self, input):
         input = Input.from_any(input)
@@ -93,7 +92,7 @@ class SiameseNetwork(object):
                 x1 = layer.fprop(x1, 'test')
             for layer in self.layers2:
                 x2 = layer.fprop(x2, 'test')
-            dists_batch = self.loss_layer.fprop(x1, x2, 'test')
+            dists_batch = self.loss.predict(x1, x2)
             dists_batch = np.ravel(np.array(dists_batch))
             batch_size = x1.shape[0]
             dists[offset:offset+batch_size, ...] = dists_batch

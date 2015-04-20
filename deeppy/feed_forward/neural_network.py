@@ -5,19 +5,20 @@ from ..input import Input
 
 
 class NeuralNetwork:
-    def __init__(self, layers):
+    def __init__(self, layers, loss):
         self._initialized = False
         self.layers = layers
         self.bprop_until = next((idx for idx, l in enumerate(self.layers)
                                  if isinstance(l, ParamMixin)),
                                 len(self.layers))
+        self.loss = loss
 
     def _setup(self, input):
         # Setup layers sequentially
         if self._initialized:
             return
         next_shape = input.x_shape
-        for layer in self.layers:
+        for layer in self.layers + [self.loss]:
             layer._setup(next_shape)
             next_shape = layer.output_shape(next_shape)
         if next_shape != input.y_shape:
@@ -40,15 +41,15 @@ class NeuralNetwork:
         y_pred = x_next
 
         # Back propagation of partial derivatives
-        next_grad = self.layers[-1].input_grad(y, y_pred)
-        layers = self.layers[self.bprop_until:-1]
+        next_grad = self.loss.grad(y, y_pred)
+        layers = self.layers[self.bprop_until:]
         for layer in reversed(layers[1:]):
             next_grad = layer.bprop(next_grad)
         layers[0].bprop(next_grad, to_x=False)
-        return self.layers[-1].loss(y, y_pred)
+        return self.loss.loss(y, y_pred)
 
     def _output_shape(self, input_shape):
-        for layer in self.layers:
+        for layer in self.layers + [self.loss]:
             input_shape = layer.output_shape(input_shape)
         return input_shape
 
@@ -59,9 +60,9 @@ class NeuralNetwork:
         y_offset = 0
         for x_batch in input.batches():
             x_next = x_batch
-            for layer in self.layers[:-1]:
+            for layer in self.layers:
                 x_next = layer.fprop(x_next, 'test')
-            y_batch = np.array(self.layers[-1].predict(x_next))
+            y_batch = np.array(self.loss.predict(x_next))
             batch_size = x_batch.shape[0]
             y[y_offset:y_offset+batch_size, ...] = y_batch
             y_offset += batch_size

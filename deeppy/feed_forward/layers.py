@@ -23,16 +23,6 @@ class Layer(object):
         raise NotImplementedError()
 
 
-class LossMixin(object):
-    def loss(self, Y_true, Y_pred):
-        """ Calculate mean loss given output and predicted output. """
-        raise NotImplementedError()
-
-    def input_grad(self, Y_true, Y_pred):
-        """ Calculate input gradient given output and predicted output. """
-        raise NotImplementedError()
-
-
 class ParamMixin(object):
     def params(self):
         """ Layer parameters. """
@@ -112,35 +102,3 @@ class Activation(Layer):
 
     def output_shape(self, input_shape):
         return input_shape
-
-
-class MultinomialLogReg(Layer, LossMixin):
-    """ Multinomial logistic regression with a cross-entropy loss function. """
-    def __init__(self):
-        self.name = 'logreg'
-
-    def _setup(self, input_shape):
-        self.n_classes = input_shape[1]
-
-    def fprop(self, x, phase):
-        return ca.nnet.softmax(x)
-
-    def bprop(self, Y_grad):
-        raise NotImplementedError(
-            'MultinomialLogReg does not support back-propagation of gradients.'
-            + ' It should occur only as the last layer of a NeuralNetwork.'
-        )
-
-    def predict(self, x):
-        return ca.nnet.one_hot_decode(self.fprop(x, ''))
-
-    def input_grad(self, y, y_pred):
-        y = ca.nnet.one_hot_encode(y, self.n_classes)
-        return -(y - y_pred)
-
-    def loss(self, y, y_pred):
-        y = ca.nnet.one_hot_encode(y, self.n_classes)
-        return ca.nnet.categorical_cross_entropy(y_pred=y_pred, y_true=y)
-
-    def output_shape(self, input_shape):
-        return (input_shape[0],)

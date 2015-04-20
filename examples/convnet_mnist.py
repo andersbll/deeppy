@@ -60,8 +60,8 @@ def run():
                 n_output=dataset.n_classes,
                 weights=dp.Parameter(dp.AutoFiller()),
             ),
-            dp.MultinomialLogReg(),
         ],
+        loss=dp.MultinomialLogReg(),
     )
 
     # Train neural network
