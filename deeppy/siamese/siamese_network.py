@@ -72,7 +72,7 @@ class SiameseNetwork(Model):
             next_shape = layer.output_shape(next_shape)
         feats = np.empty(next_shape)
         idx = 0
-        for x_batch in input.batches():
+        for x_batch in input.batches('test'):
             x_next = x_batch
             for layer in self.layers:
                 x_next = layer.fprop(x_next, 'test')
@@ -85,7 +85,7 @@ class SiameseNetwork(Model):
     def distances(self, input):
         dists = np.empty((input.n_samples,), dtype=float_)
         offset = 0
-        for batch in input.batches():
+        for batch in input.batches('test'):
             x1, x2 = batch
             for layer in self.layers:
                 x1 = layer.fprop(x1, 'test')
