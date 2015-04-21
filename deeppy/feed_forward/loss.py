@@ -20,6 +20,8 @@ class Loss(object):
                 return MultinomialLogReg()
             elif arg == 'mse':
                 return MeanSqauredError()
+            elif arg == 'bce':
+                return BinaryCrossEntropy()
         raise ValueError('Invalid constructor arguments: %s' % arg)
 
     def _setup(self, x_shape):
@@ -90,8 +92,21 @@ class MeanSqauredError(Loss):
     def _setup(self, input_shape):
         self.n_targets = input_shape[1]
 
-    def input_grad(self, y, y_pred):
+    def grad(self, y, y_pred):
         return 2.0 / self.n_targets * (y_pred - y)
 
     def loss(self, y, y_pred):
         return ca.mean((y-y_pred)**2, axis=1)
+
+
+class BinaryCrossEntropy(Loss):
+    def __init__(self, eps=1e-10):
+        self.name = 'bce'
+        self.eps = eps
+
+    def grad(self, y, y_pred):
+        return -(y/(y_pred+self.eps) - (1-y)/(1-y_pred+self.eps))
+
+    def loss(self, y, y_pred):
+        return ca.mean(-ca.sum(y*ca.log(y_pred+self.eps) +
+                               (1-y) * ca.log(1-y_pred+self.eps), axis=1))

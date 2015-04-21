@@ -2,6 +2,11 @@ __version__ = '0.1.dev'
 
 from . import datasets
 from . import misc
+from .autoencoder import (
+    Autoencoder,
+    DenoisingAutoencoder,
+    StackedAutoencoder,
+)
 from .base import (
     bool_,
     int_,
