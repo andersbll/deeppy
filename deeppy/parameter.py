@@ -4,10 +4,11 @@ import cudarray as ca
 import logging
 logger = logging.getLogger(__name__)
 
+from .base import PickleMixin
 from .fillers import Filler
 
 
-class Parameter(object):
+class Parameter(PickleMixin):
     def __init__(self, fill, name='', learn_rate=1.0, weight_decay=0.0,
                  monitor=False):
         self.filler = Filler.from_any(fill)
@@ -16,8 +17,8 @@ class Parameter(object):
         self._monitor = monitor
         self.weight_decay = weight_decay
         self._array = None
-        self._grad_array = None
-        self._last_step = None
+        self._tmp_grad_array = None
+        self._tmp_last_step = None
         self.shares = []
 
     @classmethod
@@ -38,9 +39,9 @@ class Parameter(object):
     @property
     def grad_array(self):
         ''' Returns the gradient array. '''
-        if self._grad_array is None:
-            self._grad_array = ca.empty_like(self.array)
-        return self._grad_array
+        if self._tmp_grad_array is None:
+            self._tmp_grad_array = ca.empty_like(self.array)
+        return self._tmp_grad_array
 
     def grad(self):
         ''' Returns a parameter step calculated from the gradient.
@@ -54,7 +55,7 @@ class Parameter(object):
     def step(self, step):
         ''' Update the parameter values according to the given step. '''
         if self._monitor:
-            self._last_step = step
+            self._tmp_last_step = step
         self._array += step
 
     def penalty(self):
@@ -67,8 +68,8 @@ class Parameter(object):
         if not self._monitor:
             return
         val_mean_abs = np.array(ca.mean(ca.fabs(self._array)))
-        grad_mean_abs = np.array(ca.mean(ca.fabs(self._grad_array)))
-        step_mean_abs = np.array(ca.mean(ca.fabs(self._last_step)))
+        grad_mean_abs = np.array(ca.mean(ca.fabs(self._tmp_grad_array)))
+        step_mean_abs = np.array(ca.mean(ca.fabs(self._tmp_last_step)))
         logger.info('%s:\t%.1e  [%.1e, %.1e]'
                     % (self.name, val_mean_abs, grad_mean_abs, step_mean_abs))
 
@@ -81,7 +82,7 @@ class Parameter(object):
 class SharedParameter(Parameter):
     def __init__(self, parent):
         self.parent = parent
-        self._grad_array = None
+        self._tmp_grad_array = None
 
     def _setup(self, shape):
         pass

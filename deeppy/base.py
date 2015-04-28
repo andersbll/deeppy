@@ -25,3 +25,9 @@ class Model(object):
 
     def _update(self, batch):
         raise NotImplementedError()
+
+
+class PickleMixin(object):
+    def __getstate__(self):
+        return dict((k, v) for k, v in self.__dict__.items()
+                    if not k.startswith('_tmp_'))

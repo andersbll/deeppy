@@ -6,16 +6,16 @@ class ContrastiveLoss(Loss):
     def __init__(self, margin=1.0):
         self.name = 'contrastive'
         self.margin = margin
-        self._last_x1 = None
-        self._last_x2 = None
-        self._last_dists = None
+        self._tmp_last_x1 = None
+        self._tmp_last_x2 = None
+        self._tmp_last_dists = None
 
     def predict(self, x1, x2):
-        if self._last_x1 is not x1 or self._last_x2 is not x2:
-            self._last_dists = ca.sum((x1-x2)**2, axis=1, keepdims=True)
-            self._last_x1 = x1
-            self._last_x2 = x2
-        return self._last_dists
+        if self._tmp_last_x1 is not x1 or self._tmp_last_x2 is not x2:
+            self._tmp_last_dists = ca.sum((x1-x2)**2, axis=1, keepdims=True)
+            self._tmp_last_x1 = x1
+            self._tmp_last_x2 = x2
+        return self._tmp_last_dists
 
     def input_grad(self, target, x1, x2):
         dists = self.predict(x1, x2)

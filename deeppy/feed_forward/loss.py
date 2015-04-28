@@ -1,7 +1,8 @@
 import cudarray as ca
+from ..base import PickleMixin
 
 
-class Loss(object):
+class Loss(PickleMixin):
     # abll: I suspect that this interface is not ideal. It would be more
     # elegant if Loss only provided loss() and grad(). However,
     #
@@ -47,25 +48,25 @@ class MultinomialLogReg(Loss):
     """ Multinomial logistic regression with a cross-entropy loss function. """
     def __init__(self):
         self.name = 'logreg'
-        self._last_x = None
-        self._last_y = None
-        self._last_target = None
-        self._last_target_one_hot = None
+        self._tmp_last_x = None
+        self._tmp_last_y = None
+        self._tmp_last_target = None
+        self._tmp_last_target_one_hot = None
 
     def _setup(self, input_shape):
         self.n_classes = input_shape[1]
 
     def _softmax(self, x):
-        if self._last_x is not x:
-            self._last_y = ca.nnet.softmax(x)
-            self._last_x = x
-        return self._last_y
+        if self._tmp_last_x is not x:
+            self._tmp_last_y = ca.nnet.softmax(x)
+            self._tmp_last_x = x
+        return self._tmp_last_y
 
     def _one_hot(self, target):
-        if self._last_target is not target:
+        if self._tmp_last_target is not target:
             self._target_one_hot = ca.nnet.one_hot_encode(target,
                                                           self.n_classes)
-            self._last_target = target
+            self._tmp_last_target = target
         return self._target_one_hot
 
     def predict(self, x):

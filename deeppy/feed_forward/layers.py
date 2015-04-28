@@ -1,8 +1,9 @@
 import cudarray as ca
+from ..base import PickleMixin
 from ..parameter import Parameter
 
 
-class Layer(object):
+class Layer(PickleMixin):
     def _setup(self, input_shape):
         """ Setup layer with parameters that are unknown at __init__(). """
         pass
@@ -58,11 +59,11 @@ class FullyConnected(Layer, ParamMixin):
             self.b.name = self.name + '_b'
 
     def fprop(self, x, phase):
-        self._last_x = x
+        self._tmp_last_x = x
         return ca.dot(x, self.W.array) + self.b.array
 
     def bprop(self, y_grad, to_x=True):
-        ca.dot(self._last_x.T, y_grad, out=self.W.grad_array)
+        ca.dot(self._tmp_last_x.T, y_grad, out=self.W.grad_array)
         ca.sum(y_grad, axis=0, out=self.b.grad_array)
         if to_x:
             return ca.dot(y_grad, self.W.array.T)
@@ -98,12 +99,12 @@ class Activation(Layer):
             raise ValueError('Invalid activation function.')
 
     def fprop(self, x, phase):
-        self._last_x = x
+        self._tmp_last_x = x
         return self.fun(x)
 
     def bprop(self, y_grad):
-        self.fun_d(self._last_x, self._last_x)
-        return self._last_x * y_grad
+        self.fun_d(self._tmp_last_x, self._tmp_last_x)
+        return self._tmp_last_x * y_grad
 
     def output_shape(self, input_shape):
         return input_shape

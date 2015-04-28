@@ -10,15 +10,15 @@ class Dropout(Layer):
     def fprop(self, X, phase):
         if self.dropout > 0.0:
             if phase == 'train':
-                self.mask = self.dropout < ca.random.uniform(size=X.shape)
-                Y = X * self.mask
+                self._tmp_mask = self.dropout < ca.random.uniform(size=X.shape)
+                Y = X * self._tmp_mask
             elif phase == 'test':
                 Y = X * (1.0 - self.dropout)
         return Y
 
     def bprop(self, Y_grad):
         if self.dropout > 0.0:
-            return Y_grad * self.mask
+            return Y_grad * self._tmp_mask
         else:
             return Y_grad
 
@@ -38,13 +38,13 @@ class DropoutFullyConnected(FullyConnected):
         Y = super(DropoutFullyConnected, self).fprop(X, phase)
         if self.dropout > 0.0:
             if phase == 'train':
-                self.mask = self.dropout < ca.random.uniform(size=Y.shape)
-                Y *= self.mask
+                self._tmp_mask = self.dropout < ca.random.uniform(size=Y.shape)
+                Y *= self._tmp_mask
             elif phase == 'test':
                 Y *= (1.0 - self.dropout)
         return Y
 
     def bprop(self, y_grad, to_x=True):
         if self.dropout > 0.0:
-            y_grad *= self.mask
+            y_grad *= self._tmp_mask
         return super(DropoutFullyConnected, self).bprop(y_grad, to_x)

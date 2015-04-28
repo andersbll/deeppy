@@ -1,7 +1,7 @@
 import cudarray as ca
 from ..feed_forward.layers import ParamMixin, Activation, FullyConnected
 from ..feed_forward.loss import Loss
-from ..base import Model
+from ..base import Model, PickleMixin
 from ..parameter import Parameter
 
 
@@ -19,7 +19,7 @@ class AutoencoderBase(object):
         raise NotImplementedError()
 
 
-class Autoencoder(Model, AutoencoderBase, ParamMixin):
+class Autoencoder(Model, AutoencoderBase, ParamMixin, PickleMixin):
     def __init__(self, n_output, weights, bias=0.0, activation='sigmoid',
                  loss='bce'):
         self.name = 'autoenc'
@@ -64,12 +64,12 @@ class Autoencoder(Model, AutoencoderBase, ParamMixin):
         return (input_shape[0], self.n_output)
 
     def encode(self, x):
-        self._last_x = x
+        self._tmp_last_x = x
         y = ca.dot(x, self.W.array) + self.b.array
         return self.activation.fprop(y, '')
 
     def decode(self, y_prime):
-        self._last_y_prime = y_prime
+        self._tmp_last_y_prime = y_prime
         x_prime = ca.dot(y_prime, self.W.array.T) + self.b_prime.array
         return self.activation_decode.fprop(x_prime, '')
 
@@ -78,13 +78,13 @@ class Autoencoder(Model, AutoencoderBase, ParamMixin):
         # Because W's gradient has already been updated by decode_bprop() at
         # this point, we should add its contribution from the encode step.
         W_grad = self.W.grad_array
-        W_grad += ca.dot(self._last_x.T, y_grad)
+        W_grad += ca.dot(self._tmp_last_x.T, y_grad)
         ca.sum(y_grad, axis=0, out=self.b.grad_array)
         return ca.dot(y_grad, self.W.array.T)
 
     def decode_bprop(self, x_prime_grad):
         x_prime_grad = self.activation_decode.bprop(x_prime_grad)
-        ca.dot(x_prime_grad.T, self._last_y_prime, out=self.W.grad_array)
+        ca.dot(x_prime_grad.T, self._tmp_last_y_prime, out=self.W.grad_array)
         ca.sum(x_prime_grad, axis=0, out=self.b_prime.grad_array)
         return ca.dot(x_prime_grad, self.W.array)
 
