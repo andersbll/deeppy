@@ -3,7 +3,7 @@ import cudarray as ca
 
 
 class Input(object):
-    def __init__(self, x, batch_size=0):
+    def __init__(self, x, batch_size=128):
         self.x = x
         self.batch_size = batch_size if batch_size > 0 else x.shape[0]
         self.n_samples = x.shape[0]
@@ -35,7 +35,7 @@ class Input(object):
 
 
 class SupervisedInput(Input):
-    def __init__(self, x, y, batch_size=0):
+    def __init__(self, x, y, batch_size=128):
         super(SupervisedInput, self).__init__(x, batch_size)
         if x.shape[0] != y.shape[0]:
             raise ValueError('shape mismatch between x and y')
