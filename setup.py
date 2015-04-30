@@ -7,6 +7,11 @@ import deeppy
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
+with open('requirements.txt') as f:
+    install_requires = [l.strip() for l in f]
+
+
 setup(
     name='deeppy',
     version=deeppy.__version__,
@@ -16,7 +21,7 @@ setup(
     license='MIT',
     url='http://compute.dtu.dk/~abll',
     packages=find_packages(),
-    install_requires=['numpy', 'scipy', 'cudarray'],
+    install_requires=install_requires,
     long_description=read('README.md'),
     classifiers=[
         'Development Status :: 4 - Beta',
