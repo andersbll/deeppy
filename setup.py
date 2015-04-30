@@ -1,7 +1,8 @@
 #!/usr/bin/env python
+
 import os
+import re
 from setuptools import setup, find_packages
-import deeppy
 
 
 def read(fname):
@@ -12,9 +13,21 @@ with open('requirements.txt') as f:
     install_requires = [l.strip() for l in f]
 
 
+version = None
+regex = re.compile(r'''^__version__ = ['"]([^'"]*)['"]''')
+with open(os.path.join('deeppy', '__init__.py')) as f:
+    for line in f:
+        mo = regex.search(line)
+        if mo is not None:
+            version = mo.group(1)
+            break
+if version is None:
+    raise RuntimeError('Could not find version number')
+
+
 setup(
     name='deeppy',
-    version=deeppy.__version__,
+    version=version,
     author='Anders Boesen Lindbo Larsen',
     author_email='abll@dtu.dk',
     description="Deep learning in Python",
