@@ -23,7 +23,7 @@ def run():
     x_test = x[test_idx]
     y_test = y[test_idx]
 
-    scaler = dp.UniformScaler(high=255.)
+    scaler = dp.StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
 

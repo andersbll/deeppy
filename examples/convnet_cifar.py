@@ -18,9 +18,9 @@ def run():
     x_test = x[test_idx]
     y_test = y[test_idx]
 
-    scaler = dp.UniformScaler(feature_wise=True)
-    x_train = scaler.fit_transform(x_train)
-    x_test = scaler.transform(x_test)
+    feat_mean = np.mean(x_train, axis=0, keepdims=True)
+    x_train -= feat_mean
+    x_test -= feat_mean
 
     batch_size = 128
     train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)

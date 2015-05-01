@@ -41,6 +41,7 @@ from .parameter import (
 )
 
 from .preprocess import (
+    StandardScaler,
     UniformScaler,
 )
 from .siamese import (

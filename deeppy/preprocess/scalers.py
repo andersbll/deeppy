@@ -1,27 +1,61 @@
 import numpy as np
 
 
-class UniformScaler:
-    def __init__(self, low=0.0, high=1.0, zero_mean=True, feature_wise=False):
-        self.zero_mean = zero_mean
-        self.feature_wise = feature_wise
-        self._mean = None
-        self._low = low
-        self._high = high
+class StandardScaler:
+    def __init__(self, mean=0.0, std=1.0):
+        self.mean = mean
+        self.std = std
+        self._x_mean = None
+        self._x_std = None
 
     def fit(self, x):
-        if self.zero_mean:
-            if self.feature_wise:
-                self._mean = np.mean(x, axis=0, keepdims=True)
-            else:
-                self._mean = np.mean(x)
+        self._x_mean = np.mean(x)
+        self._x_std = np.std(x)
 
     def fit_transform(self, x):
         self.fit(x)
         return self.transform(x)
 
     def transform(self, x):
-        if self.zero_mean:
-            x -= self._mean
-        x /= self._high - self._low
+        x = np.copy(x)
+        x -= self._x_mean
+        x *= self.std / self._x_std
+        x += self.mean
+        return x
+
+    def inverse_transform(self, x):
+        x = np.copy(x)
+        x -= self.mean
+        x /= self.std / self._x_std
+        x += self._x_mean
+        return x
+
+
+class UniformScaler:
+    def __init__(self, low=0.0, high=1.0):
+        self.low = low
+        self.high = high
+        self._min = None
+        self._max = None
+
+    def fit(self, x):
+        self._min = np.min(x)
+        self._max = np.max(x)
+
+    def fit_transform(self, x):
+        self.fit(x)
+        return self.transform(x)
+
+    def transform(self, x):
+        x = np.copy(x)
+        x -= self._min
+        x *= (self.high - self.low) / (self._max - self._min)
+        x += self.low
+        return x
+
+    def inverse_transform(self, x):
+        x = np.copy(x)
+        x -= self.low
+        x /= (self.high - self.low) / (self._max - self._min)
+        x += self._min
         return x
