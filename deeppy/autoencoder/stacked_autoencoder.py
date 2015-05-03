@@ -1,5 +1,5 @@
 import itertools
-from ..feedforward.layers import ParamMixin
+from ..base import Model, ParamMixin
 from ..feedforward.loss import Loss
 from .autoencoder import AutoencoderBase
 
@@ -47,7 +47,7 @@ class StackedAutoencoderLayer(AutoencoderBase):
         return getattr(self.ae, attr)
 
 
-class StackedAutoencoder(AutoencoderBase, ParamMixin):
+class StackedAutoencoder(Model, AutoencoderBase):
     def __init__(self, layers, loss='bce'):
         self._initialized = False
         self.layers = layers

@@ -1,6 +1,6 @@
 import numpy as np
 import cudarray as ca
-from ..feedforward import ParamMixin
+from ..base import ParamMixin
 
 
 def approx_fprime(xk, f, epsilon, *args):

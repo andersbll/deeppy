@@ -1,5 +1,5 @@
 import cudarray as ca
-from ..feedforward.layers import ParamMixin, Activation, FullyConnected
+from ..feedforward.layers import Activation, FullyConnected
 from ..feedforward.loss import Loss
 from ..base import Model, PickleMixin
 from ..parameter import Parameter
@@ -19,7 +19,7 @@ class AutoencoderBase(object):
         raise NotImplementedError()
 
 
-class Autoencoder(Model, AutoencoderBase, ParamMixin, PickleMixin):
+class Autoencoder(Model, AutoencoderBase, PickleMixin):
     def __init__(self, n_out, weights, bias=0.0, activation='sigmoid',
                  loss='bce'):
         self.name = 'autoenc'

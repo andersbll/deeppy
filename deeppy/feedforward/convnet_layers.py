@@ -1,5 +1,6 @@
 import numpy as np
-from .layers import Layer, ParamMixin
+from .layers import Layer
+from ..base import ParamMixin
 from ..parameter import Parameter
 import cudarray as ca
 
@@ -47,9 +48,10 @@ class Convolution(Layer, ParamMixin):
             self._tmp_last_x, self.W.array, y_grad, to_imgs=to_x,
             filters_d=self.W.grad_array
         )
-        ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
-               keepdims=True, out=self.b.grad_array)
-        return x_grad
+        if to_x:
+            ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
+                   keepdims=True, out=self.b.grad_array)
+            return x_grad
 
     @property
     def _params(self):
@@ -76,9 +78,10 @@ class Pool(Layer):
         poolout = self.pool_op.fprop(x)
         return poolout
 
-    def bprop(self, y_grad):
-        x_grad = self.pool_op.bprop(self.last_img_shape, y_grad)
-        return x_grad
+    def bprop(self, y_grad, to_x=True):
+        if to_x:
+            x_grad = self.pool_op.bprop(self.last_img_shape, y_grad)
+            return x_grad
 
     def y_shape(self, x_shape):
         return self.pool_op.output_shape(x_shape)
@@ -96,8 +99,8 @@ class LocalResponseNormalization(Layer):
                            k=self.k)
         return x
 
-    def bprop(self, Y_grad):
-        return Y_grad
+    def bprop(self, y_grad, to_x=True):
+        return y_grad
 
     def y_shape(self, x_shape):
         return x_shape
@@ -154,7 +157,7 @@ class LocalContrastNormalization(Layer):
         # Scale centered input with standard deviation
         return centered / (tmp + self.eps)
 
-    def bprop(self, Y_grad):
+    def bprop(self, y_grad, to_x=True):
         raise NotImplementedError('LocalContrastNormalization supports only '
                                   'usage as a preprocessing layer.')
 
@@ -168,7 +171,7 @@ class Flatten(Layer):
         self.last_x_shape = x.shape
         return ca.reshape(x, self.y_shape(x.shape))
 
-    def bprop(self, y_grad):
+    def bprop(self, y_grad, to_x=True):
         return ca.reshape(y_grad, self.last_x_shape)
 
     def y_shape(self, x_shape):

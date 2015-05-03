@@ -15,13 +15,20 @@ int_ = ca.int_
 float_ = ca.float_
 
 
-class Model(object):
-    def _setup(self, input):
-        pass
-
+class ParamMixin(object):
     @property
     def _params(self):
+        """ List of Parameter objects. """
         raise NotImplementedError()
+
+    @_params.setter
+    def _params(self, params):
+        raise NotImplementedError()
+
+
+class Model(ParamMixin):
+    def _setup(self, input):
+        pass
 
     def _update(self, batch):
         raise NotImplementedError()

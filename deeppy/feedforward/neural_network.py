@@ -1,7 +1,6 @@
 import numpy as np
 import itertools
-from .layers import ParamMixin
-from ..base import Model
+from ..base import Model, ParamMixin
 from ..input import Input
 
 

@@ -16,7 +16,7 @@ class Dropout(Layer):
                 y = x * (1.0 - self.dropout)
         return y
 
-    def bprop(self, y_grad):
+    def bprop(self, y_grad, to_x=True):
         if self.dropout > 0.0:
             return y_grad * self._tmp_mask
         else:

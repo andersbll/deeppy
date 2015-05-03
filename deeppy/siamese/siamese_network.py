@@ -1,8 +1,7 @@
 from copy import copy
 import numpy as np
 import itertools
-from ..feedforward.layers import ParamMixin
-from ..base import Model, float_
+from ..base import Model, ParamMixin, float_
 from ..input import Input
 
 

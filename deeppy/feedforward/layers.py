@@ -1,5 +1,5 @@
 import cudarray as ca
-from ..base import PickleMixin
+from ..base import ParamMixin, PickleMixin
 from ..parameter import Parameter
 
 
@@ -12,7 +12,7 @@ class Layer(PickleMixin):
         """ Calculate layer output for given input (forward propagation). """
         raise NotImplementedError()
 
-    def bprop(self, y_grad):
+    def bprop(self, y_grad, to_x=True):
         """ Calculate input gradient. """
         raise NotImplementedError()
 
@@ -21,22 +21,6 @@ class Layer(PickleMixin):
         x_shape[0] is the number of samples in the input.
         x_shape[1:] is the shape of the feature.
         """
-        raise NotImplementedError()
-
-
-class ParamMixin(object):
-    @property
-    def _params(self):
-        """ Return list of the Layer's parameters. """
-        raise NotImplementedError()
-
-    @_params.setter
-    def _params(self, params):
-        """ Replace the Layer's parameters. """
-        raise NotImplementedError()
-
-    def bprop(self, y_grad, to_x=True):
-        """ Backprop to parameters and input. """
         raise NotImplementedError()
 
 
@@ -101,7 +85,7 @@ class Activation(Layer):
         self._tmp_last_x = x
         return self.fun(x)
 
-    def bprop(self, y_grad):
+    def bprop(self, y_grad, to_x=True):
         self.fun_d(self._tmp_last_x, self._tmp_last_x)
         return self._tmp_last_x * y_grad
 
