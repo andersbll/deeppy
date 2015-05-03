@@ -1,7 +1,7 @@
 from copy import copy
 import numpy as np
 import itertools
-from ..feed_forward.layers import ParamMixin
+from ..feedforward.layers import ParamMixin
 from ..base import Model, float_
 from ..input import Input
 
@@ -28,12 +28,12 @@ class SiameseNetwork(Model):
         next_shape = input.x_shape
         for layer in self.layers:
             layer._setup(next_shape)
-            next_shape = layer.output_shape(next_shape)
+            next_shape = layer.y_shape(next_shape)
         next_shape = input.x_shape
         for layer in self.layers2:
             layer._setup(next_shape)
-            next_shape = layer.output_shape(next_shape)
-        next_shape = self.loss.output_shape(next_shape)
+            next_shape = layer.y_shape(next_shape)
+        next_shape = self.loss.y_shape(next_shape)
         self._initialized = True
 
     @property
@@ -52,7 +52,7 @@ class SiameseNetwork(Model):
             x2 = layer.fprop(x2, 'train')
 
         # Back propagation of partial derivatives
-        grad1, grad2 = self.loss.input_grad(y, x1, x2)
+        grad1, grad2 = self.loss.grad(y, x1, x2)
         layers = self.layers[self.bprop_until:]
         for layer in reversed(layers[1:]):
             grad1 = layer.bprop(grad1)
@@ -69,7 +69,7 @@ class SiameseNetwork(Model):
         input = Input.from_any(input)
         next_shape = input.x.shape
         for layer in self.layers:
-            next_shape = layer.output_shape(next_shape)
+            next_shape = layer.y_shape(next_shape)
         feats = np.empty(next_shape)
         idx = 0
         for x_batch in input.batches('test'):

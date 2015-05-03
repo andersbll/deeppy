@@ -56,17 +56,17 @@ def run():
         siamese_layers=[
             dp.Dropout(),
             dp.FullyConnected(
-                n_output=800,
+                n_out=800,
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
-                n_output=800,
+                n_out=800,
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
-                n_output=2,
+                n_out=2,
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
             ),
         ],

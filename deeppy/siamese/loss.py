@@ -1,5 +1,5 @@
 import cudarray as ca
-from ..feed_forward.loss import Loss
+from ..feedforward.loss import Loss
 
 
 class ContrastiveLoss(Loss):
@@ -17,7 +17,7 @@ class ContrastiveLoss(Loss):
             self._tmp_last_x2 = x2
         return self._tmp_last_dists
 
-    def input_grad(self, target, x1, x2):
+    def grad(self, target, x1, x2):
         dists = self.predict(x1, x2)
         target = ca.reshape(target, target.shape+(1,))
 
@@ -33,5 +33,5 @@ class ContrastiveLoss(Loss):
         dists = self.predict(x1, x2)
         return target*dists + (1-target)*ca.maximum(self.margin-dists, 0)
 
-    def output_shape(self, input_shape):
-        return (input_shape[0],)
+    def y_shape(self, x_shape):
+        return (x_shape[0],)

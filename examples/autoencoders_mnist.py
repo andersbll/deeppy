@@ -29,19 +29,19 @@ def run():
     sae = dp.StackedAutoencoder(
         layers=[
             dp.DenoisingAutoencoder(
-                n_output=1000,
+                n_out=1000,
                 weights=dp.Parameter(dp.AutoFiller()),
                 activation='sigmoid',
                 corruption=0.25,
             ),
             dp.DenoisingAutoencoder(
-                n_output=1000,
+                n_out=1000,
                 weights=dp.Parameter(dp.AutoFiller()),
                 activation='sigmoid',
                 corruption=0.25,
             ),
             dp.DenoisingAutoencoder(
-                n_output=1000,
+                n_out=1000,
                 weights=dp.Parameter(dp.AutoFiller()),
                 activation='sigmoid',
                 corruption=0.25,
@@ -68,9 +68,9 @@ def run():
 
     # Setup neural network using the stacked autoencoder layers
     net = dp.NeuralNetwork(
-        layers=sae.nn_layers() + [
+        layers=sae.feedforward_layers() + [
             dp.FullyConnected(
-                n_output=dataset.n_classes,
+                n_out=dataset.n_classes,
                 weights=dp.Parameter(dp.AutoFiller()),
             ),        
         ],

@@ -21,7 +21,7 @@ class NeuralNetwork(Model):
         next_shape = input.x_shape
         for layer in self.layers + [self.loss]:
             layer._setup(next_shape)
-            next_shape = layer.output_shape(next_shape)
+            next_shape = layer.y_shape(next_shape)
         if next_shape != input.y_shape:
             raise ValueError('Output shape %s does not match Y %s'
                              % (next_shape, input.y_shape))
@@ -51,9 +51,10 @@ class NeuralNetwork(Model):
         return self.loss.loss(y, y_pred)
 
     def _output_shape(self, input_shape):
+        next_shape = input_shape
         for layer in self.layers + [self.loss]:
-            input_shape = layer.output_shape(input_shape)
-        return input_shape
+            next_shape = layer.y_shape(next_shape)
+        return next_shape
 
     def predict(self, input):
         """ Calculate the output for the given input x. """

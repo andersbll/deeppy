@@ -31,21 +31,21 @@ def run():
         layers=[
             dp.Dropout(0.2),
             dp.DropoutFullyConnected(
-                n_output=800,
+                n_out=800,
                 dropout=0.5,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
                                      weight_decay=0.00001),
             ),
             dp.Activation('relu'),
             dp.DropoutFullyConnected(
-                n_output=800,
+                n_out=800,
                 dropout=0.5,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
                                      weight_decay=0.00001),
             ),
             dp.Activation('relu'),
             dp.DropoutFullyConnected(
-                n_output=dataset.n_classes,
+                n_out=dataset.n_classes,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.01),
                                      weight_decay=0.00001),
             ),

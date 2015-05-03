@@ -20,7 +20,7 @@ class Loss(PickleMixin):
             if arg == 'logreg':
                 return MultinomialLogReg()
             elif arg == 'mse':
-                return MeanSqauredError()
+                return MeanSquaredError()
             elif arg == 'bce':
                 return BinaryCrossEntropy()
         raise ValueError('Invalid constructor arguments: %s' % arg)
@@ -40,8 +40,8 @@ class Loss(PickleMixin):
         prediction. """
         raise NotImplementedError()
 
-    def output_shape(self, input_shape):
-        return input_shape
+    def y_shape(self, x_shape):
+        return x_shape
 
 
 class MultinomialLogReg(Loss):
@@ -53,8 +53,8 @@ class MultinomialLogReg(Loss):
         self._tmp_last_target = None
         self._tmp_last_target_one_hot = None
 
-    def _setup(self, input_shape):
-        self.n_classes = input_shape[1]
+    def _setup(self, x_shape):
+        self.n_classes = x_shape[1]
 
     def _softmax(self, x):
         if self._tmp_last_x is not x:
@@ -82,16 +82,16 @@ class MultinomialLogReg(Loss):
         target = self._one_hot(target)
         return -(target - y)
 
-    def output_shape(self, input_shape):
-        return (input_shape[0],)
+    def y_shape(self, x_shape):
+        return (x_shape[0],)
 
 
-class MeanSqauredError(Loss):
+class MeanSquaredError(Loss):
     def __init__(self):
         self.name = 'mse'
 
-    def _setup(self, input_shape):
-        self.n_targets = input_shape[1]
+    def _setup(self, x_shape):
+        self.n_targets = x_shape[1]
 
     def grad(self, y, y_pred):
         return 2.0 / self.n_targets * (y_pred - y)

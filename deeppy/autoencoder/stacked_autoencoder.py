@@ -1,6 +1,6 @@
 import itertools
-from ..feed_forward.layers import ParamMixin
-from ..feed_forward.loss import Loss
+from ..feedforward.layers import ParamMixin
+from ..feedforward.loss import Loss
 from .autoencoder import AutoencoderBase
 
 
@@ -86,14 +86,15 @@ class StackedAutoencoder(AutoencoderBase, ParamMixin):
         return self.loss.loss(x, z)
 
     def _output_shape(self, input_shape):
+        next_shape = input_shape
         for layer in self.layers:
-            input_shape = layer.output_shape(input_shape)
-        return input_shape
+            next_shape = layer.output_shape(next_shape)
+        return next_shape
 
     def ae_models(self):
         for i, ae in enumerate(self.layers):
             yield StackedAutoencoderLayer(ae, self.layers[:i])
 
-    def nn_layers(self):
-        nn_layers = [ae.nn_layers() for ae in self.layers]
-        return list(itertools.chain.from_iterable(nn_layers))
+    def feedforward_layers(self):
+        feedforward_layers = [ae.feedforward_layers() for ae in self.layers]
+        return list(itertools.chain.from_iterable(feedforward_layers))

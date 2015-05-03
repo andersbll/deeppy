@@ -33,7 +33,7 @@ def run():
     }
     net = dp.NeuralNetwork(
         layers=[
-            dp.Convolutional(
+            dp.Convolution(
                 n_filters=32,
                 filter_shape=(5, 5),
                 border_mode='same',
@@ -42,7 +42,7 @@ def run():
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
-            dp.Convolutional(
+            dp.Convolution(
                 n_filters=32,
                 filter_shape=(5, 5),
                 border_mode='same',
@@ -51,7 +51,7 @@ def run():
             ),
             dp.Activation('relu'),
             dp.Pool(**pool_kwargs),
-            dp.Convolutional(
+            dp.Convolution(
                 n_filters=64,
                 filter_shape=(5, 5),
                 border_mode='same',
@@ -62,13 +62,13 @@ def run():
             dp.Pool(**pool_kwargs),
             dp.Flatten(),
             dp.FullyConnected(
-                n_output=64,
+                n_out=64,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
                                      weight_decay=0.004),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
-                n_output=dataset.n_classes,
+                n_out=dataset.n_classes,
                 weights=dp.Parameter(dp.NormalFiller(sigma=0.1),
                                      weight_decay=0.004),
             ),

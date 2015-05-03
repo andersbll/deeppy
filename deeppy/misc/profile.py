@@ -17,21 +17,21 @@ def avg_running_time(fun, reps):
 def profile(neuralnet, input, reps=50):
     input = Input.from_any(input)
     neuralnet._setup(input)
-    batch = next(input.supervised_batches())
-    layer_input = batch[0]
+    batch = next(input.batches())
+    x = batch[0]
     total_duration = 0
     for layer_idx, layer in enumerate(neuralnet.layers[:-1]):
         def fprop():
-            layer.fprop(layer_input, 'train')
+            layer.fprop(x, 'train')
         fprop_duration = avg_running_time(fprop, reps)
-        layer_output = layer.fprop(layer_input, 'train')
+        y = layer.fprop(x, 'train')
 
         def bprop():
-            layer.bprop(layer_output)
+            layer.bprop(y)
         bprop_duration = avg_running_time(bprop, reps)
         print('%s:   \tfprop(): %.6f s \t bprop(): %.6f s'
               % (layer.name, fprop_duration, bprop_duration))
-        layer_input = layer_output
+        x = y
         total_duration += fprop_duration + bprop_duration
     print('total_duration: %.6f s' % total_duration)
 

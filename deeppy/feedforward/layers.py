@@ -4,22 +4,22 @@ from ..parameter import Parameter
 
 
 class Layer(PickleMixin):
-    def _setup(self, input_shape):
+    def _setup(self, x_shape):
         """ Setup layer with parameters that are unknown at __init__(). """
         pass
 
-    def fprop(self, X, phase):
+    def fprop(self, x, phase):
         """ Calculate layer output for given input (forward propagation). """
         raise NotImplementedError()
 
-    def bprop(self, Y_grad):
+    def bprop(self, y_grad):
         """ Calculate input gradient. """
         raise NotImplementedError()
 
-    def output_shape(self, input_shape):
+    def y_shape(self, x_shape):
         """ Calculate shape of this layer's output.
-        input_shape[0] is the number of samples in the input.
-        input_shape[1:] is the shape of the feature.
+        x_shape[0] is the number of samples in the input.
+        x_shape[1:] is the shape of the feature.
         """
         raise NotImplementedError()
 
@@ -41,16 +41,15 @@ class ParamMixin(object):
 
 
 class FullyConnected(Layer, ParamMixin):
-    def __init__(self, n_output, weights, bias=0.0):
+    def __init__(self, n_out, weights, bias=0.0):
         self.name = 'fullconn'
-        self.n_output = n_output
+        self.n_out = n_out
         self.W = Parameter.from_any(weights)
         self.b = Parameter.from_any(bias)
 
-    def _setup(self, input_shape):
-        n_input = input_shape[1]
-        W_shape = (n_input, self.n_output)
-        b_shape = self.n_output
+    def _setup(self, x_shape):
+        W_shape = (x_shape[1], self.n_out)
+        b_shape = self.n_out
         self.W._setup(W_shape)
         if not self.W.name:
             self.W.name = self.name + '_W'
@@ -76,8 +75,8 @@ class FullyConnected(Layer, ParamMixin):
     def _params(self, params):
         self.W, self.b = params
 
-    def output_shape(self, input_shape):
-        return (input_shape[0], self.n_output)
+    def y_shape(self, x_shape):
+        return (x_shape[0], self.n_out)
 
 
 class Activation(Layer):
@@ -106,5 +105,5 @@ class Activation(Layer):
         self.fun_d(self._tmp_last_x, self._tmp_last_x)
         return self._tmp_last_x * y_grad
 
-    def output_shape(self, input_shape):
-        return input_shape
+    def y_shape(self, x_shape):
+        return x_shape

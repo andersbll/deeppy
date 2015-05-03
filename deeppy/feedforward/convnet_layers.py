@@ -15,7 +15,7 @@ def padding(win_shape, border_mode):
         raise ValueError('invalid mode: "%s"' % border_mode)
 
 
-class Convolutional(Layer, ParamMixin):
+class Convolution(Layer, ParamMixin):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
                  strides=(1, 1), border_mode='valid'):
         self.name = 'conv'
@@ -26,8 +26,8 @@ class Convolutional(Layer, ParamMixin):
         pad = padding(filter_shape, border_mode)
         self.conv_op = ca.nnet.ConvBC01(pad, strides)
 
-    def _setup(self, input_shape):
-        n_channels = input_shape[1]
+    def _setup(self, x_shape):
+        n_channels = x_shape[1]
         W_shape = (self.n_filters, n_channels) + self.filter_shape
         b_shape = (1, self.n_filters, 1, 1)
         self.W._setup(W_shape)
@@ -59,8 +59,8 @@ class Convolutional(Layer, ParamMixin):
     def _params(self, params):
         self.W, self.b = params
 
-    def output_shape(self, input_shape):
-        return self.conv_op.output_shape(input_shape, self.n_filters,
+    def y_shape(self, x_shape):
+        return self.conv_op.output_shape(x_shape, self.n_filters,
                                          self.filter_shape)
 
 
@@ -80,8 +80,8 @@ class Pool(Layer):
         x_grad = self.pool_op.bprop(self.last_img_shape, y_grad)
         return x_grad
 
-    def output_shape(self, input_shape):
-        return self.pool_op.output_shape(input_shape)
+    def y_shape(self, x_shape):
+        return self.pool_op.output_shape(x_shape)
 
 
 class LocalResponseNormalization(Layer):
@@ -91,16 +91,16 @@ class LocalResponseNormalization(Layer):
         self.n = n
         self.k = k
 
-    def fprop(self, input, phase):
-        input = ca.lrnorm_bc01(input, N=self.n, alpha=self.alpha,
-                               beta=self.beta, k=self.k)
-        return input
+    def fprop(self, x, phase):
+        x = ca.lrnorm_bc01(x, N=self.n, alpha=self.alpha, beta=self.beta,
+                           k=self.k)
+        return x
 
     def bprop(self, Y_grad):
         return Y_grad
 
-    def output_shape(self, input_shape):
-        return input_shape
+    def y_shape(self, x_shape):
+        return x_shape
 
 
 class LocalContrastNormalization(Layer):
@@ -124,8 +124,8 @@ class LocalContrastNormalization(Layer):
         pad = padding(kernel.shape[-2:], 'same')
         self.conv_op = ca.nnet.ConvBC01(pad, strides)
 
-    def _setup(self, input_shape):
-        n_channels = input_shape[1]
+    def _setup(self, x_shape):
+        n_channels = x_shape[1]
         if self.kernel.ndim == 2:
             self.kernel = np.repeat(self.kernel[np.newaxis, np.newaxis, ...],
                                     n_channels, axis=1)
@@ -158,18 +158,18 @@ class LocalContrastNormalization(Layer):
         raise NotImplementedError('LocalContrastNormalization supports only '
                                   'usage as a preprocessing layer.')
 
-    def output_shape(self, input_shape):
-        return input_shape
+    def y_shape(self, x_shape):
+        return x_shape
 
 
 class Flatten(Layer):
     def fprop(self, x, phase):
         self.name = 'flatten'
         self.last_x_shape = x.shape
-        return ca.reshape(x, self.output_shape(x.shape))
+        return ca.reshape(x, self.y_shape(x.shape))
 
     def bprop(self, y_grad):
         return ca.reshape(y_grad, self.last_x_shape)
 
-    def output_shape(self, input_shape):
-        return (input_shape[0], np.prod(input_shape[1:]))
+    def y_shape(self, x_shape):
+        return (x_shape[0], np.prod(x_shape[1:]))

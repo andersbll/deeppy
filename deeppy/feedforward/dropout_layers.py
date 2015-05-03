@@ -7,42 +7,42 @@ class Dropout(Layer):
         self.name = 'dropout'
         self.dropout = dropout
 
-    def fprop(self, X, phase):
+    def fprop(self, x, phase):
         if self.dropout > 0.0:
             if phase == 'train':
-                self._tmp_mask = self.dropout < ca.random.uniform(size=X.shape)
-                Y = X * self._tmp_mask
+                self._tmp_mask = self.dropout < ca.random.uniform(size=x.shape)
+                y = x * self._tmp_mask
             elif phase == 'test':
-                Y = X * (1.0 - self.dropout)
-        return Y
+                y = x * (1.0 - self.dropout)
+        return y
 
-    def bprop(self, Y_grad):
+    def bprop(self, y_grad):
         if self.dropout > 0.0:
-            return Y_grad * self._tmp_mask
+            return y_grad * self._tmp_mask
         else:
-            return Y_grad
+            return y_grad
 
-    def output_shape(self, input_shape):
-        return input_shape
+    def y_shape(self, x_shape):
+        return x_shape
 
 
 class DropoutFullyConnected(FullyConnected):
-    def __init__(self, n_output, weights, bias=0.0, dropout=0.5):
+    def __init__(self, n_out, weights, bias=0.0, dropout=0.5):
         super(DropoutFullyConnected, self).__init__(
-            n_output=n_output, weights=weights, bias=bias
+            n_out=n_out, weights=weights, bias=bias
         )
         self.name = 'fc_drop'
         self.dropout = dropout
 
-    def fprop(self, X, phase):
-        Y = super(DropoutFullyConnected, self).fprop(X, phase)
+    def fprop(self, x, phase):
+        y = super(DropoutFullyConnected, self).fprop(x, phase)
         if self.dropout > 0.0:
             if phase == 'train':
-                self._tmp_mask = self.dropout < ca.random.uniform(size=Y.shape)
-                Y *= self._tmp_mask
+                self._tmp_mask = self.dropout < ca.random.uniform(size=y.shape)
+                y *= self._tmp_mask
             elif phase == 'test':
-                Y *= (1.0 - self.dropout)
-        return Y
+                y *= (1.0 - self.dropout)
+        return y
 
     def bprop(self, y_grad, to_x=True):
         if self.dropout > 0.0:

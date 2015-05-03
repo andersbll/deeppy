@@ -12,12 +12,12 @@ def run():
         dp.Activation('sigmoid'),
         dp.Activation('tanh'),
         dp.FullyConnected(
-            n_output=3,
+            n_out=3,
             weights=dp.AutoFiller(),
         ),
         dp.Dropout(0.2),
         dp.DropoutFullyConnected(
-            n_output=10,
+            n_out=10,
             weights=dp.AutoFiller(),
             dropout=0.5,
         ),
@@ -29,13 +29,13 @@ def run():
         dp.misc.check_bprop(layer, x)
 
     conv_layers = [
-        dp.Convolutional(
+        dp.Convolution(
             n_filters=32,
             filter_shape=(3, 3),
             border_mode='same',
             weights=dp.AutoFiller(),
         ),
-        dp.Convolutional(
+        dp.Convolution(
             n_filters=32,
             filter_shape=(5, 5),
             border_mode='valid',

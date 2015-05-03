@@ -1,6 +1,6 @@
 import cudarray as ca
-from ..feed_forward.layers import ParamMixin, Activation, FullyConnected
-from ..feed_forward.loss import Loss
+from ..feedforward.layers import ParamMixin, Activation, FullyConnected
+from ..feedforward.loss import Loss
 from ..base import Model, PickleMixin
 from ..parameter import Parameter
 
@@ -20,10 +20,10 @@ class AutoencoderBase(object):
 
 
 class Autoencoder(Model, AutoencoderBase, ParamMixin, PickleMixin):
-    def __init__(self, n_output, weights, bias=0.0, activation='sigmoid',
+    def __init__(self, n_out, weights, bias=0.0, activation='sigmoid',
                  loss='bce'):
         self.name = 'autoenc'
-        self.n_output = n_output
+        self.n_out = n_out
         self.activation = Activation(activation)
         self.activation_decode = Activation(activation)
         self.loss = Loss.from_any(loss)
@@ -37,8 +37,8 @@ class Autoencoder(Model, AutoencoderBase, ParamMixin, PickleMixin):
             return
         next_shape = input.x_shape
         n_input = next_shape[1]
-        W_shape = (n_input, self.n_output)
-        b_shape = self.n_output
+        W_shape = (n_input, self.n_out)
+        b_shape = self.n_out
         b_prime_shape = n_input
         self.W._setup(W_shape)
         if not self.W.name:
@@ -49,7 +49,7 @@ class Autoencoder(Model, AutoencoderBase, ParamMixin, PickleMixin):
         self.b_prime._setup(b_prime_shape)
         if not self.b_prime.name:
             self.b_prime.name = self.name + '_b_prime'
-        self.loss._setup((next_shape[0], self.n_output))
+        self.loss._setup((next_shape[0], self.n_out))
         self._initialized = True
 
     @property
@@ -61,7 +61,7 @@ class Autoencoder(Model, AutoencoderBase, ParamMixin, PickleMixin):
         self.W, self.b, self.b_prime = params
 
     def output_shape(self, input_shape):
-        return (input_shape[0], self.n_output)
+        return (input_shape[0], self.n_out)
 
     def encode(self, x):
         self._tmp_last_x = x
@@ -96,17 +96,17 @@ class Autoencoder(Model, AutoencoderBase, ParamMixin, PickleMixin):
         self.encode_bprop(y_grad)
         return self.loss.loss(x, x_prime)
 
-    def nn_layers(self):
-        return [FullyConnected(self.n_output, self.W.array, self.b.array),
+    def feedforward_layers(self):
+        return [FullyConnected(self.n_out, self.W.array, self.b.array),
                 self.activation]
 
 
 class DenoisingAutoencoder(Autoencoder):
-    def __init__(self, n_output, weights, bias=0.0, activation='sigmoid',
+    def __init__(self, n_out, weights, bias=0.0, activation='sigmoid',
                  loss='bce', corruption=0.25):
         super(DenoisingAutoencoder, self).__init__(
-            n_output=n_output, weights=weights, bias=bias,
-            activation=activation, loss=loss
+            n_out=n_out, weights=weights, bias=bias, activation=activation,
+            loss=loss
         )
         self.corruption = corruption
 

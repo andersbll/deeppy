@@ -1,6 +1,6 @@
 import numpy as np
 import cudarray as ca
-from ..feed_forward import ParamMixin
+from ..feedforward import ParamMixin
 
 
 def approx_fprime(xk, f, epsilon, *args):
@@ -27,24 +27,24 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
     # depending on the cudarray back-end.
     if eps is None:
         eps = np.sqrt(np.finfo(ca.float_).eps)
-    input_shape = x0.shape
-    layer._setup(input_shape)
+    x_shape = x0.shape
+    layer._setup(x_shape)
 
     # Check bprop to input
     def func(x):
         ca.random.seed(random_seed)
-        x = ca.array(np.reshape(x, input_shape))
+        x = ca.array(np.reshape(x, x_shape))
         out = layer.fprop(ca.array(x), 'train')
         y = ca.sum(out)
         return np.array(y)
 
     def grad(x):
         ca.random.seed(random_seed)
-        x = ca.array(np.reshape(x, input_shape))
+        x = ca.array(np.reshape(x, x_shape))
         out = layer.fprop(ca.array(x), 'train')
-        out_grad = ca.ones_like(out, dtype=np.float32)
-        input_grad = layer.bprop(out_grad)
-        return np.ravel(np.array(input_grad))
+        y_grad = ca.ones_like(out, dtype=np.float32)
+        x_grad = layer.bprop(y_grad)
+        return np.ravel(np.array(x_grad))
 
     err = check_grad(func, grad, np.ravel(x0), eps)
     print('%s_input: %.2e' % (layer.name, err))
@@ -68,8 +68,8 @@ def check_bprop(layer, x0, eps=None, random_seed=123456):
             param_vals *= 0
             param_vals += ca.array(np.reshape(x, param_vals.shape))
             out = layer.fprop(ca.array(x0), 'train')
-            out_grad = ca.ones_like(out, dtype=np.float32)
-            layer.bprop(out_grad)
+            y_grad = ca.ones_like(out, dtype=np.float32)
+            layer.bprop(y_grad)
             param_grad = layer._params[p_idx].grad()
             return np.ravel(np.array(param_grad))
 

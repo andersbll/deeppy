@@ -29,7 +29,7 @@ def run():
     # Setup neural network
     net = dp.NeuralNetwork(
         layers=[
-            dp.Convolutional(
+            dp.Convolution(
                 n_filters=32,
                 filter_shape=(5, 5),
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
@@ -40,7 +40,7 @@ def run():
                 strides=(2, 2),
                 method='max',
             ),
-            dp.Convolutional(
+            dp.Convolution(
                 n_filters=64,
                 filter_shape=(5, 5),
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
@@ -53,11 +53,11 @@ def run():
             ),
             dp.Flatten(),
             dp.FullyConnected(
-                n_output=128,
+                n_out=128,
                 weights=dp.Parameter(dp.AutoFiller()),
             ),
             dp.FullyConnected(
-                n_output=dataset.n_classes,
+                n_out=dataset.n_classes,
                 weights=dp.Parameter(dp.AutoFiller()),
             ),
         ],
@@ -75,7 +75,7 @@ def run():
 
     # Visualize convolutional filters to disk
     for l, layer in enumerate(net.layers):
-        if not isinstance(layer, dp.Convolutional):
+        if not isinstance(layer, dp.Convolution):
             continue
         W = np.array(layer.W.array)
         filepath = os.path.join('mnist', 'conv_layer_%i.png' % l)

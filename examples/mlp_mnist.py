@@ -30,17 +30,17 @@ def run():
     net = dp.NeuralNetwork(
         layers=[
             dp.FullyConnected(
-                n_output=800,
+                n_out=800,
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
-                n_output=800,
+                n_out=800,
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
             dp.Activation('relu'),
             dp.FullyConnected(
-                n_output=dataset.n_classes,
+                n_out=dataset.n_classes,
                 weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
             ),
         ],
