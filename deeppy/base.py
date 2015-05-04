@@ -1,7 +1,6 @@
 import numpy as np
 import cudarray as ca
 import logging
-from .fillers import Filler
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

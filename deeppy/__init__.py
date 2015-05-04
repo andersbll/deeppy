@@ -1,4 +1,4 @@
-from . import datasets
+from . import dataset
 from . import misc
 from .autoencoder import Autoencoder, DenoisingAutoencoder, StackedAutoencoder
 from .base import bool_, int_, float_
@@ -8,7 +8,7 @@ from .feedforward import (
     DropoutFullyConnected, Convolution, Flatten, Pool,
     LocalContrastNormalization, LocalResponseNormalization,
 )
-from .fillers import (
+from .filler import (
     AutoFiller, CopyFiller, ConstantFiller, NormalFiller, UniformFiller,
 )
 from .parameter import Parameter

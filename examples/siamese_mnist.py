@@ -13,7 +13,7 @@ import deeppy as dp
 
 def run():
     # Prepare MNIST data
-    dataset = dp.datasets.MNIST()
+    dataset = dp.dataset.MNIST()
     x, y = dataset.data(flat=True)
     x = x.astype(dp.float_)
     y = y.astype(dp.int_)

@@ -8,7 +8,7 @@ import deeppy as dp
 
 def run():
     # Prepare data
-    dataset = dp.datasets.CIFAR10()
+    dataset = dp.dataset.CIFAR10()
     x, y = dataset.data()
     x = x.astype(dp.float_)
     y = y.astype(dp.int_)

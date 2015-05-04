@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .base import PickleMixin
-from .fillers import Filler
+from .filler import Filler
 
 
 class Parameter(PickleMixin):

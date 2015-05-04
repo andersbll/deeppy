@@ -8,7 +8,7 @@ import deeppy as dp
 
 def run():
     # Prepare data
-    dataset = dp.datasets.MNIST()
+    dataset = dp.dataset.MNIST()
     x, y = dataset.data()
     x = x.astype(dp.float_)[:, np.newaxis, :, :]
     y = y.astype(dp.int_)
