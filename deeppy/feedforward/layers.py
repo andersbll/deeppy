@@ -91,3 +91,37 @@ class Activation(Layer):
 
     def y_shape(self, x_shape):
         return x_shape
+
+
+class PReLU(Layer, ParamMixin):
+    def __init__(self, a=0.25):
+        self.name = 'prelu'
+        self.a = Parameter.from_any(a)
+
+    def _setup(self, x_shape):
+        self.a._setup((1,))
+        self.a.name = self.name + '_a'
+
+    @property
+    def _params(self):
+        return [self.a]
+
+    @_params.setter
+    def _params(self, params):
+        self.a = params[0]
+
+    def fprop(self, x, phase):
+        self._tmp_last_x = x
+        pos = ca.maximum(x, 0)
+        neg = self.a.array * ca.minimum(x, 0)
+        return pos + neg
+
+    def bprop(self, y_grad, to_x=True):
+        pos = ca.nnet.relu_d(self._tmp_last_x)
+        neg_mask = self._tmp_last_x < 0
+        a_grad = neg_mask * self._tmp_last_x * y_grad
+        ca.sum(a_grad, out=self.a.grad_array)
+        return (pos + self.a.array * neg_mask) * y_grad
+
+    def y_shape(self, x_shape):
+        return x_shape

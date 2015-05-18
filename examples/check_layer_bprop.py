@@ -11,6 +11,7 @@ def run():
         dp.Activation('relu'),
         dp.Activation('sigmoid'),
         dp.Activation('tanh'),
+        dp.PReLU(),
         dp.FullyConnected(
             n_out=3,
             weights=dp.AutoFiller(),

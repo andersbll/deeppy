@@ -5,7 +5,7 @@ from .base import bool_, int_, float_
 from .input import Input, SupervisedInput
 from .feedforward import (
     NeuralNetwork, FullyConnected, Activation, MultinomialLogReg, Dropout,
-    DropoutFullyConnected, Convolution, Flatten, Pool,
+    DropoutFullyConnected, Convolution, Flatten, Pool, PReLU,
     LocalContrastNormalization, LocalResponseNormalization,
 )
 from .filler import (
