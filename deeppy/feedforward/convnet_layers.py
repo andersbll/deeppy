@@ -48,10 +48,9 @@ class Convolution(Layer, ParamMixin):
             self._tmp_last_x, self.W.array, y_grad, to_imgs=to_x,
             filters_d=self.W.grad_array
         )
-        if to_x:
-            ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
-                   keepdims=True, out=self.b.grad_array)
-            return x_grad
+        ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
+               keepdims=True, out=self.b.grad_array)
+        return x_grad
 
     @property
     def _params(self):
@@ -118,6 +117,7 @@ class LocalContrastNormalization(Layer):
         return kernel/np.sum(kernel)
 
     def __init__(self, kernel, eps=0.1, strides=(1, 1)):
+        self.name = 'lcn'
         self.eps = eps
         if kernel.ndim == 1:
             kernel = np.outer(kernel, kernel)
@@ -166,8 +166,10 @@ class LocalContrastNormalization(Layer):
 
 
 class Flatten(Layer):
-    def fprop(self, x, phase):
+    def __init__(self):
         self.name = 'flatten'
+
+    def fprop(self, x, phase):
         self.last_x_shape = x.shape
         return ca.reshape(x, self.y_shape(x.shape))
 
