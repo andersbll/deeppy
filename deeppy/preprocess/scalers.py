@@ -12,19 +12,21 @@ class StandardScaler:
         self._x_mean = np.mean(x)
         self._x_std = np.std(x)
 
-    def fit_transform(self, x):
+    def fit_transform(self, x, copy=True):
         self.fit(x)
-        return self.transform(x)
+        return self.transform(x, copy)
 
-    def transform(self, x):
-        x = np.copy(x)
+    def transform(self, x, copy=True):
+        if copy:
+            x = np.copy(x)
         x -= self._x_mean
         x *= self.std / self._x_std
         x += self.mean
         return x
 
-    def inverse_transform(self, x):
-        x = np.copy(x)
+    def inverse_transform(self, x, copy=True):
+        if copy:
+            x = np.copy(x)
         x -= self.mean
         x /= self.std / self._x_std
         x += self._x_mean
@@ -42,19 +44,21 @@ class UniformScaler:
         self._min = np.min(x)
         self._max = np.max(x)
 
-    def fit_transform(self, x):
+    def fit_transform(self, x, copy=True):
         self.fit(x)
-        return self.transform(x)
+        return self.transform(x, copy)
 
-    def transform(self, x):
-        x = np.copy(x)
+    def transform(self, x, copy=True):
+        if copy:
+            x = np.copy(x)
         x -= self._min
         x *= (self.high - self.low) / (self._max - self._min)
         x += self.low
         return x
 
-    def inverse_transform(self, x):
-        x = np.copy(x)
+    def inverse_transform(self, x, copy=True):
+        if copy:
+            x = np.copy(x)
         x -= self.low
         x /= (self.high - self.low) / (self._max - self._min)
         x += self._min
