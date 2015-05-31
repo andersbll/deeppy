@@ -5,7 +5,7 @@ import scipy as sp
 import logging
 
 from .dataset import Dataset
-from .file_util import touch
+from .util import touch
 
 logger = logging.getLogger(__name__)
 

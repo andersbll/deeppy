@@ -1,10 +1,10 @@
 import os
-import struct
 import numpy as np
 import logging
 
 from .dataset import Dataset
-from .file_util import touch
+from .util import touch, load_idx
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,27 +21,6 @@ _SHA1S = [
     'c3a25af1f52dad7f726cce8cacb138654b760d48',
     '763e7fa3757d93b0cdec073cef058b2004252c17',
 ]
-
-
-def _read_int(buf):
-    return struct.unpack('>i', buf.read(4))[0]
-
-
-def _read_idx(filepath):
-    with open(filepath, 'rb') as f:
-        magic = _read_int(f)
-        n = _read_int(f)
-        if magic == 2051:
-            height = _read_int(f)
-            width = _read_int(f)
-            shape = (n, height, width)
-        elif magic == 2049:
-            shape = n
-        else:
-            raise RuntimeError('could not parse header correctly')
-        a = np.fromfile(f, dtype='B', count=np.prod(shape))
-        a = np.reshape(a, shape)
-    return a
 
 
 class MNIST(Dataset):
@@ -64,7 +43,7 @@ class MNIST(Dataset):
         self.n_train = 60000
         self.img_shape = (28, 28)
         self._install()
-        self.x, self.y = self._read()
+        self.x, self.y = self._load()
 
     def data(self, flat=False):
         if flat:
@@ -88,7 +67,7 @@ class MNIST(Dataset):
         filenames = ['train-images-idx3-ubyte', 'train-labels-idx1-ubyte',
                      't10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte']
         filenames = [os.path.join(self.data_dir, f) for f in filenames]
-        x_train, y_train, x_test, y_test = map(_read_idx, filenames)
+        x_train, y_train, x_test, y_test = map(load_idx, filenames)
         x = np.vstack([x_train, x_test])
         y = np.hstack([y_train, y_test])
         if x.shape[0] != y.shape[0] != self.n_train + self.n_test:
@@ -97,7 +76,7 @@ class MNIST(Dataset):
             np.savez(f, x=x, y=y)
         touch(checkpoint)
 
-    def _read(self):
+    def _load(self):
         with open(self._data_file, 'rb') as f:
             dic = np.load(f)
             x = dic['x']

@@ -2,7 +2,7 @@ import os
 import shutil
 import logging
 
-from .file_util import checksum, download, archive_extract, is_archive, touch
+from .util import checksum, download, archive_extract, is_archive, touch
 
 
 logger = logging.getLogger(__name__)

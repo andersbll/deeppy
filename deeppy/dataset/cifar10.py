@@ -31,7 +31,7 @@ class CIFAR10(Dataset):
         self.img_shape = (3, 32, 32)
         self.data_dir = os.path.join(data_root, self.name)
         self._install()
-        self.x, self.y = self._read()
+        self.x, self.y = self._load()
 
     def data(self):
         return self.x, self.y
@@ -45,7 +45,7 @@ class CIFAR10(Dataset):
         self._download(_URLS, _SHA1S)
         self._unpack()
 
-    def _read(self):
+    def _load(self):
         dirpath = os.path.join(self.data_dir, 'cifar-10-batches-py')
         filenames = ['data_batch_1', 'data_batch_2', 'data_batch_3',
                      'data_batch_4', 'data_batch_5', 'test_batch']

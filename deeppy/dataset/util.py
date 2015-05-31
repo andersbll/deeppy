@@ -5,6 +5,8 @@ import tarfile
 import zipfile
 import gzip
 import hashlib
+import numpy as np
+import struct
 from subprocess import Popen
 
 
@@ -24,10 +26,10 @@ def download(url, target_dir, sha1=None, filename=None):
 
 
 def is_archive(filepath):
-    return (tarfile.is_tarfile(filepath)
-            or zipfile.is_zipfile(filepath)
-            or filepath[-3:].lower() == '.gz'
-            or filepath[-2:].lower() == '.z')
+    return (tarfile.is_tarfile(filepath) or
+            zipfile.is_zipfile(filepath) or
+            filepath[-3:].lower() == '.gz' or
+            filepath[-2:].lower() == '.z')
 
 
 def archive_extract(filepath, target_dir):
@@ -38,7 +40,7 @@ def archive_extract(filepath, target_dir):
                 abs_path = os.path.abspath(os.path.join(target_dir, n))
                 if not abs_path.startswith(target_dir):
                     raise RuntimeError('Archive tries to extract files '
-                                       + 'outside target_dir.')
+                                       'outside target_dir.')
             tarf.extractall(target_dir)
     elif zipfile.is_zipfile(filepath):
         with zipfile.ZipFile(filepath, 'r') as zipf:
@@ -50,7 +52,7 @@ def archive_extract(filepath, target_dir):
     elif filepath[-2:].lower() == '.z':
         if os.name != 'posix':
             raise NotImplementedError('Only Linux and Mac OS X support .Z '
-                                      + 'compression.')
+                                      'compression.')
         filepath_out, _ = os.path.splitext(os.path.abspath(filepath))
         cmd = 'gzip -d %s' % filepath
         retval = Popen(cmd, shell=True).wait()
@@ -64,3 +66,24 @@ def archive_extract(filepath, target_dir):
 def checksum(filename):
     data = open(filename, 'rb').read()
     return hashlib.sha1(data).hexdigest()
+
+
+def _read_int(buf):
+    return struct.unpack('>i', buf.read(4))[0]
+
+
+def load_idx(filepath):
+    with open(filepath, 'rb') as f:
+        magic = _read_int(f)
+        n = _read_int(f)
+        if magic == 2051:
+            height = _read_int(f)
+            width = _read_int(f)
+            shape = (n, height, width)
+        elif magic == 2049:
+            shape = n
+        else:
+            raise RuntimeError('could not parse header correctly')
+        a = np.fromfile(f, dtype='B', count=np.prod(shape))
+        a = np.reshape(a, shape)
+    return a
