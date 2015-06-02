@@ -38,9 +38,22 @@ class InfiMNIST(Dataset):
         self._data_file = os.path.join(self.data_dir, 'infimnist.npz')
         self.n_classes = 10
         self.img_shape = (28, 28)
+        self._infimnist_start = 10000
+        self._infimnist_stop = 8109999
         self._install()
         self.x, self.y = self._load()
         self.n_samples = self.x.shape[0]
+
+    def split(self, n_val=10000):
+        infimnist_idxs = np.arange(self._infimnist_start, self._infimnist_stop)
+        # Map InfiMNIST indices to MNIST indices according to infimnist.c
+        testnum = 10000
+        trainnum = 60000
+        mnist_idxs = (infimnist_idxs - testnum) % trainnum
+        # Use the last n_val digits for validation
+        train_idx = mnist_idxs < (trainnum - n_val)
+        val_idx = np.logical_not(train_idx)
+        return train_idx, val_idx
 
     def data(self, flat=False):
         if flat:
@@ -67,10 +80,12 @@ class InfiMNIST(Dataset):
         lab_file = os.path.join(cwd, 'mnist8m-labels-idx1-ubyte')
         pat_file = os.path.join(cwd, 'mnist8m-patterns-idx3-ubyte')
         with open(lab_file, 'wb') as out:
-            Popen(['./infimnist', 'lab', '10000', '8109999'], stdout=out,
+            Popen(['./infimnist', 'lab', str(self._infimnist_start),
+                   str(self._infimnist_stop)], stdout=out,
                   cwd=cwd).wait()
         with open(pat_file, 'wb') as out:
-            Popen(['./infimnist', 'pat', '10000', '8109999'], stdout=out,
+            Popen(['./infimnist', 'pat', str(self._infimnist_start),
+                   str(self._infimnist_stop)], stdout=out,
                   cwd=cwd).wait()
 
         logger.info('Converting InfiMNIST data to Numpy arrays')
