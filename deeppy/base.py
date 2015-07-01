@@ -1,4 +1,3 @@
-import numpy as np
 import cudarray as ca
 import logging
 
@@ -35,5 +34,5 @@ class Model(ParamMixin):
 
 class PickleMixin(object):
     def __getstate__(self):
-        return dict((k, v) for k, v in self.__dict__.items()
-                    if not k.startswith('_tmp_'))
+        return dict((k, None) if k.startswith('_tmp_') else (k, v)
+                    for k, v in self.__dict__.items())
