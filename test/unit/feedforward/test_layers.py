@@ -1,6 +1,5 @@
 import itertools
 import numpy as np
-import scipy.optimize
 import cudarray as ca
 import deeppy as dp
 from copy import copy
@@ -14,7 +13,6 @@ n_outs = [1, 2, 8, 7, 25]
 
 def allclose(a, b, rtol=None, atol=None):
     if ca.float_ == np.float32:
-        # Higher tolerances when CUDArray uses a float32 backend.
         rtol = 1e-04 if rtol is None else rtol
         atol = 1e-06 if atol is None else atol
     else:
@@ -23,64 +21,89 @@ def allclose(a, b, rtol=None, atol=None):
     return np.allclose(a, b, rtol, atol)
 
 
-def grad_close(func, grad, x0, eps, *args):
-    if ca.float_ == np.float64:
-        rtol, atol = 1e-04, 1e-05
+def gradclose(a, b, rtol=None, atol=None):
+    if ca.float_ == np.float32:
+        rtol = 1e-05 if rtol is None else rtol
+        atol = 1e-07 if atol is None else atol
     else:
-        rtol, atol = 1e-03, 1e-03
-    grad_true = grad(x0, *args)
-    grad_approx = scipy.optimize.approx_fprime(x0, func, eps, *args)
-    return allclose(grad_true, grad_approx, rtol=rtol, atol=atol)
+
+        rtol = 1e-06 if rtol is None else rtol
+        atol = 1e-08 if atol is None else atol
+    diff = abs(abs(a - b) - atol + rtol * 0.5 * (abs(a) + abs(b)))
+    is_close = np.all(diff > 0)
+    if not is_close:
+        denom = 0.5 * (abs(a) + abs(b))
+        mask = denom == 0
+        rel_error = abs(a - b) / (denom + mask)
+        rel_error[mask] = 0
+        rel_error = np.max(rel_error)
+        abs_error = np.max(abs(a - b))
+        print('rel_error=%.4e, abs_error=%.4e, rtol=%.2e, atol=%.2e'
+              % (rel_error, abs_error, rtol, atol))
+    return is_close
 
 
-def check_grad(layer, x0, eps=None, seed=1):
+def approx_fprime(x, f, eps=None, *args):
+    '''
+    Central difference approximation of the gradient of a scalar function.
+    '''
     if eps is None:
         eps = np.sqrt(np.finfo(ca.float_).eps)
+    grad = np.zeros_like(x)
+    step = np.zeros_like(x)
+    for idx in np.ndindex(x.shape):
+        step[idx] = eps * max(abs(x[idx]), 1.0)
+        grad[idx] = (f(*((x+step,) + args)) -
+                     f(*((x-step,) + args))) / (2*step[idx])
+        step[idx] = 0.0
+    return grad
 
+
+def check_grad(layer, x0, seed=1, eps=None, rtol=None, atol=None):
+    '''
+    Numerical gradient checking of layer bprop.
+    '''
     # Check input gradient
-    def func(x):
+    def fun(x):
         ca.random.seed(seed)
-        x = np.reshape(x, x0.shape)
         y = np.array(layer.fprop(ca.array(x), 'train')).astype(np.float_)
         return np.sum(y)
 
-    def grad(x):
-        ca.random.seed(seed)
-        x = np.reshape(x, x0.shape)
+    def fun_grad(x):
         y = layer.fprop(ca.array(x), 'train')
         y_grad = ca.ones_like(y, dtype=ca.float_)
         x_grad = np.array(layer.bprop(y_grad))
-        return np.ravel(x_grad)
+        return x_grad
 
-    assert grad_close(func, grad, np.ravel(x0), eps)
+    g_approx = approx_fprime(x0, fun, eps)
+    g_true = fun_grad(x0)
+    assert gradclose(g_true, g_approx, rtol, atol)
 
     # Check parameter gradients
     if isinstance(layer, ParamMixin):
-        def func(x, *args):
+        def fun(x, p_idx):
             ca.random.seed(seed)
-            p_idx = args[0]
-            param_vals = layer._params[p_idx].array
-            param_vals *= 0
-            param_vals += ca.array(np.reshape(x, param_vals.shape))
+            param_array = layer._params[p_idx].array
+            param_array *= 0
+            param_array += ca.array(x)
             y = np.array(layer.fprop(ca.array(x0), 'train')).astype(np.float_)
             return np.sum(y)
 
-        def grad(x, *args):
-            ca.random.seed(seed)
-            p_idx = args[0]
-            param_vals = layer._params[p_idx].array
-            param_vals *= 0
-            param_vals += ca.array(np.reshape(x, param_vals.shape))
+        def fun_grad(x, p_idx):
+            param_array = layer._params[p_idx].array
+            param_array *= 0
+            param_array += ca.array(x)
             out = layer.fprop(ca.array(x0), 'train')
             y_grad = ca.ones_like(out, dtype=ca.float_)
             layer.bprop(y_grad)
-            param_grad = layer._params[p_idx].grad()
-            return np.ravel(np.array(param_grad))
+            param_grad = np.array(layer._params[p_idx].grad())
+            return param_grad.astype(np.float_)
 
         for p_idx, p in enumerate(layer._params):
-            args = p_idx
             x = np.array(layer._params[p_idx].array)
-            assert grad_close(func, grad, np.ravel(x), eps, args)
+            g_true = fun_grad(x, p_idx)
+            g_approx = approx_fprime(x, fun, eps, p_idx)
+            assert gradclose(g_true, g_approx, rtol, atol)
 
 
 def check_params(layer):
@@ -96,8 +119,8 @@ def check_params(layer):
 
 
 def test_fully_connected():
-    layer_confs = itertools.product(batch_sizes, n_ins, n_outs)
-    for batch_size, n_in, n_out in layer_confs:
+    confs = itertools.product(batch_sizes, n_ins, n_outs)
+    for batch_size, n_in, n_out in confs:
         print('FullyConnected: batch_size=%i, n_in=%i, n_out=%i'
               % (batch_size, n_in, n_out))
         x_shape = (batch_size, n_in)
@@ -122,8 +145,8 @@ def test_fully_connected():
 
 def test_activation():
     activations = ['sigmoid', 'tanh', 'relu']
-    layer_confs = itertools.product(batch_sizes, n_ins, activations)
-    for batch_size, n_in, activation in layer_confs:
+    confs = itertools.product(batch_sizes, n_ins, activations)
+    for batch_size, n_in, activation in confs:
         print('Activation: batch_size=%i, n_in=%i, fun=%s'
               % (batch_size, n_in, activation))
         x_shape = (batch_size, n_in)
@@ -132,8 +155,8 @@ def test_activation():
             # Change x values that are too close to 0. The numeric
             # differentiation may make such values change sign resulting in
             # faulty gradient approximation.
-            eps = 1e3
-            x[np.logical_and(-eps < x, x < eps)] = 0.1
+            thresh = 1e-04
+            x[np.logical_and(-thresh < x, x < thresh)] = 0.1
         layer = dp.Activation(activation)
         layer._setup(x_shape)
 
