@@ -74,7 +74,17 @@ def test_pool():
          method) in confs:
         if img_shape[0] < win_shape[0] or img_shape[1] < win_shape[1]:
             continue
-        if border_mode != 'valid' and (win_shape[0] != 1 or win_shape[1] != 1):
+        if border_mode != 'valid' and \
+           (win_shape[0] != 1 or win_shape[1] != 1) and \
+           ca._backend == 'cuda' and \
+           ca.nnet.pool._default_impl == 'cudnn':
+            # Bug: I think CUDArray/DeepPy calculates the padding in a manner
+            # inconsistent with cuDNN
+            continue
+        if method == 'avg' and \
+           ca._backend == 'cuda' and \
+           ca.nnet.pool._default_impl == 'masked':
+            # Not implemented yet
             continue
         print('Pool: batch_size=%i, n_channel=%i, img_shape=%s, win_shape=%s, '
               'stride=%s, border_mode=%s, method=%s'
