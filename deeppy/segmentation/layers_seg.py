@@ -49,7 +49,11 @@ class ParamMixin_seg(object):
 
 
 class FullyConnected_seg(Layer_seg, ParamMixin_seg):
-    def __init__(self, n_output, weights, bias=0.0, weight_decay=0.0):
+    def __init__(self, n_output, weights, bias=0.0):
+
+
+
+
         self.name = 'fullconn'
         self.n_output = n_output
         self.W = parameter(weights)

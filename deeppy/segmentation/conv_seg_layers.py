@@ -17,7 +17,7 @@ def padding_seg(win_shape, border_mode):
 
 class Convolutional_seg(Layer_seg, ParamMixin_seg):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
-                 border_mode='same', weight_decay=0.0):
+                 border_mode='same'):
         self.name = 'conv'
         border_mode='same'
         self.n_filters = n_filters
