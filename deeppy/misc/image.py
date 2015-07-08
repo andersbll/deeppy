@@ -1,7 +1,4 @@
-import os
 import numpy as np
-import scipy as sp
-import scipy.misc
 
 
 def img_stretch(img):
@@ -9,15 +6,6 @@ def img_stretch(img):
     img -= np.min(img)
     img /= np.max(img)+1e-12
     return img
-
-
-def img_save(img, path, stretch=True):
-    if stretch:
-        img = (255*img_stretch(img)).astype(np.uint8)
-    dirpath = os.path.dirname(path)
-    if len(dirpath) > 0 and not os.path.exists(dirpath):
-        os.makedirs(dirpath)
-    sp.misc.imsave(path, img)
 
 
 def img_tile(imgs, aspect_ratio=1.0, tile_shape=None, border=1,
