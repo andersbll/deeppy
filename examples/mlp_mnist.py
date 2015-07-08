@@ -1,72 +1,85 @@
-#!/usr/bin/env python
-# coding: utf-8
+#!/usr/bin/python
 
-import os
+"""
+Digit classification
+====================
+
+"""
+
 import numpy as np
+import matplotlib.pyplot as plt
 import deeppy as dp
 
 
-def run():
-    # Prepare data
-    dataset = dp.dataset.MNIST()
-    x, y = dataset.data(flat=True)
-    x = x.astype(dp.float_)
-    y = y.astype(dp.int_)
-    train_idx, test_idx = dataset.split()
-    x_train = x[train_idx]
-    y_train = y[train_idx]
-    x_test = x[test_idx]
-    y_test = y[test_idx]
+# Fetch MNIST data
+dataset = dp.dataset.MNIST()
+x_train, y_train, x_test, y_test = dataset.data(flat=True, dp_dtypes=True)
 
-    scaler = dp.StandardScaler()
-    x_train = scaler.fit_transform(x_train)
-    x_test = scaler.transform(x_test)
+# Normalize pixel intensities
+scaler = dp.StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
 
-    batch_size = 128
-    train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-    test_input = dp.SupervisedInput(x_test, y_test)
+# Prepare network inputs
+batch_size = 128
+train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
+test_input = dp.SupervisedInput(x_test, y_test)
 
-    # Setup neural network
-    net = dp.NeuralNetwork(
-        layers=[
-            dp.FullyConnected(
-                n_out=800,
-                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
-            ),
-            dp.Activation('relu'),
-            dp.FullyConnected(
-                n_out=800,
-                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
-            ),
-            dp.Activation('relu'),
-            dp.FullyConnected(
-                n_out=dataset.n_classes,
-                weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.0001),
-            ),
-        ],
-        loss=dp.MultinomialLogReg(),
-    )
+# Setup network
+weight_gain = 2.0
+weight_decay = 0.0005
+net = dp.NeuralNetwork(
+    layers=[
+        dp.FullyConnected(
+            n_out=1024,
+            weights=dp.Parameter(dp.AutoFiller(weight_gain),
+                                 weight_decay=weight_decay),
+        ),
+        dp.Activation('relu'),
+        dp.FullyConnected(
+            n_out=1024,
+            weights=dp.Parameter(dp.AutoFiller(weight_gain),
+                                 weight_decay=weight_decay),
+        ),
+        dp.Activation('relu'),
+        dp.FullyConnected(
+            n_out=dataset.n_classes,
+            weights=dp.Parameter(dp.AutoFiller()),
+        ),
+    ],
+    loss=dp.MultinomialLogReg(),
+)
 
-    # Train neural network
-    def val_error():
-        return net.error(test_input)
+# Train network
+n_epochs = [50, 15]
+learn_rate = 0.05
+for i, epochs in enumerate(n_epochs):
     trainer = dp.StochasticGradientDescent(
-        max_epochs=25,
-        learn_rule=dp.Momentum(learn_rate=0.1, momentum=0.9),
+        max_epochs=epochs,
+        learn_rule=dp.Momentum(learn_rate=learn_rate/10**i, momentum=0.94),
     )
-    trainer.train(net, train_input, val_error)
+    trainer.train(net, train_input)
 
-    # Visualize weights from first layer
-    W = next(np.array(layer.W.array) for layer in net.layers
-             if isinstance(layer, dp.FullyConnected))
-    W = np.reshape(W.T, (-1, 28, 28))
-    filepath = os.path.join('mnist', 'mlp_weights.png')
-    dp.misc.img_save(dp.misc.img_tile(dp.misc.img_stretch(W)), filepath)
-
-    # Evaluate on test data
-    error = net.error(test_input)
-    print('Test error rate: %.4f' % error)
+# Evaluate on test data
+error = net.error(test_input)
+print('Test error rate: %.4f' % error)
 
 
-if __name__ == '__main__':
-    run()
+# Plot dataset examples
+def plot_img(img, title):
+    plt.figure()
+    plt.imshow(img, cmap='gray', interpolation='nearest')
+    plt.axis('off')
+    plt.title(title)
+    plt.tight_layout()
+
+imgs = np.reshape(x_train[:63, ...], (-1, 28, 28))
+plot_img(dp.misc.img_tile(dp.misc.img_stretch(imgs)),
+         'Dataset examples')
+
+# Plot learned features in first layer
+W = np.array(net.layers[0].W.array)
+W = np.reshape(W.T, (-1,) + dataset.img_shape)
+W = W[np.argsort(np.std(W, axis=(1, 2)))[-64:]]
+plot_img(dp.misc.img_tile(dp.misc.img_stretch(W)),
+         'Examples of features learned')
