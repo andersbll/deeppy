@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """
 Convnets for image classification (1)
@@ -75,7 +75,7 @@ net = dp.NeuralNetwork(
 )
 
 # Train network
-n_epochs = [100, 15, 15]
+n_epochs = [50, 15, 15]
 learn_rate = 0.05
 momentum = 0.88
 for i, epochs in enumerate(n_epochs):
