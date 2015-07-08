@@ -76,7 +76,8 @@ def conv_filter_tile(filters):
     else:
         # Organize tile such that each row corresponds to a filter and the
         # columns are the filter channels
-        tile_shape = (f, c)
+        tile_shape = (c, f)
+        filters = np.transpose(filters, (1, 0, 2, 3))
         filters = np.resize(filters, (f*c, h, w))
     filters = img_stretch(filters)
     return img_tile(filters, tile_shape=tile_shape)
