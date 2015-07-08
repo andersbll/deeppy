@@ -2,6 +2,7 @@ import os
 import numpy as np
 import logging
 
+from ..base import float_, int_
 from .dataset import Dataset
 from .util import touch, load_idx
 
@@ -43,19 +44,19 @@ class MNIST(Dataset):
         self.n_train = 60000
         self.img_shape = (28, 28)
         self._install()
-        self.x, self.y = self._load()
+        self._data = self._load()
 
-    def data(self, flat=False):
+    def data(self, flat=False, dp_dtypes=False):
+        x_train, y_train, x_test, y_test = self._data
+        if dp_dtypes:
+            x_train = x_train.astype(float_)
+            y_train = y_train.astype(int_)
+            x_test = x_test.astype(float_)
+            y_test = y_test.astype(int_)
         if flat:
-            x = np.reshape(self.x, (self.n_train + self.n_test, -1))
-        else:
-            x = self.x
-        return x, self.y
-
-    def split(self):
-        train_idx = np.arange(self.n_train)
-        test_idx = np.arange(self.n_train, self.n_train+self.n_test)
-        return train_idx, test_idx
+            x_train = np.reshape(x_train, (self.n_train, -1))
+            x_test = np.reshape(x_test, (self.n_test, -1))
+        return x_train, y_train, x_test, y_test
 
     def _install(self):
         checkpoint = os.path.join(self.data_dir, self._install_checkpoint)
@@ -68,17 +69,16 @@ class MNIST(Dataset):
                      't10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte']
         filenames = [os.path.join(self.data_dir, f) for f in filenames]
         x_train, y_train, x_test, y_test = map(load_idx, filenames)
-        x = np.vstack([x_train, x_test])
-        y = np.hstack([y_train, y_test])
-        if x.shape[0] != y.shape[0] != self.n_train + self.n_test:
-            raise RuntimeError('dataset has invalid shape')
         with open(self._data_file, 'wb') as f:
-            np.savez(f, x=x, y=y)
+            np.savez(f, x_train=x_train, y_train=y_train, x_test=x_test,
+                     y_test=y_test)
         touch(checkpoint)
 
     def _load(self):
         with open(self._data_file, 'rb') as f:
             dic = np.load(f)
-            x = dic['x']
-            y = dic['y']
-        return x, y
+            x_train = dic['x_train']
+            y_train = dic['y_train']
+            x_test = dic['x_test']
+            y_test = dic['y_test']
+        return x_train, y_train, x_test, y_test

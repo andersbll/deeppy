@@ -1,6 +1,7 @@
 import os
 import pickle
 import numpy as np
+from ..base import float_, int_
 from .dataset import Dataset
 
 
@@ -31,15 +32,19 @@ class CIFAR10(Dataset):
         self.img_shape = (3, 32, 32)
         self.data_dir = os.path.join(data_root, self.name)
         self._install()
-        self.x, self.y = self._load()
+        self._data = self._load()
 
-    def data(self):
-        return self.x, self.y
-
-    def split(self, n_valid=0):
-        train_idx = np.arange(self.n_train)
-        test_idx = np.arange(self.n_train, self.n_train+self.n_test)
-        return train_idx, test_idx
+    def data(self, flat=False, dp_dtypes=False):
+        x_train, y_train, x_test, y_test = self._data
+        if dp_dtypes:
+            x_train = x_train.astype(float_)
+            y_train = y_train.astype(int_)
+            x_test = x_test.astype(float_)
+            y_test = y_test.astype(int_)
+        if flat:
+            x_train = np.reshape(x_train, (x_train.shape[0], -1))
+            x_test = np.reshape(x_test, (x_test.shape[0], -1))
+        return x_train, y_train, x_test, y_test
 
     def _install(self):
         self._download(_URLS, _SHA1S)
@@ -57,9 +62,10 @@ class CIFAR10(Dataset):
                 dic = pickle.load(f)
                 xs.append(dic['data'])
                 ys.append(dic['labels'])
-        x = np.vstack(xs)
-        y = np.hstack(ys)
-        x = np.reshape(x, (self.n_train + self.n_test,) + self.img_shape)
-        if x.shape[0] != y.shape[0] != self.n_train + self.n_test:
-            raise RuntimeError('dataset has invalid shape')
-        return x, y
+        x_train = np.vstack(xs[:5])
+        y_train = np.hstack(ys[:5])
+        x_test = np.array(xs[5])
+        y_test = np.array(ys[5])
+        x_train = np.reshape(x_train, (self.n_train,) + self.img_shape)
+        x_test = np.reshape(x_test, (self.n_test,) + self.img_shape)
+        return x_train, y_train, x_test, y_test

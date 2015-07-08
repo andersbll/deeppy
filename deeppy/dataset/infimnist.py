@@ -3,6 +3,7 @@ import numpy as np
 import logging
 from subprocess import Popen
 
+from ..base import float_, int_
 from .dataset import Dataset
 from .util import touch, load_idx
 
@@ -41,8 +42,7 @@ class InfiMNIST(Dataset):
         self._infimnist_start = 10000
         self._infimnist_stop = 8109999
         self._install()
-        self.x, self.y = self._load()
-        self.n_samples = self.x.shape[0]
+        self._data = self._load()
 
     def split(self, n_val=10000):
         infimnist_idxs = np.arange(self._infimnist_start, self._infimnist_stop)
@@ -55,12 +55,14 @@ class InfiMNIST(Dataset):
         val_idx = np.logical_not(train_idx)
         return train_idx, val_idx
 
-    def data(self, flat=False):
+    def data(self, flat=False, dp_dtypes=False):
+        x, y = self._data
+        if dp_dtypes:
+            x = x.astype(float_)
+            y = y.astype(int_)
         if flat:
-            x = np.reshape(self.x, (self.n_samples, -1))
-        else:
-            x = self.x
-        return x, self.y
+            x = np.reshape(self.x, (self.x.shape[0], -1))
+        return x, y
 
     def _install(self):
         checkpoint = os.path.join(self.data_dir, self._install_checkpoint)
