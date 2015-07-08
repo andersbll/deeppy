@@ -1,0 +1,3 @@
+source/examples/*
+!source/examples/index.rst
+build

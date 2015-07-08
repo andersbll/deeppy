@@ -1,0 +1,17 @@
+.image-reference {
+    /* fix the alabaster theme that underlines figure images */
+    border: 0 !important;
+}
+
+
+.example, .example-noimg {
+    min-height: 100px;
+    width: 32%;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+}
+
+.example-noimg {
+    padding-top: 80px;
+}
