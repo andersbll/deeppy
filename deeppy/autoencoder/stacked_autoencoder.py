@@ -1,6 +1,6 @@
 import itertools
 from ..base import ParamMixin
-from ..feedforward.loss import Loss
+from ..loss import Loss
 from .autoencoder import Autoencoder
 
 

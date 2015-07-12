@@ -90,7 +90,7 @@ class SiameseNetwork(Model):
                 x1 = layer.fprop(x1, 'test')
             for layer in self.layers2:
                 x2 = layer.fprop(x2, 'test')
-            dists_batch = self.loss.predict(x1, x2)
+            dists_batch = self.loss.fprop(x1, x2)
             dists_batch = np.ravel(np.array(dists_batch))
             batch_size = x1.shape[0]
             dists[offset:offset+batch_size, ...] = dists_batch

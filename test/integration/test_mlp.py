@@ -54,7 +54,7 @@ def test_classification():
                 weights=dp.Parameter(dp.AutoFiller()),
             ),
         ],
-        loss=dp.MultinomialLogReg(),
+        loss=dp.SoftmaxCrossEntropy(),
     )
 
     # Train neural network

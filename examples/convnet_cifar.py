@@ -66,7 +66,7 @@ net = dp.NeuralNetwork(
             weights=dp.Parameter(dp.AutoFiller(gain=1.25)),
         )
     ],
-    loss=dp.MultinomialLogReg(),
+    loss=dp.SoftmaxCrossEntropy(),
 )
 
 

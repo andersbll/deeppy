@@ -64,7 +64,7 @@ class NeuralNetwork(Model):
             x_next = x_batch
             for layer in self.layers:
                 x_next = layer.fprop(x_next, 'test')
-            y_batch = np.array(self.loss.predict(x_next))
+            y_batch = np.array(self.loss.fprop(x_next))
             batch_size = x_batch.shape[0]
             y[y_offset:y_offset+batch_size, ...] = y_batch
             y_offset += batch_size

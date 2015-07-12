@@ -1,7 +1,7 @@
 import numpy as np
 import cudarray as ca
 from ..feedforward.layers import Activation, FullyConnected
-from ..feedforward.loss import Loss
+from ..loss import Loss
 from ..base import Model, PickleMixin
 from ..input import Input
 from ..parameter import Parameter

@@ -50,7 +50,7 @@ sae = dp.StackedAutoencoder(
 
 # Train autoencoders layer-wise
 trainer = dp.StochasticGradientDescent(
-    min_epochs=50, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
+    min_epochs=25, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
 )
 for ae in sae.ae_models():
     trainer.train(ae, train_input)
@@ -66,14 +66,14 @@ net = dp.NeuralNetwork(
             weights=dp.Parameter(dp.AutoFiller()),
         ),
     ],
-    loss=dp.MultinomialLogReg(),
+    loss=dp.SoftmaxCrossEntropy(),
 )
 
 # Fine-tune neural network
 train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
 test_input = dp.SupervisedInput(x_test, y_test)
 trainer = dp.StochasticGradientDescent(
-    max_epochs=75, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
+    max_epochs=25, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
 )
 trainer.train(net, train_input)
 
