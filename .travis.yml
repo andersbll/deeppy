@@ -1,0 +1,35 @@
+language: python
+
+python:
+  - 2.7
+  - 3.4
+
+branches:
+  only:
+    - master
+
+env:
+  - CUDARRAY_BACKEND=numpy
+
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=~/miniconda/bin:$PATH
+  - conda update --yes conda
+
+install:
+  - conda install --yes numpy cython pillow pytest scikit-learn
+  - git clone git@github.com:andersbll/cudarray.git
+  - cd cudarray && python setup.py --without-cuda develop && cd ..
+  - python setup.py develop
+
+script:
+  - python setup.py test
+
+notifications:
+  irc:
+    channels:
+      - chat.freenode.net#deeppy
+    on_success: always
+    on_failure: always
