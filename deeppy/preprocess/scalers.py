@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class StandardScaler:
+class StandardScaler(object):
     def __init__(self, mean=0.0, std=1.0):
         self.mean = mean
         self.std = std
@@ -33,7 +33,7 @@ class StandardScaler:
         return x
 
 
-class UniformScaler:
+class UniformScaler(object):
     def __init__(self, low=0.0, high=1.0):
         self.low = low
         self.high = high

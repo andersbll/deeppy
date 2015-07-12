@@ -3,7 +3,7 @@ import cudarray as ca
 from .base import PickleMixin
 
 
-_flt_min = np.finfo(ca.float_).tiny
+_FLT_MIN = np.finfo(ca.float_).tiny
 
 
 class Loss(PickleMixin):
@@ -49,28 +49,28 @@ class SoftmaxCrossEntropy(Loss):
 
     def __init__(self):
         self.name = 'softmaxce'
-        self._tmp_last_x = None
-        self._tmp_last_y = None
-        self._tmp_last_target = None
-        self._tmp_last_target_one_hot = None
+        self._tmp_x = None
+        self._tmp_y = None
+        self._tmp_target = None
+        self._tmp_one_hot = None
+        self.n_classes = None
 
     def _setup(self, x_shape):
         self.n_classes = x_shape[1]
 
     def _softmax(self, x):
         # caching wrapper
-        if self._tmp_last_x is not x:
-            self._tmp_last_y = ca.nnet.softmax(x)
-            self._tmp_last_x = x
-        return self._tmp_last_y
+        if self._tmp_x is not x:
+            self._tmp_y = ca.nnet.softmax(x)
+            self._tmp_x = x
+        return self._tmp_y
 
     def _one_hot(self, target):
         # caching wrapper
-        if self._tmp_last_target is not target:
-            self._target_one_hot = ca.nnet.one_hot_encode(target,
-                                                          self.n_classes)
-            self._tmp_last_target = target
-        return self._target_one_hot
+        if self._tmp_target is not target:
+            self._tmp_one_hot = ca.nnet.one_hot_encode(target, self.n_classes)
+            self._tmp_target = target
+        return self._tmp_one_hot
 
     def fprop(self, x):
         return ca.nnet.one_hot_decode(self._softmax(x))
@@ -94,17 +94,18 @@ class BinaryCrossEntropy(Loss):
         self.name = 'bce'
 
     def loss(self, y, y_pred):
-        y_pred = ca.maximum(y_pred, _flt_min)
+        y_pred = ca.maximum(y_pred, _FLT_MIN)
         return -ca.mean(y*ca.log(y_pred) + (1 - y)*ca.log(1 - y_pred), axis=1)
 
     def grad(self, y, y_pred):
-        y_pred = ca.maximum(y_pred, _flt_min)
+        y_pred = ca.maximum(y_pred, _FLT_MIN)
         return -(y/y_pred - (1-y)/(1-y_pred))
 
 
 class MeanSquaredError(Loss):
     def __init__(self):
         self.name = 'mse'
+        self.n_targets = None
 
     def _setup(self, x_shape):
         self.n_targets = x_shape[1]

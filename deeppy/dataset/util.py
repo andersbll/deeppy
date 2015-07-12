@@ -15,7 +15,7 @@ def touch(filepath, times=None):
         os.utime(filepath, times)
 
 
-def download(url, target_dir, sha1=None, filename=None):
+def download(url, target_dir, filename=None):
     filename = url.split('/')[-1].split('#')[0].split('?')[0]
     filepath = os.path.join(target_dir, filename)
     if sys.version_info[0] > 2:
@@ -36,8 +36,8 @@ def archive_extract(filepath, target_dir):
     if tarfile.is_tarfile(filepath):
         with tarfile.open(filepath, 'r') as tarf:
             # Check that no files get extracted outside target_dir
-            for n in tarf.getnames():
-                abs_path = os.path.abspath(os.path.join(target_dir, n))
+            for name in tarf.getnames():
+                abs_path = os.path.abspath(os.path.join(target_dir, name))
                 if not abs_path.startswith(target_dir):
                     raise RuntimeError('Archive tries to extract files '
                                        'outside target_dir.')
@@ -53,7 +53,6 @@ def archive_extract(filepath, target_dir):
         if os.name != 'posix':
             raise NotImplementedError('Only Linux and Mac OS X support .Z '
                                       'compression.')
-        filepath_out, _ = os.path.splitext(os.path.abspath(filepath))
         cmd = 'gzip -d %s' % filepath
         retval = Popen(cmd, shell=True).wait()
         if retval != 0:
@@ -75,15 +74,12 @@ def _read_int(buf):
 def load_idx(filepath):
     with open(filepath, 'rb') as f:
         magic = _read_int(f)
-        n = _read_int(f)
         if magic == 2051:
-            height = _read_int(f)
-            width = _read_int(f)
-            shape = (n, height, width)
+            shape = (_read_int(f), _read_int(f), _read_int(f))
         elif magic == 2049:
-            shape = n
+            shape = _read_int(f)
         else:
             raise RuntimeError('could not parse header correctly')
-        a = np.fromfile(f, dtype='B', count=np.prod(shape))
-        a = np.reshape(a, shape)
-    return a
+        array = np.fromfile(f, dtype='B', count=np.prod(shape))
+        array = np.reshape(array, shape)
+    return array

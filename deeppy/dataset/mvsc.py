@@ -7,7 +7,7 @@ import logging
 from .dataset import Dataset
 from .util import touch
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 _URLS = {
     'liberty': ['http://www.cs.ubc.ca/~mbrown/patchdata/liberty.zip'],
@@ -55,7 +55,7 @@ class MVSC(Dataset):
             return
         self._download(_URLS[self.scene], _SHA1S[self.scene])
         self._unpack(separate_dirs=True)
-        logger.info('Converting MVSC data to Numpy arrays')
+        log.info('Converting MVSC data to Numpy arrays')
 
         scene_dir = os.path.join(self.data_dir, self.scene)
         info_file = os.path.join(scene_dir, 'info.txt')

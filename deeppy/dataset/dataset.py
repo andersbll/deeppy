@@ -5,7 +5,7 @@ import logging
 from .util import checksum, download, archive_extract, is_archive, touch
 
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class Dataset(object):
@@ -15,13 +15,7 @@ class Dataset(object):
     _unpack_checkpoint = '__unpack_complete'
     _install_checkpoint = '__install_complete'
 
-    def __init__(self, data_root='datasets'):
-        raise NotImplementedError()
-
-    def data(self):
-        raise NotImplementedError()
-
-    def split(self):
+    def __init__(self):
         raise NotImplementedError()
 
     def _download(self, urls, sha1s=None):
@@ -31,19 +25,18 @@ class Dataset(object):
         if os.path.exists(checkpoint):
             return
         if os.path.exists(self.data_dir):
-            logger.info('Incomplete %s exists - restarting download.'
-                        % self.data_dir)
+            log.info('Incomplete %s exists - restarting download.',
+                     self.data_dir)
             shutil.rmtree(self.data_dir)
             os.mkdir(self.data_dir)
         else:
             os.makedirs(self.data_dir)
         for i, url in enumerate(urls):
-            logger.info('Downloading %s' % url)
+            log.info('Downloading %s', url)
             filepath = download(url, self.data_dir)
             if sha1s is not None:
                 if sha1s[i] != checksum(filepath):
-                    raise RuntimeError('SHA-1 checksum mismatch for %s.'
-                                       % url)
+                    raise RuntimeError('SHA-1 checksum mismatch for %s.' % url)
         touch(checkpoint)
 
     def _unpack(self, separate_dirs=False):
@@ -55,7 +48,7 @@ class Dataset(object):
         for filename in os.listdir(self.data_dir):
             filepath = os.path.join(self.data_dir, filename)
             if is_archive(filepath):
-                logger.info('Unpacking %s' % filepath)
+                log.info('Unpacking %s', filepath)
                 target_dir = os.path.abspath(self.data_dir)
                 if separate_dirs:
                     dirname, _ = os.path.splitext(filename)

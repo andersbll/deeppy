@@ -13,12 +13,14 @@ class Momentum(LearningRule):
     def __init__(self, learn_rate, momentum):
         self.learn_rate = learn_rate
         self.momentum = momentum
-        self.batch_size = 1
+        self.batch_size = None
+        self.params = None
+        self.steps = None
 
     def _setup(self, params, batch_size):
-        self.params = params
         self.batch_size = batch_size
-        self.steps = [ca.zeros_like(p.grad_array) for p in params]
+        self.params = params
+        self.steps = [ca.zeros_like(param.grad_array) for param in params]
 
     def step(self):
         for param, last_step in zip(self.params, self.steps):
@@ -37,13 +39,15 @@ class RMSProp(LearningRule):
     def __init__(self, learn_rate, decay=0.9, max_scaling=1e3):
         self.learn_rate = learn_rate
         self.decay = decay
-        self.batch_size = 1
         self.max_scaling_inv = 1./max_scaling
+        self.batch_size = None
+        self.params = None
+        self.steps = None
 
     def _setup(self, params, batch_size):
-        self.params = params
         self.batch_size = batch_size
-        self.steps = [ca.zeros_like(p.grad_array) for p in params]
+        self.params = params
+        self.steps = [ca.zeros_like(param.grad_array) for param in params]
 
     def step(self):
         for param, rms_grad in zip(self.params, self.steps):

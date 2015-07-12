@@ -8,7 +8,7 @@ from .dataset import Dataset
 from .util import touch, load_idx
 
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 _URLS = [
     'http://leon.bottou.org/_media/projects/infimnist.tar.gz',
@@ -61,7 +61,7 @@ class InfiMNIST(Dataset):
             x = x.astype(float_)
             y = y.astype(int_)
         if flat:
-            x = np.reshape(self.x, (self.x.shape[0], -1))
+            x = np.reshape(x, (x.shape[0], -1))
         return x, y
 
     def _install(self):
@@ -71,14 +71,14 @@ class InfiMNIST(Dataset):
         self._download(_URLS, _SHA1S)
         self._unpack()
 
-        logger.info('Building executable')
+        log.info('Building executable')
         cwd = os.path.join(self.data_dir, 'infimnist')
         if os.name == 'posix':
             Popen('make', cwd=cwd).wait()
         else:
             Popen(['nmake', '/f', 'NMakefile'], cwd=cwd).wait()
 
-        logger.info('Generating InfiMNIST dataset')
+        log.info('Generating InfiMNIST dataset')
         lab_file = os.path.join(cwd, 'mnist8m-labels-idx1-ubyte')
         pat_file = os.path.join(cwd, 'mnist8m-patterns-idx3-ubyte')
         with open(lab_file, 'wb') as out:
@@ -90,7 +90,7 @@ class InfiMNIST(Dataset):
                    str(self._infimnist_stop)], stdout=out,
                   cwd=cwd).wait()
 
-        logger.info('Converting InfiMNIST data to Numpy arrays')
+        log.info('Converting InfiMNIST data to Numpy arrays')
         x, y = map(load_idx, [pat_file, lab_file])
         if x.shape[0] != y.shape[0]:
             raise RuntimeError('dataset has invalid shape')

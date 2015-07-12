@@ -7,7 +7,7 @@ from .dataset import Dataset
 from .util import touch, load_idx
 
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 _URLS = [
     'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz',
@@ -64,7 +64,7 @@ class MNIST(Dataset):
             return
         self._download(_URLS, _SHA1S)
         self._unpack()
-        logger.info('Converting MNIST data to Numpy arrays')
+        log.info('Converting MNIST data to Numpy arrays')
         filenames = ['train-images-idx3-ubyte', 'train-labels-idx1-ubyte',
                      't10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte']
         filenames = [os.path.join(self.data_dir, f) for f in filenames]

@@ -102,7 +102,8 @@ plot_img(dp.misc.img_tile(dp.misc.img_stretch(x_errors), aspect_ratio=0.6),
          'All %i misclassified digits' % n_errors)
 
 # Plot convolutional filters.
-filters = [l.W.array for l in net.layers if isinstance(l, dp.Convolution)]
+filters = [l.weights.array for l in net.layers
+           if isinstance(l, dp.Convolution)]
 
 fig = plt.figure()
 gs = matplotlib.gridspec.GridSpec(2, 1, height_ratios=[1, 3])

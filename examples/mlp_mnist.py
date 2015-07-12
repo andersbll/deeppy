@@ -78,8 +78,8 @@ plot_img(dp.misc.img_tile(dp.misc.img_stretch(imgs)),
          'Dataset examples')
 
 # Plot learned features in first layer
-W = np.array(net.layers[0].W.array)
-W = np.reshape(W.T, (-1,) + dataset.img_shape)
-W = W[np.argsort(np.std(W, axis=(1, 2)))[-64:]]
-plot_img(dp.misc.img_tile(dp.misc.img_stretch(W)),
+w = np.array(net.layers[0].weights.array)
+w = np.reshape(w.T, (-1,) + dataset.img_shape)
+w = w[np.argsort(np.std(w, axis=(1, 2)))[-64:]]
+plot_img(dp.misc.img_tile(dp.misc.img_stretch(w)),
          'Examples of features learned')

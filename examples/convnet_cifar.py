@@ -104,7 +104,8 @@ img_tile = dp.misc.img_tile(dp.misc.img_stretch(img_bhwc), aspect_ratio=0.75,
 plot_img(img_tile, title='CIFAR10 example images')
 
 # Plot convolutional filters.
-filters = [l.W.array for l in net.layers if isinstance(l, dp.Convolution)]
+filters = [l.weights.array for l in net.layers
+           if isinstance(l, dp.Convolution)]
 
 fig = plt.figure()
 gs = matplotlib.gridspec.GridSpec(2, 2, height_ratios=[1, 3])

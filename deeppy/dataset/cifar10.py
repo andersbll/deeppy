@@ -54,18 +54,18 @@ class CIFAR10(Dataset):
         dirpath = os.path.join(self.data_dir, 'cifar-10-batches-py')
         filenames = ['data_batch_1', 'data_batch_2', 'data_batch_3',
                      'data_batch_4', 'data_batch_5', 'test_batch']
-        xs = []
-        ys = []
+        x = []
+        y = []
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
             with open(filepath, 'rb') as f:
                 dic = pickle.load(f)
-                xs.append(dic['data'])
-                ys.append(dic['labels'])
-        x_train = np.vstack(xs[:5])
-        y_train = np.hstack(ys[:5])
-        x_test = np.array(xs[5])
-        y_test = np.array(ys[5])
+                x.append(dic['data'])
+                y.append(dic['labels'])
+        x_train = np.vstack(x[:5])
+        y_train = np.hstack(y[:5])
+        x_test = np.array(x[5])
+        y_test = np.array(y[5])
         x_train = np.reshape(x_train, (self.n_train,) + self.img_shape)
         x_test = np.reshape(x_test, (self.n_test,) + self.img_shape)
         return x_train, y_train, x_test, y_test

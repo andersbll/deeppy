@@ -27,17 +27,17 @@ class Filler(object):
 
 
 class ConstantFiller(Filler):
-    def __init__(self, c=0.0):
-        self.c = c
+    def __init__(self, value=0.0):
+        self.value = value
 
     def array(self, shape):
-        return ca.ones(shape)*self.c
+        return ca.ones(shape)*self.value
 
 
 class NormalFiller(Filler):
-    def __init__(self, sigma=1.0, mu=0.0):
-        self.sigma = sigma
+    def __init__(self, mu=0.0, sigma=1.0):
         self.mu = mu
+        self.sigma = sigma
 
     def array(self, shape):
         return ca.random.normal(loc=self.mu, scale=self.sigma, size=shape)
@@ -58,7 +58,6 @@ class CopyFiller(Filler):
 
     def array(self, shape):
         if isinstance(shape, int):
-            # XXX: Is there a better way to normalize NumPy shapes?
             shape = (shape,)
         if self.arr.shape != shape:
             raise ValueError('Shape mismatch: expected %s but got %s'

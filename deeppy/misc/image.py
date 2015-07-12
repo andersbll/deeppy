@@ -56,16 +56,16 @@ def img_tile(imgs, aspect_ratio=1.0, tile_shape=None, border=1,
 
 
 def conv_filter_tile(filters):
-    f, c, h, w = filters.shape
+    n_filters, n_channels, height, width = filters.shape
     tile_shape = None
-    if c == 3:
+    if n_channels == 3:
         # Interpret 3 color channels as RGB
         filters = np.transpose(filters, (0, 2, 3, 1))
     else:
         # Organize tile such that each row corresponds to a filter and the
         # columns are the filter channels
-        tile_shape = (c, f)
+        tile_shape = (n_channels, n_filters)
         filters = np.transpose(filters, (1, 0, 2, 3))
-        filters = np.resize(filters, (f*c, h, w))
+        filters = np.resize(filters, (n_filters*n_channels, height, width))
     filters = img_stretch(filters)
     return img_tile(filters, tile_shape=tile_shape)

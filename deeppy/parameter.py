@@ -1,11 +1,10 @@
 import numpy as np
 import cudarray as ca
-
-import logging
-logger = logging.getLogger(__name__)
-
 from .base import PickleMixin
 from .filler import Filler
+
+import logging
+log = logging.getLogger(__name__)
 
 
 class Parameter(PickleMixin):
@@ -18,7 +17,7 @@ class Parameter(PickleMixin):
         self.weight_decay = weight_decay
         self._array = None
         self._tmp_grad_array = None
-        self._tmp_last_step = None
+        self._tmp_step = None
         self.shares = []
 
     @classmethod
@@ -55,7 +54,7 @@ class Parameter(PickleMixin):
     def step(self, step):
         ''' Update the parameter values according to the given step. '''
         if self._monitor:
-            self._tmp_last_step = step
+            self._tmp_step = step
         self._array += step
 
     def penalty(self):
@@ -69,9 +68,9 @@ class Parameter(PickleMixin):
             return
         val_mean_abs = np.array(ca.mean(ca.fabs(self._array)))
         grad_mean_abs = np.array(ca.mean(ca.fabs(self._tmp_grad_array)))
-        step_mean_abs = np.array(ca.mean(ca.fabs(self._tmp_last_step)))
-        logger.info('%s:\t%.1e  [%.1e, %.1e]'
-                    % (self.name, val_mean_abs, grad_mean_abs, step_mean_abs))
+        step_mean_abs = np.array(ca.mean(ca.fabs(self._tmp_step)))
+        log.info('%s:\t%.1e  [%.1e, %.1e]', self.name, val_mean_abs,
+                 grad_mean_abs, step_mean_abs)
 
     def share(self):
         param = SharedParameter(self)

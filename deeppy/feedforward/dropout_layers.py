@@ -6,6 +6,7 @@ class Dropout(Layer):
     def __init__(self, dropout=0.5):
         self.name = 'dropout'
         self.dropout = dropout
+        self._tmp_mask = None
 
     def fprop(self, x, phase):
         if self.dropout > 0.0:
@@ -33,6 +34,7 @@ class DropoutFullyConnected(FullyConnected):
         )
         self.name = 'fc_drop'
         self.dropout = dropout
+        self._tmp_mask = None
 
     def fprop(self, x, phase):
         y = super(DropoutFullyConnected, self).fprop(x, phase)

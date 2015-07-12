@@ -90,14 +90,14 @@ def plot_img(img, title):
     plt.title(title)
     plt.tight_layout()
 
-W = np.array(sae.layers[0].W.array)
-W = np.reshape(W.T, (-1,) + dataset.img_shape)
-sortidx = np.argsort(np.std(W, axis=(1, 2)))[-64:]
-plot_img(dp.misc.img_tile(dp.misc.img_stretch(W[sortidx])),
+w = np.array(sae.layers[0].weights.array)
+w = np.reshape(w.T, (-1,) + dataset.img_shape)
+sortidx = np.argsort(np.std(w, axis=(1, 2)))[-64:]
+plot_img(dp.misc.img_tile(dp.misc.img_stretch(w[sortidx])),
          'Autoencoder features')
 
 # Plot learned features in first layer
-W = np.array(net.layers[0].W.array)
-W = np.reshape(W.T, (-1,) + dataset.img_shape)
-plot_img(dp.misc.img_tile(dp.misc.img_stretch(W[sortidx])),
+w = np.array(net.layers[0].weights.array)
+w = np.reshape(w.T, (-1,) + dataset.img_shape)
+plot_img(dp.misc.img_tile(dp.misc.img_stretch(w[sortidx])),
          'Fine-tuned features')

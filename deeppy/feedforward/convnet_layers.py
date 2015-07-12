@@ -22,43 +22,42 @@ class Convolution(Layer, ParamMixin):
         self.name = 'conv'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
-        self.W = Parameter.from_any(weights)
-        self.b = Parameter.from_any(bias)
+        self.weights = Parameter.from_any(weights)
+        self.bias = Parameter.from_any(bias)
         pad = padding(filter_shape, border_mode)
         self.conv_op = ca.nnet.ConvBC01(pad, strides)
+        self._tmp_x = None
 
     def _setup(self, x_shape):
         n_channels = x_shape[1]
-        W_shape = (self.n_filters, n_channels) + self.filter_shape
-        b_shape = (1, self.n_filters, 1, 1)
-        self.W._setup(W_shape)
-        if not self.W.name:
-            self.W.name = self.name + '_W'
-        self.b._setup(b_shape)
-        if not self.b.name:
-            self.b.name = self.name + '_b'
+        self.weights._setup((self.n_filters, n_channels) + self.filter_shape)
+        if not self.weights.name:
+            self.weights.name = self.name + '_weights'
+        self.bias._setup((1, self.n_filters, 1, 1))
+        if not self.bias.name:
+            self.bias.name = self.name + '_bias'
 
     def fprop(self, x, phase):
-        self._tmp_last_x = x
-        convout = self.conv_op.fprop(x, self.W.array)
-        return convout + self.b.array
+        self._tmp_x = x
+        convout = self.conv_op.fprop(x, self.weights.array)
+        return convout + self.bias.array
 
     def bprop(self, y_grad, to_x=True):
         _, x_grad = self.conv_op.bprop(
-            self._tmp_last_x, self.W.array, y_grad, to_imgs=to_x,
-            filters_d=self.W.grad_array
+            self._tmp_x, self.weights.array, y_grad, to_imgs=to_x,
+            filters_d=self.weights.grad_array
         )
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
-               keepdims=True, out=self.b.grad_array)
+               keepdims=True, out=self.bias.grad_array)
         return x_grad
 
     @property
     def _params(self):
-        return self.W, self.b
+        return self.weights, self.bias
 
     @_params.setter
     def _params(self, params):
-        self.W, self.b = params
+        self.weights, self.bias = params
 
     def y_shape(self, x_shape):
         return self.conv_op.output_shape(x_shape, self.n_filters,
@@ -71,15 +70,16 @@ class Pool(Layer):
         self.name = 'pool'
         pad = padding(win_shape, border_mode)
         self.pool_op = ca.nnet.PoolB01(win_shape, pad, strides, method)
+        self.img_shape = None
 
     def fprop(self, x, phase):
-        self.last_img_shape = x.shape[2:]
+        self.img_shape = x.shape[2:]
         poolout = self.pool_op.fprop(x)
         return poolout
 
     def bprop(self, y_grad, to_x=True):
         if to_x:
-            x_grad = self.pool_op.bprop(self.last_img_shape, y_grad)
+            x_grad = self.pool_op.bprop(self.img_shape, y_grad)
             return x_grad
 
     def y_shape(self, x_shape):
@@ -112,8 +112,8 @@ class LocalContrastNormalization(Layer):
             size = int(np.ceil(sigma*2.))
             if size % 2 == 0:
                 size += 1
-        xs = np.linspace(-size/2., size/2., size)
-        kernel = 1/(np.sqrt(2*np.pi))*np.exp(-xs**2/(2*sigma**2))/sigma
+        x = np.linspace(-size/2., size/2., size)
+        kernel = 1/(np.sqrt(2*np.pi))*np.exp(-x**2/(2*sigma**2))/sigma
         return kernel/np.sum(kernel)
 
     def __init__(self, kernel, eps=0.1, strides=(1, 1)):
@@ -124,6 +124,7 @@ class LocalContrastNormalization(Layer):
         if kernel.shape[-2] % 2 == 0 or kernel.shape[-1] % 2 == 0:
             raise ValueError('only odd kernel sizes are supported')
         self.kernel = kernel
+        self.ca_kernel = None
         pad = padding(kernel.shape[-2:], 'same')
         self.conv_op = ca.nnet.ConvBC01(pad, strides)
 
@@ -168,13 +169,14 @@ class LocalContrastNormalization(Layer):
 class Flatten(Layer):
     def __init__(self):
         self.name = 'flatten'
+        self.x_shape = None
 
     def fprop(self, x, phase):
-        self.last_x_shape = x.shape
+        self.x_shape = x.shape
         return ca.reshape(x, self.y_shape(x.shape))
 
     def bprop(self, y_grad, to_x=True):
-        return ca.reshape(y_grad, self.last_x_shape)
+        return ca.reshape(y_grad, self.x_shape)
 
     def y_shape(self, x_shape):
         return (x_shape[0], np.prod(x_shape[1:]))

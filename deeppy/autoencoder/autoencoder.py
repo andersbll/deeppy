@@ -8,73 +8,72 @@ from ..parameter import Parameter
 
 
 class Autoencoder(Model, PickleMixin):
-    def __init__(self, n_out, weights, bias=0.0, activation='sigmoid',
-                 loss='bce'):
+    def __init__(self, n_out, weights, bias=0.0, bias_prime=0.0,
+                 activation='sigmoid', loss='bce'):
         self.name = 'autoenc'
         self.n_out = n_out
         self.activation = Activation(activation)
         self.activation_decode = Activation(activation)
         self.loss = Loss.from_any(loss)
-        self.W = Parameter.from_any(weights)
-        self.b = Parameter.from_any(bias)
-        self.b_prime = Parameter.from_any(bias)
+        self.weights = Parameter.from_any(weights)
+        self.bias = Parameter.from_any(bias)
+        self.bias_prime = Parameter.from_any(bias_prime)
         self._initialized = False
+        self._tmp_x = None
+        self._tmp_y = None
 
     def _setup(self, input):
         if self._initialized:
             return
         next_shape = input.x_shape
-        n_input = next_shape[1]
-        W_shape = (n_input, self.n_out)
-        b_shape = self.n_out
-        b_prime_shape = n_input
-        self.W._setup(W_shape)
-        if not self.W.name:
-            self.W.name = self.name + '_W'
-        self.b._setup(b_shape)
-        if not self.b.name:
-            self.b.name = self.name + '_b'
-        self.b_prime._setup(b_prime_shape)
-        if not self.b_prime.name:
-            self.b_prime.name = self.name + '_b_prime'
+        n_in = next_shape[1]
+        self.weights._setup((n_in, self.n_out))
+        if not self.weights.name:
+            self.weights.name = self.name + '_w'
+        self.bias._setup(self.n_out)
+        if not self.bias.name:
+            self.bias.name = self.name + '_b'
+        self.bias_prime._setup(n_in)
+        if not self.bias_prime.name:
+            self.bias_prime.name = self.name + '_b_prime'
         self.loss._setup((next_shape[0], self.n_out))
         self._initialized = True
 
     @property
     def _params(self):
-        return self.W, self.b, self.b_prime
+        return self.weights, self.bias, self.bias_prime
 
     @_params.setter
     def _params(self, params):
-        self.W, self.b, self.b_prime = params
+        self.weights, self.bias, self.bias_prime = params
 
     def output_shape(self, input_shape):
         return (input_shape[0], self.n_out)
 
     def encode(self, x):
-        self._tmp_last_x = x
-        y = ca.dot(x, self.W.array) + self.b.array
+        self._tmp_x = x
+        y = ca.dot(x, self.weights.array) + self.bias.array
         return self.activation.fprop(y, '')
 
     def decode(self, y):
-        self._tmp_last_y = y
-        x = ca.dot(y, self.W.array.T) + self.b_prime.array
+        self._tmp_y = y
+        x = ca.dot(y, self.weights.array.T) + self.bias_prime.array
         return self.activation_decode.fprop(x, '')
 
     def decode_bprop(self, x_grad):
         x_grad = self.activation_decode.bprop(x_grad)
-        ca.dot(x_grad.T, self._tmp_last_y, out=self.W.grad_array)
-        ca.sum(x_grad, axis=0, out=self.b_prime.grad_array)
-        return ca.dot(x_grad, self.W.array)
+        ca.dot(x_grad.T, self._tmp_y, out=self.weights.grad_array)
+        ca.sum(x_grad, axis=0, out=self.bias_prime.grad_array)
+        return ca.dot(x_grad, self.weights.array)
 
     def encode_bprop(self, y_grad):
         y_grad = self.activation.bprop(y_grad)
-        # Because W's gradient has already been updated by decode_bprop() at
-        # this point, we should add its contribution from the encode step.
-        W_grad = self.W.grad_array
-        W_grad += ca.dot(self._tmp_last_x.T, y_grad)
-        ca.sum(y_grad, axis=0, out=self.b.grad_array)
-        return ca.dot(y_grad, self.W.array.T)
+        # Because the weight gradient has already been updated by
+        # decode_bprop() we must add the contribution.
+        w_grad = self.weights.grad_array
+        w_grad += ca.dot(self._tmp_x.T, y_grad)
+        ca.sum(y_grad, axis=0, out=self.bias.grad_array)
+        return ca.dot(y_grad, self.weights.array.T)
 
     def _update(self, x):
         y_prime = self.encode(x)
@@ -116,16 +115,17 @@ class Autoencoder(Model, PickleMixin):
         return y
 
     def feedforward_layers(self):
-        return [FullyConnected(self.n_out, self.W.array, self.b.array),
+        return [FullyConnected(self.n_out, self.weights.array,
+                               self.bias.array),
                 self.activation]
 
 
 class DenoisingAutoencoder(Autoencoder):
-    def __init__(self, n_out, weights, bias=0.0, activation='sigmoid',
-                 loss='bce', corruption=0.25):
+    def __init__(self, n_out, weights, bias=0.0, bias_prime=0.0,
+                 corruption=0.25, activation='sigmoid', loss='bce'):
         super(DenoisingAutoencoder, self).__init__(
-            n_out=n_out, weights=weights, bias=bias, activation=activation,
-            loss=loss
+            n_out=n_out, weights=weights, bias=bias, bias_prime=bias_prime,
+            activation=activation, loss=loss
         )
         self.corruption = corruption
 
