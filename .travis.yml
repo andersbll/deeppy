@@ -20,7 +20,7 @@ before_install:
 
 install:
   - conda install --yes numpy cython pillow pytest scikit-learn
-  - git clone git@github.com:andersbll/cudarray.git
+  - git clone https://github.com/andersbll/cudarray.git
   - cd cudarray && python setup.py --without-cuda develop && cd ..
   - python setup.py develop
 
