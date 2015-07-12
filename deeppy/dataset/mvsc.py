@@ -1,7 +1,7 @@
 import os
 import glob
 import numpy as np
-import scipy as sp
+from PIL import Image
 import logging
 
 from .dataset import Dataset
@@ -95,7 +95,7 @@ class MVSC(Dataset):
         files = glob.glob(os.path.join(scene_dir, '*.bmp'))
         patch_idx = 0
         for f in sorted(files):
-            img = sp.misc.imread(f)
+            img = np.array(Image.open(f))
             for i in range(patches_per_img):
                 if patch_idx == n_patches:
                     break
