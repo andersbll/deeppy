@@ -68,7 +68,7 @@ setup(
     description='Deep learning in Python',
     license='MIT',
     url='http://compute.dtu.dk/~abll',
-    packages=find_packages(exclude=['examples', 'test']),
+    packages=find_packages(exclude=['doc', 'examples', 'test']),
     install_requires=install_requires,
     long_description=read('README.md'),
     cmdclass={
@@ -76,8 +76,8 @@ setup(
         'coverage': Coverage,
     },
     extras_require={
-        'test': ['pytest'],
-        'coverage': ['pytest', 'coverage'],
+        'test': ['pytest', 'sklearn'],
+        'coverage': ['pytest', 'sklearn', 'coverage'],
     },
     classifiers=[
         'Development Status :: 4 - Beta',
