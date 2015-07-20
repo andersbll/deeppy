@@ -20,7 +20,7 @@ from .preprocess.scalers import StandardScaler, UniformScaler
 from .siamese.input import SiameseInput, SupervisedSiameseInput
 from .siamese.loss import ContrastiveLoss
 from .siamese.siamese_network import SiameseNetwork
-from .train.learn_rules import Momentum, RMSProp
+from .train.learn_rules import Adam, Momentum, RMSProp
 from .train.sgd import StochasticGradientDescent
 
 __version__ = '0.1.dev'
