@@ -34,7 +34,7 @@ class StochasticGradientDescent(object):
             epoch += 1
 
             batch_costs = []
-            for batch in input.batches('train'):
+            for batch in input.batches():
                 cost = np.array(ca.mean(model._update(batch)))
                 batch_costs.append(cost)
                 # Update gradient

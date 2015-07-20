@@ -43,7 +43,7 @@ while n < n_pairs:
 
 # Prepare network inputs
 train_input = dp.SupervisedSiameseInput(x1, x2, y, batch_size=128)
-test_input = dp.SupervisedInput(x_test, y_test)
+test_input = dp.Input(x_test)
 
 # Setup network
 net = dp.SiameseNetwork(

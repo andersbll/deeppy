@@ -1,20 +1,23 @@
 import cudarray as ca
 from .layers import Layer, FullyConnected
+from ..base import PhaseMixin
 
 
-class Dropout(Layer):
+class Dropout(Layer, PhaseMixin):
     def __init__(self, dropout=0.5):
         self.name = 'dropout'
         self.dropout = dropout
         self._tmp_mask = None
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         if self.dropout > 0.0:
-            if phase == 'train':
+            if self.phase == 'train':
                 self._tmp_mask = self.dropout < ca.random.uniform(size=x.shape)
                 y = x * self._tmp_mask
-            elif phase == 'test':
+            elif self.phase == 'test':
                 y = x * (1.0 - self.dropout)
+            else:
+                raise ValueError('Invalid phase: %s' % self.phase)
         return y
 
     def bprop(self, y_grad, to_x=True):
@@ -27,7 +30,7 @@ class Dropout(Layer):
         return x_shape
 
 
-class DropoutFullyConnected(FullyConnected):
+class DropoutFullyConnected(FullyConnected, PhaseMixin):
     def __init__(self, n_out, weights, bias=0.0, dropout=0.5):
         super(DropoutFullyConnected, self).__init__(
             n_out=n_out, weights=weights, bias=bias
@@ -36,14 +39,16 @@ class DropoutFullyConnected(FullyConnected):
         self.dropout = dropout
         self._tmp_mask = None
 
-    def fprop(self, x, phase):
-        y = super(DropoutFullyConnected, self).fprop(x, phase)
+    def fprop(self, x):
+        y = super(DropoutFullyConnected, self).fprop(x)
         if self.dropout > 0.0:
-            if phase == 'train':
+            if self.phase == 'train':
                 self._tmp_mask = self.dropout < ca.random.uniform(size=y.shape)
                 y *= self._tmp_mask
-            elif phase == 'test':
+            elif self.phase == 'test':
                 y *= (1.0 - self.dropout)
+            else:
+                raise ValueError('Invalid phase: %s' % self.phase)
         return y
 
     def bprop(self, y_grad, to_x=True):

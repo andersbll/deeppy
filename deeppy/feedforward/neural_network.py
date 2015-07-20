@@ -1,10 +1,10 @@
 import numpy as np
 import itertools
-from ..base import Model, ParamMixin
+from ..base import Model, ParamMixin, PhaseMixin
 from ..input import Input
 
 
-class NeuralNetwork(Model):
+class NeuralNetwork(Model, PhaseMixin):
     def __init__(self, layers, loss):
         self._initialized = False
         self.layers = layers
@@ -33,12 +33,23 @@ class NeuralNetwork(Model):
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))
 
+    @PhaseMixin.phase.setter
+    def phase(self, phase):
+        if self._phase == phase:
+            return
+        self._phase = phase
+        for layer in self.layers:
+            if isinstance(layer, PhaseMixin):
+                layer.phase = phase
+
     def _update(self, batch):
+        self.phase = 'train'
+
         # Forward propagation
         x, y = batch
         x_next = x
         for layer in self.layers:
-            x_next = layer.fprop(x_next, 'train')
+            x_next = layer.fprop(x_next)
         y_pred = x_next
 
         # Back propagation of partial derivatives
@@ -57,25 +68,16 @@ class NeuralNetwork(Model):
 
     def predict(self, input):
         """ Calculate the output for the given input x. """
+        self.phase = 'test'
         input = Input.from_any(input)
         y = np.empty(self._output_shape(input.x.shape))
         y_offset = 0
-        for x_batch in input.batches('test'):
+        for x_batch in input.batches():
             x_next = x_batch
             for layer in self.layers:
-                x_next = layer.fprop(x_next, 'test')
+                x_next = layer.fprop(x_next)
             y_batch = np.array(self.loss.fprop(x_next))
             batch_size = x_batch.shape[0]
             y[y_offset:y_offset+batch_size, ...] = y_batch
             y_offset += batch_size
         return y
-
-    def error(self, input):
-        input = Input.from_any(input)
-        """ Calculate error on the given input. """
-        y_pred = self.predict(input)
-#        print(y_pred)
-        # XXX: this only works for classification
-        # TODO: support regression
-        error = y_pred != input.y
-        return np.mean(error)

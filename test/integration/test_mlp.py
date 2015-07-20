@@ -1,3 +1,4 @@
+import numpy as np
 import deeppy as dp
 from sklearn.datasets import make_classification
 
@@ -30,8 +31,8 @@ def test_classification():
     # Setup input
     batch_size = 16
     train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-    val_input = dp.SupervisedInput(x_val, y_val)
-    test_input = dp.SupervisedInput(x_test, y_test)
+    val_input = dp.Input(x_val)
+    test_input = dp.Input(x_test)
 
     # Setup neural network
     weight_decay = 1e-03
@@ -59,13 +60,13 @@ def test_classification():
 
     # Train neural network
     def val_error():
-        return net.error(val_input)
+        return np.mean(net.predict(val_input) != y_val)
     trainer = dp.StochasticGradientDescent(
         min_epochs=10, learn_rule=dp.Momentum(learn_rate=0.01, momentum=0.9),
     )
     trainer.train(net, train_input, val_error)
 
     # Evaluate on test data
-    error = net.error(test_input)
+    error = np.mean(net.predict(test_input) != y_test)
     print('Test error rate: %.4f' % error)
     assert error < 0.2

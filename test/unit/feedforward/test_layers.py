@@ -66,11 +66,11 @@ def check_grad(layer, x0, seed=1, eps=None, rtol=None, atol=None):
     # Check input gradient
     def fun(x):
         ca.random.seed(seed)
-        y = np.array(layer.fprop(ca.array(x), 'train')).astype(np.float_)
+        y = np.array(layer.fprop(ca.array(x))).astype(np.float_)
         return np.sum(y)
 
     def fun_grad(x):
-        y = layer.fprop(ca.array(x), 'train')
+        y = layer.fprop(ca.array(x))
         y_grad = ca.ones_like(y, dtype=ca.float_)
         x_grad = np.array(layer.bprop(y_grad))
         return x_grad
@@ -86,14 +86,14 @@ def check_grad(layer, x0, seed=1, eps=None, rtol=None, atol=None):
             param_array = layer._params[p_idx].array
             param_array *= 0
             param_array += ca.array(x)
-            y = np.array(layer.fprop(ca.array(x0), 'train')).astype(np.float_)
+            y = np.array(layer.fprop(ca.array(x0))).astype(np.float_)
             return np.sum(y)
 
         def fun_grad(x, p_idx):
             param_array = layer._params[p_idx].array
             param_array *= 0
             param_array += ca.array(x)
-            out = layer.fprop(ca.array(x0), 'train')
+            out = layer.fprop(ca.array(x0))
             y_grad = ca.ones_like(out, dtype=ca.float_)
             layer.bprop(y_grad)
             param_grad = np.array(layer._params[p_idx].grad())
@@ -131,8 +131,7 @@ def test_fully_connected():
         layer._setup(x_shape)
         assert layer.y_shape(x_shape) == (batch_size, n_out)
 
-        phase = 'train'
-        y = np.array(layer.fprop(ca.array(x), phase))
+        y = np.array(layer.fprop(ca.array(x)))
         assert allclose(np.dot(x, w) + b, y)
 
         y_grad = y

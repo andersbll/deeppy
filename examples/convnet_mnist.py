@@ -28,7 +28,7 @@ x_test = scaler.transform(x_test)
 # Prepare network inputs
 batch_size = 128
 train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-test_input = dp.SupervisedInput(x_test, y_test)
+test_input = dp.Input(x_test)
 
 # Setup network
 def pool_layer():

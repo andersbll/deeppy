@@ -37,7 +37,7 @@ class Convolution(Layer, ParamMixin):
         if not self.bias.name:
             self.bias.name = self.name + '_bias'
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         self._tmp_x = x
         convout = self.conv_op.fprop(x, self.weights.array)
         return convout + self.bias.array
@@ -72,7 +72,7 @@ class Pool(Layer):
         self.pool_op = ca.nnet.PoolB01(win_shape, pad, strides, method)
         self.img_shape = None
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         self.img_shape = x.shape[2:]
         poolout = self.pool_op.fprop(x)
         return poolout
@@ -93,7 +93,7 @@ class LocalResponseNormalization(Layer):
         self.n = n
         self.k = k
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         x = ca.lrnorm_bc01(x, N=self.n, alpha=self.alpha, beta=self.beta,
                            k=self.k)
         return x
@@ -137,7 +137,7 @@ class LocalContrastNormalization(Layer):
             self.kernel = self.kernel[np.newaxis, :]
         self.ca_kernel = ca.array(self.kernel)
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         n_channels = x.shape[1]
 
         # Calculate local mean
@@ -171,7 +171,7 @@ class Flatten(Layer):
         self.name = 'flatten'
         self.x_shape = None
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         self.x_shape = x.shape
         return ca.reshape(x, self.y_shape(x.shape))
 

@@ -25,7 +25,7 @@ class Input(object):
             batch_stop = min(self.n_samples, batch_start + self.batch_size)
             yield batch_start, batch_stop
 
-    def batches(self, phase=''):
+    def batches(self):
         for batch_start, batch_stop in self._batch_slices():
             yield ca.array(self.x[batch_start:batch_stop])
 
@@ -41,15 +41,11 @@ class SupervisedInput(Input):
             raise ValueError('shape mismatch between x and y')
         self.y = y
 
-    def batches(self, phase='train'):
-        if phase == 'train':
-            for batch_start, batch_stop in self._batch_slices():
-                x_batch = ca.array(self.x[batch_start:batch_stop])
-                y_batch = ca.array(self.y[batch_start:batch_stop])
-                yield x_batch, y_batch
-        elif phase == 'test':
-            for x in super(SupervisedInput, self).batches():
-                yield x
+    def batches(self):
+        for batch_start, batch_stop in self._batch_slices():
+            x_batch = ca.array(self.x[batch_start:batch_stop])
+            y_batch = ca.array(self.y[batch_start:batch_stop])
+            yield x_batch, y_batch
 
     @property
     def y_shape(self):

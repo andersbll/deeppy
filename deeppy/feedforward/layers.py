@@ -8,7 +8,7 @@ class Layer(PickleMixin):
         """ Setup layer with parameters that are unknown at __init__(). """
         pass
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         """ Calculate layer output for given input (forward propagation). """
         raise NotImplementedError()
 
@@ -40,7 +40,7 @@ class FullyConnected(Layer, ParamMixin):
         if not self.bias.name:
             self.bias.name = self.name + '_b'
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         self._tmp_x = x
         return ca.dot(x, self.weights.array) + self.bias.array
 
@@ -81,7 +81,7 @@ class Activation(Layer):
             raise ValueError('Invalid activation function.')
         self._tmp_x = None
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         self._tmp_x = x
         return self.fun(x)
 
@@ -111,7 +111,7 @@ class PReLU(Layer, ParamMixin):
     def _params(self, params):
         self.a = params[0]
 
-    def fprop(self, x, phase):
+    def fprop(self, x):
         self._tmp_x = x
         pos = ca.maximum(x, 0)
         neg = self.a.array * ca.minimum(x, 0)

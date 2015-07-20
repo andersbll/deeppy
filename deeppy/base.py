@@ -23,6 +23,18 @@ class ParamMixin(object):
         raise NotImplementedError()
 
 
+class PhaseMixin(object):
+    _phase = None
+
+    @property
+    def phase(self):
+        return self._phase
+
+    @phase.setter
+    def phase(self, phase):
+        self._phase = phase
+
+
 class Model(ParamMixin):
     def _setup(self, input):
         pass

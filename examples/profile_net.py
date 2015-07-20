@@ -21,14 +21,15 @@ def avg_running_time(fun, reps):
 def profile(net, input, reps=50):
     input = dp.Input.from_any(input)
     net._setup(input)
+    net.phase = 'train'
     batch = next(input.batches())
     x = batch[0]
     total_duration = 0
     for layer_idx, layer in enumerate(net.layers[:-1]):
         def fprop():
-            layer.fprop(x, 'train')
+            layer.fprop(x)
         fprop_duration = avg_running_time(fprop, reps)
-        y = layer.fprop(x, 'train')
+        y = layer.fprop(x)
         to_x = layer_idx > net.bprop_until
 
         def bprop():

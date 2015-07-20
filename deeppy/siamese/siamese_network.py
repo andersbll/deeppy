@@ -1,11 +1,11 @@
 from copy import copy
 import numpy as np
 import itertools
-from ..base import Model, ParamMixin, float_
+from ..base import Model, ParamMixin, PhaseMixin, float_
 from ..input import Input
 
 
-class SiameseNetwork(Model):
+class SiameseNetwork(Model, PhaseMixin):
     def __init__(self, siamese_layers, loss):
         self._initialized = False
         self.layers = siamese_layers
@@ -42,13 +42,24 @@ class SiameseNetwork(Model):
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))
 
+    @PhaseMixin.phase.setter
+    def phase(self, phase):
+        if self._phase == phase:
+            return
+        self._phase = phase
+        for layer in self.layers + self.layers2:
+            if isinstance(layer, PhaseMixin):
+                layer.phase = phase
+
     def _update(self, batch):
+        self.phase = 'train'
+
         # Forward propagation
         x1, x2, y = batch
         for layer in self.layers:
-            x1 = layer.fprop(x1, 'train')
+            x1 = layer.fprop(x1)
         for layer in self.layers2:
-            x2 = layer.fprop(x2, 'train')
+            x2 = layer.fprop(x2)
 
         # Back propagation of partial derivatives
         grad1, grad2 = self.loss.grad(y, x1, x2)
@@ -65,16 +76,17 @@ class SiameseNetwork(Model):
         return self.loss.loss(y, x1, x2)
 
     def features(self, input):
+        self.phase = 'test'
         input = Input.from_any(input)
         next_shape = input.x.shape
         for layer in self.layers:
             next_shape = layer.y_shape(next_shape)
         feats = np.empty(next_shape)
         idx = 0
-        for x_batch in input.batches('test'):
+        for x_batch in input.batches():
             x_next = x_batch
             for layer in self.layers:
-                x_next = layer.fprop(x_next, 'test')
+                x_next = layer.fprop(x_next)
             feats_batch = np.array(x_next)
             batch_size = x_batch.shape[0]
             feats[idx:idx+batch_size, ...] = feats_batch
@@ -82,14 +94,15 @@ class SiameseNetwork(Model):
         return feats
 
     def distances(self, input):
+        self.phase = 'test'
         dists = np.empty((input.n_samples,), dtype=float_)
         offset = 0
-        for batch in input.batches('test'):
+        for batch in input.batches():
             x1, x2 = batch
             for layer in self.layers:
-                x1 = layer.fprop(x1, 'test')
+                x1 = layer.fprop(x1)
             for layer in self.layers2:
-                x2 = layer.fprop(x2, 'test')
+                x2 = layer.fprop(x2)
             dists_batch = self.loss.fprop(x1, x2)
             dists_batch = np.ravel(np.array(dists_batch))
             batch_size = x1.shape[0]

@@ -25,7 +25,7 @@ x_test = scaler.transform(x_test)
 # Prepare network inputs
 batch_size = 128
 train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-test_input = dp.SupervisedInput(x_test, y_test, batch_size=batch_size)
+test_input = dp.Input(x_test, batch_size=batch_size)
 
 # Setup network
 def conv_layer(n_filters):
@@ -71,8 +71,8 @@ net = dp.NeuralNetwork(
 
 
 # Train network
-def val_error():
-    return net.error(test_input)
+def test_error():
+    return np.mean(net.predict(test_input) != y_test)
 n_epochs = [8, 8]
 learn_rate = 0.05
 for i, max_epochs in enumerate(n_epochs):
@@ -81,12 +81,11 @@ for i, max_epochs in enumerate(n_epochs):
         max_epochs=max_epochs,
         learn_rule=dp.Momentum(learn_rate=lr, momentum=0.9),
     )
-    trainer.train(net, train_input, val_error)
+    trainer.train(net, train_input, test_error)
 
 
 # Evaluate on test data
-error = net.error(test_input)
-print('Test error rate: %.4f' % error)
+print('Test error rate: %.4f' % test_error())
 
 
 # Plot image examples.

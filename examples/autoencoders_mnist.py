@@ -71,14 +71,14 @@ net = dp.NeuralNetwork(
 
 # Fine-tune neural network
 train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-test_input = dp.SupervisedInput(x_test, y_test)
+test_input = dp.Input(x_test)
 trainer = dp.StochasticGradientDescent(
     max_epochs=25, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
 )
 trainer.train(net, train_input)
 
 # Evaluate on test data
-error = net.error(test_input)
+error = np.mean(net.predict(test_input) != y_test)
 print('Test error rate: %.4f' % error)
 
 

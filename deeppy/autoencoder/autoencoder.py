@@ -53,12 +53,12 @@ class Autoencoder(Model, PickleMixin):
     def encode(self, x):
         self._tmp_x = x
         y = ca.dot(x, self.weights.array) + self.bias.array
-        return self.activation.fprop(y, '')
+        return self.activation.fprop(y)
 
     def decode(self, y):
         self._tmp_y = y
         x = ca.dot(y, self.weights.array.T) + self.bias_prime.array
-        return self.activation_decode.fprop(x, '')
+        return self.activation_decode.fprop(x)
 
     def decode_bprop(self, x_grad):
         x_grad = self.activation_decode.bprop(x_grad)
@@ -92,7 +92,7 @@ class Autoencoder(Model, PickleMixin):
         input = Input.from_any(input)
         x_prime = np.empty(input.x.shape)
         offset = 0
-        for x_batch in input.batches('test'):
+        for x_batch in input.batches():
             x_prime_batch = np.array(self._reconstruct_batch(x_batch))
             batch_size = x_prime_batch.shape[0]
             x_prime[offset:offset+batch_size, ...] = x_prime_batch
@@ -107,7 +107,7 @@ class Autoencoder(Model, PickleMixin):
         input = Input.from_any(input)
         y = np.empty(self.output_shape(input.x.shape))
         offset = 0
-        for x_batch in input.batches('test'):
+        for x_batch in input.batches():
             y_batch = np.array(self._embed_batch(x_batch))
             batch_size = y_batch.shape[0]
             y[offset:offset+batch_size, ...] = y_batch
