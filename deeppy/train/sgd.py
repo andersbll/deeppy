@@ -20,7 +20,8 @@ class StochasticGradientDescent(object):
         input = Input.from_any(input)
         model._setup(input)
         params = model._params
-        self.learn_rule._setup(params, input.batch_size)
+        self.learn_rule.learn_rate /= input.batch_size
+        learn_rule_states = [self.learn_rule.init_state(p) for p in params]
         n_params = np.sum([p.array.size for p in params])
         log.info('SGD: Model contains %i parameters.', n_params)
         log.info('SGD: %d gradient updates per epoch.', input.n_batches)
@@ -38,7 +39,8 @@ class StochasticGradientDescent(object):
                 cost = np.array(ca.mean(model._update(batch)))
                 batch_costs.append(cost)
                 # Update gradient
-                self.learn_rule.step()
+                for param, state in zip(params, learn_rule_states):
+                    self.learn_rule.step(param, state)
 
             epoch_cost = np.mean(batch_costs)
             if val_error_fun is not None:
