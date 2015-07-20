@@ -6,12 +6,12 @@ from ..input import Input
 
 class NeuralNetwork(Model, PhaseMixin):
     def __init__(self, layers, loss):
-        self._initialized = False
         self.layers = layers
-        self.bprop_until = next((idx for idx, l in enumerate(self.layers)
-                                 if isinstance(l, ParamMixin)),
-                                len(self.layers))
         self.loss = loss
+        self.bprop_until = next((idx for idx, l in enumerate(self.layers)
+                                 if isinstance(l, ParamMixin)), 0)
+        self.layers[self.bprop_until].bprop_to_x = False
+        self._initialized = False
 
     def _setup(self, input):
         # Setup layers sequentially
@@ -57,7 +57,7 @@ class NeuralNetwork(Model, PhaseMixin):
         layers = self.layers[self.bprop_until:]
         for layer in reversed(layers[1:]):
             next_grad = layer.bprop(next_grad)
-        layers[0].bprop(next_grad, to_x=False)
+        layers[0].bprop(next_grad)
         return self.loss.loss(y, y_pred)
 
     def _output_shape(self, input_shape):

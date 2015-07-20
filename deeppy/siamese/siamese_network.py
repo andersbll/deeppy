@@ -7,18 +7,19 @@ from ..input import Input
 
 class SiameseNetwork(Model, PhaseMixin):
     def __init__(self, siamese_layers, loss):
-        self._initialized = False
         self.layers = siamese_layers
+        self.loss = loss
         # Create second array of layers
         self.layers2 = [copy(layer) for layer in self.layers]
         for layer1, layer2 in zip(self.layers, self.layers2):
             if isinstance(layer1, ParamMixin):
                 # Replace weights in layers2 with shared weights
                 layer2._params = [p.share() for p in layer1._params]
-        self.loss = loss
         self.bprop_until = next((idx for idx, l in enumerate(self.layers)
-                                 if isinstance(l, ParamMixin)),
-                                len(self.layers))
+                                 if isinstance(l, ParamMixin)), 0)
+        self.layers[self.bprop_until].bprop_to_x = False
+        self.layers2[self.bprop_until].bprop_to_x = False
+        self._initialized = False
 
     def _setup(self, input):
         # Setup layers sequentially
@@ -66,12 +67,12 @@ class SiameseNetwork(Model, PhaseMixin):
         layers = self.layers[self.bprop_until:]
         for layer in reversed(layers[1:]):
             grad1 = layer.bprop(grad1)
-        layers[0].bprop(grad1, to_x=False)
+        layers[0].bprop(grad1)
 
         layers2 = self.layers2[self.bprop_until:]
         for layer in reversed(layers2[1:]):
             grad2 = layer.bprop(grad2)
-        layers2[0].bprop(grad2, to_x=False)
+        layers2[0].bprop(grad2)
 
         return self.loss.loss(y, x1, x2)
 

@@ -42,9 +42,9 @@ class Convolution(Layer, ParamMixin):
         convout = self.conv_op.fprop(x, self.weights.array)
         return convout + self.bias.array
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         _, x_grad = self.conv_op.bprop(
-            self._tmp_x, self.weights.array, y_grad, to_imgs=to_x,
+            self._tmp_x, self.weights.array, y_grad, to_imgs=self.bprop_to_x,
             filters_d=self.weights.grad_array
         )
         ca.sum(ca.sum(y_grad, axis=(2, 3), keepdims=True), axis=0,
@@ -77,10 +77,9 @@ class Pool(Layer):
         poolout = self.pool_op.fprop(x)
         return poolout
 
-    def bprop(self, y_grad, to_x=True):
-        if to_x:
-            x_grad = self.pool_op.bprop(self.img_shape, y_grad)
-            return x_grad
+    def bprop(self, y_grad):
+        x_grad = self.pool_op.bprop(self.img_shape, y_grad)
+        return x_grad
 
     def y_shape(self, x_shape):
         return self.pool_op.output_shape(x_shape)
@@ -98,7 +97,7 @@ class LocalResponseNormalization(Layer):
                            k=self.k)
         return x
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         return y_grad
 
     def y_shape(self, x_shape):
@@ -158,7 +157,7 @@ class LocalContrastNormalization(Layer):
         # Scale centered input with standard deviation
         return centered / (tmp + self.eps)
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         raise NotImplementedError('LocalContrastNormalization supports only '
                                   'usage as a preprocessing layer.')
 
@@ -175,7 +174,7 @@ class Flatten(Layer):
         self.x_shape = x.shape
         return ca.reshape(x, self.y_shape(x.shape))
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         return ca.reshape(y_grad, self.x_shape)
 
     def y_shape(self, x_shape):

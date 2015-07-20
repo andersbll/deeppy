@@ -4,6 +4,8 @@ from ..parameter import Parameter
 
 
 class Layer(PickleMixin):
+    bprop_to_x = True
+
     def _setup(self, x_shape):
         """ Setup layer with parameters that are unknown at __init__(). """
         pass
@@ -12,7 +14,7 @@ class Layer(PickleMixin):
         """ Calculate layer output for given input (forward propagation). """
         raise NotImplementedError()
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         """ Calculate input gradient. """
         raise NotImplementedError()
 
@@ -44,10 +46,10 @@ class FullyConnected(Layer, ParamMixin):
         self._tmp_x = x
         return ca.dot(x, self.weights.array) + self.bias.array
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         ca.dot(self._tmp_x.T, y_grad, out=self.weights.grad_array)
         ca.sum(y_grad, axis=0, out=self.bias.grad_array)
-        if to_x:
+        if self.bprop_to_x:
             return ca.dot(y_grad, self.weights.array.T)
 
     @property
@@ -85,7 +87,7 @@ class Activation(Layer):
         self._tmp_x = x
         return self.fun(x)
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         self.fun_d(self._tmp_x, self._tmp_x)
         return self._tmp_x * y_grad
 
@@ -117,7 +119,7 @@ class PReLU(Layer, ParamMixin):
         neg = self.a.array * ca.minimum(x, 0)
         return pos + neg
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         pos = ca.nnet.relu_d(self._tmp_x)
         neg_mask = self._tmp_x < 0
         a_grad = neg_mask * self._tmp_x * y_grad

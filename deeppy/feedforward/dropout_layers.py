@@ -20,7 +20,7 @@ class Dropout(Layer, PhaseMixin):
                 raise ValueError('Invalid phase: %s' % self.phase)
         return y
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         if self.dropout > 0.0:
             return y_grad * self._tmp_mask
         else:
@@ -51,7 +51,7 @@ class DropoutFullyConnected(FullyConnected, PhaseMixin):
                 raise ValueError('Invalid phase: %s' % self.phase)
         return y
 
-    def bprop(self, y_grad, to_x=True):
+    def bprop(self, y_grad):
         if self.dropout > 0.0:
             y_grad *= self._tmp_mask
-        return super(DropoutFullyConnected, self).bprop(y_grad, to_x)
+        return super(DropoutFullyConnected, self).bprop(y_grad)
