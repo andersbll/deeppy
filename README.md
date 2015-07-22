@@ -1,5 +1,7 @@
 ## Deep learning in Python
 
+[![Join the chat at https://gitter.im/andersbll/deeppy](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/andersbll/deeppy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 DeepPy tries to combine state-of-the-art deep learning models with a Pythonic interface in an extensible framework.
 
 
