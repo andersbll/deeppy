@@ -36,10 +36,10 @@ class PhaseMixin(object):
 
 
 class Model(ParamMixin):
-    def _setup(self, input):
+    def _setup(self, **array_shapes):
         pass
 
-    def _update(self, batch):
+    def _update(self, **arrays):
         raise NotImplementedError()
 
 

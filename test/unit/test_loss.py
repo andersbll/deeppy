@@ -15,11 +15,11 @@ def check_grad(loss, x0, y0, seed=1, eps=None, rtol=None, atol=None):
     '''
     def fun(x):
         ca.random.seed(seed)
-        y = np.array(loss.loss(ca.array(y0), ca.array(x))).astype(np.float_)
+        y = np.array(loss.loss(ca.array(x), ca.array(y0))).astype(np.float_)
         return np.sum(y)
 
     def fun_grad(x):
-        x_grad = np.array(loss.grad(ca.array(y0), ca.array(x)))
+        x_grad = np.array(loss.grad(ca.array(x), ca.array(y0)))
         return x_grad
 
     g_approx = approx_fprime(x0, fun, eps)
@@ -37,8 +37,7 @@ def test_softmaxcrossentropy():
         y = np.random.randint(low=0, high=n_in, size=batch_size)
         loss = dp.SoftmaxCrossEntropy()
         loss._setup(x_shape)
-        assert loss.y_shape(x_shape) == x_shape[:1]
-        assert loss.loss(ca.array(y), ca.array(x)).shape == x_shape[:1]
+        assert loss.loss(ca.array(x), ca.array(y)).shape == x_shape[:1]
         check_grad(loss, x, y)
 
 
@@ -52,8 +51,7 @@ def test_binarycrossentropy():
         y = np.random.uniform(size=x_shape)
         loss = dp.BinaryCrossEntropy()
         loss._setup(x_shape)
-        assert loss.y_shape(x_shape) == x_shape
-        assert loss.loss(ca.array(y), ca.array(x)).shape == x_shape[:1]
+        assert loss.loss(ca.array(x), ca.array(y)).shape == x_shape[:1]
         check_grad(loss, x, y)
 
 
@@ -66,6 +64,5 @@ def test_meansquarederror():
         y = np.random.normal(size=x_shape)
         loss = dp.MeanSquaredError()
         loss._setup(x_shape)
-        assert loss.y_shape(x_shape) == x_shape
-        assert loss.loss(ca.array(y), ca.array(x)).shape == x_shape[:1]
+        assert loss.loss(ca.array(x), ca.array(y)).shape == x_shape[:1]
         check_grad(loss, x, y)

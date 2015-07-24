@@ -22,11 +22,10 @@ class Autoencoder(Model, PickleMixin):
         self._tmp_x = None
         self._tmp_y = None
 
-    def _setup(self, input):
+    def _setup(self, x_shape):
         if self._initialized:
             return
-        next_shape = input.x_shape
-        n_in = next_shape[1]
+        n_in = x_shape[1]
         self.weights._setup((n_in, self.n_out))
         if not self.weights.name:
             self.weights.name = self.name + '_w'
@@ -36,7 +35,7 @@ class Autoencoder(Model, PickleMixin):
         self.bias_prime._setup(n_in)
         if not self.bias_prime.name:
             self.bias_prime.name = self.name + '_b_prime'
-        self.loss._setup((next_shape[0], self.n_out))
+        self.loss._setup((x_shape[0], self.n_out))
         self._initialized = True
 
     @property
@@ -78,10 +77,10 @@ class Autoencoder(Model, PickleMixin):
     def _update(self, x):
         y_prime = self.encode(x)
         x_prime = self.decode(y_prime)
-        x_prime_grad = self.loss.grad(x, x_prime)
+        x_prime_grad = self.loss.grad(x_prime, x)
         y_grad = self.decode_bprop(x_prime_grad)
         self.encode_bprop(y_grad)
-        return self.loss.loss(x, x_prime)
+        return self.loss.loss(x_prime, x)
 
     def _reconstruct_batch(self, x):
         y = self.encode(x)
@@ -137,7 +136,7 @@ class DenoisingAutoencoder(Autoencoder):
         x_tilde = self.corrupt(x)
         y_prime = self.encode(x_tilde)
         x_prime = self.decode(y_prime)
-        x_prime_grad = self.loss.grad(x, x_prime)
+        x_prime_grad = self.loss.grad(x_prime, x)
         y_grad = self.decode_bprop(x_prime_grad)
         self.encode_bprop(y_grad)
-        return self.loss.loss(x, x_prime)
+        return self.loss.loss(x_prime, x)

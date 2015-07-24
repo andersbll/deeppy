@@ -4,33 +4,20 @@ from ..loss import Loss
 from .autoencoder import Autoencoder
 
 
-class InputWrap(object):
-    def __init__(self, input, x_shape):
-        self.input = input
-        self.x_shape = x_shape
-
-    def __getattr__(self, attr):
-        # Wrap Input methods
-        if attr in self.__dict__:
-            return getattr(self, attr)
-        return getattr(self.ae, attr)
-
-
 class StackedAutoencoderLayer(Autoencoder):
     def __init__(self, ae, prev_layers):
         self.ae = ae
         self.prev_layers = prev_layers
         self._initialized = False
 
-    def _setup(self, input):
+    def _setup(self, x_shape):
         # Setup layers sequentially
         if self._initialized:
             return
-        next_shape = input.x_shape
         for ae in self.prev_layers:
-            ae._setup(InputWrap(input, next_shape))
-            next_shape = ae.output_shape(next_shape)
-        self.ae._setup(InputWrap(input, next_shape))
+            ae._setup(x_shape)
+            x_shape = ae.output_shape(x_shape)
+        self.ae._setup(x_shape)
         self._initialized = True
 
     def _update(self, x):
@@ -65,14 +52,13 @@ class StackedAutoencoder(Autoencoder):
         self.layers = layers
         self.loss = Loss.from_any(loss)
 
-    def _setup(self, input):
+    def _setup(self, x_shape):
         if self._initialized:
             return
-        next_shape = input.x_shape
         for ae in self.layers:
-            ae._setup(InputWrap(input, next_shape))
-            next_shape = ae.output_shape(next_shape)
-        self.loss._setup(next_shape)
+            ae._setup(x_shape)
+            x_shape = ae.output_shape(x_shape)
+        self.loss._setup(x_shape)
         self._initialized = True
 
     @property
@@ -102,11 +88,10 @@ class StackedAutoencoder(Autoencoder):
             y_grad = ae.encode_bprop(y_grad)
         return y_grad
 
-    def _output_shape(self, input_shape):
-        next_shape = input_shape
+    def _output_shape(self, x_shape):
         for ae in self.layers:
-            next_shape = ae.output_shape(next_shape)
-        return next_shape
+            x_shape = ae.output_shape(x_shape)
+        return x_shape
 
     def feedforward_layers(self):
         feedforward_layers = [ae.feedforward_layers() for ae in self.layers]

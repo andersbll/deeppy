@@ -21,15 +21,15 @@ class SiameseNetwork(Model, PhaseMixin):
         self.layers2[self.bprop_until].bprop_to_x = False
         self._initialized = False
 
-    def _setup(self, input):
+    def _setup(self, x_shape, y_shape=None):
         # Setup layers sequentially
         if self._initialized:
             return
-        next_shape = input.x_shape
+        next_shape = x_shape
         for layer in self.layers:
             layer._setup(next_shape)
             next_shape = layer.y_shape(next_shape)
-        next_shape = input.x_shape
+        next_shape = x_shape
         for layer in self.layers2:
             layer._setup(next_shape)
             next_shape = layer.y_shape(next_shape)
@@ -52,11 +52,10 @@ class SiameseNetwork(Model, PhaseMixin):
             if isinstance(layer, PhaseMixin):
                 layer.phase = phase
 
-    def _update(self, batch):
+    def _update(self, x1, x2, y):
         self.phase = 'train'
 
         # Forward propagation
-        x1, x2, y = batch
         for layer in self.layers:
             x1 = layer.fprop(x1)
         for layer in self.layers2:
@@ -84,7 +83,8 @@ class SiameseNetwork(Model, PhaseMixin):
             next_shape = layer.y_shape(next_shape)
         feats = np.empty(next_shape)
         idx = 0
-        for x_batch in input.batches():
+        for batch in input.batches():
+            x_batch = batch['x']
             x_next = x_batch
             for layer in self.layers:
                 x_next = layer.fprop(x_next)

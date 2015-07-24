@@ -50,7 +50,7 @@ sae = dp.StackedAutoencoder(
 
 # Train autoencoders layer-wise
 trainer = dp.StochasticGradientDescent(
-    min_epochs=25, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
+    max_epochs=25, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
 )
 for ae in sae.ae_models():
     trainer.train(ae, train_input)

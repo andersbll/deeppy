@@ -27,11 +27,16 @@ class Input(object):
 
     def batches(self):
         for batch_start, batch_stop in self._batch_slices():
-            yield ca.array(self.x[batch_start:batch_stop])
+            x_batch = ca.array(self.x[batch_start:batch_stop])
+            yield {'x': x_batch}
 
     @property
     def x_shape(self):
         return (self.batch_size,) + self.x.shape[1:]
+
+    @property
+    def shapes(self):
+        return {'x_shape': self.x_shape}
 
 
 class SupervisedInput(Input):
@@ -45,8 +50,12 @@ class SupervisedInput(Input):
         for batch_start, batch_stop in self._batch_slices():
             x_batch = ca.array(self.x[batch_start:batch_stop])
             y_batch = ca.array(self.y[batch_start:batch_stop])
-            yield x_batch, y_batch
+            yield {'x': x_batch, 'y': y_batch}
 
     @property
     def y_shape(self):
         return (self.batch_size,) + self.y.shape[1:]
+
+    @property
+    def shapes(self):
+        return {'x_shape': self.x_shape, 'y_shape': self.y_shape}

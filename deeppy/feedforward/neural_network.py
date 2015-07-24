@@ -2,6 +2,7 @@ import numpy as np
 import itertools
 from ..base import Model, ParamMixin, PhaseMixin
 from ..input import Input
+from ..loss import SoftmaxCrossEntropy
 
 
 class NeuralNetwork(Model, PhaseMixin):
@@ -13,17 +14,14 @@ class NeuralNetwork(Model, PhaseMixin):
         self.layers[self.bprop_until].bprop_to_x = False
         self._initialized = False
 
-    def _setup(self, input):
+    def _setup(self, x_shape, y_shape=None):
         # Setup layers sequentially
         if self._initialized:
             return
-        next_shape = input.x_shape
-        for layer in self.layers + [self.loss]:
-            layer._setup(next_shape)
-            next_shape = layer.y_shape(next_shape)
-        if next_shape != input.y_shape:
-            raise ValueError('Output shape %s does not match Y %s'
-                             % (next_shape, input.y_shape))
+        for layer in self.layers:
+            layer._setup(x_shape)
+            x_shape = layer.y_shape(x_shape)
+        self.loss._setup(x_shape, y_shape)
         self._initialized = True
 
     @property
@@ -42,42 +40,46 @@ class NeuralNetwork(Model, PhaseMixin):
             if isinstance(layer, PhaseMixin):
                 layer.phase = phase
 
-    def _update(self, batch):
+    def _update(self, x, y):
         self.phase = 'train'
 
         # Forward propagation
-        x, y = batch
-        x_next = x
+        y_pred = self.fprop(x)
+
+        # Backward propagation
+        grad = self.loss.grad(y_pred, y)
+        for layer in reversed(self.layers[self.bprop_until:]):
+            grad = layer.bprop(grad)
+        return self.loss.loss(y_pred, y)
+
+    def fprop(self, x):
         for layer in self.layers:
-            x_next = layer.fprop(x_next)
-        y_pred = x_next
+            x = layer.fprop(x)
+        return x
 
-        # Back propagation of partial derivatives
-        next_grad = self.loss.grad(y, y_pred)
-        layers = self.layers[self.bprop_until:]
-        for layer in reversed(layers[1:]):
-            next_grad = layer.bprop(next_grad)
-        layers[0].bprop(next_grad)
-        return self.loss.loss(y, y_pred)
-
-    def _output_shape(self, input_shape):
-        next_shape = input_shape
-        for layer in self.layers + [self.loss]:
-            next_shape = layer.y_shape(next_shape)
-        return next_shape
+    def y_shape(self, x_shape):
+        for layer in self.layers:
+            x_shape = layer.y_shape(x_shape)
+        return x_shape
 
     def predict(self, input):
         """ Calculate the output for the given input x. """
-        self.phase = 'test'
         input = Input.from_any(input)
-        y = np.empty(self._output_shape(input.x.shape))
+        self.phase = 'test'
+
+        if isinstance(self.loss, SoftmaxCrossEntropy):
+            # Add softmax from SoftmaxCrossEntropy
+            self.layers += [self.loss]
+
+        y = np.empty(self.y_shape(input.x.shape))
         y_offset = 0
-        for x_batch in input.batches():
-            x_next = x_batch
-            for layer in self.layers:
-                x_next = layer.fprop(x_next)
-            y_batch = np.array(self.loss.fprop(x_next))
+        for batch in input.batches():
+            x_batch = batch['x']
+            y_batch = np.array(self.fprop(x_batch))
             batch_size = x_batch.shape[0]
             y[y_offset:y_offset+batch_size, ...] = y_batch
             y_offset += batch_size
+
+        if isinstance(self.loss, SoftmaxCrossEntropy):
+            self.layers = self.layers[:-1]
         return y

@@ -13,7 +13,7 @@ class SiameseInput(Input):
         for batch_start, batch_stop in self._batch_slices():
             x1_batch = ca.array(self.x[batch_start:batch_stop])
             x2_batch = ca.array(self.x2[batch_start:batch_stop])
-            yield x1_batch, x2_batch
+            yield {'x1': x1_batch, 'x2': x2_batch}
 
 
 class SupervisedSiameseInput(SiameseInput):
@@ -28,7 +28,7 @@ class SupervisedSiameseInput(SiameseInput):
             x1_batch = ca.array(self.x[batch_start:batch_stop])
             x2_batch = ca.array(self.x2[batch_start:batch_stop])
             y_batch = ca.array(self.y[batch_start:batch_stop])
-            yield x1_batch, x2_batch, y_batch
+            yield {'x1': x1_batch, 'x2': x2_batch, 'y': y_batch}
 
     @property
     def y_shape(self):
