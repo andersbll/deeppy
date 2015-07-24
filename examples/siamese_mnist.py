@@ -7,10 +7,10 @@ Siamese networks
 """
 
 import random
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import offsetbox
 import deeppy as dp
-
 
 # Fetch MNIST data
 dataset = dp.dataset.MNIST()
@@ -43,44 +43,58 @@ while n < n_pairs:
 
 # Prepare network inputs
 train_input = dp.SupervisedSiameseInput(x1, x2, y, batch_size=128)
-test_input = dp.Input(x_test)
 
 # Setup network
+w_gain = 1.5
+w_decay = 1e-4
 net = dp.SiameseNetwork(
     siamese_layers=[
-        dp.Dropout(),
         dp.FullyConnected(
-            n_out=800,
-            weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
+            n_out=1024,
+            weights=dp.Parameter(dp.AutoFiller(w_gain), weight_decay=w_decay),
         ),
         dp.Activation('relu'),
         dp.FullyConnected(
-            n_out=800,
-            weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
+            n_out=1024,
+            weights=dp.Parameter(dp.AutoFiller(w_gain), weight_decay=w_decay),
         ),
         dp.Activation('relu'),
         dp.FullyConnected(
             n_out=2,
-            weights=dp.Parameter(dp.AutoFiller(), weight_decay=0.00001),
+            weights=dp.Parameter(dp.AutoFiller(w_gain)),
         ),
     ],
-    loss=dp.ContrastiveLoss(margin=0.5),
+    loss=dp.ContrastiveLoss(margin=1.0),
 )
 
 # Train network
 trainer = dp.StochasticGradientDescent(
-    max_epochs=10,
-    learn_rule=dp.RMSProp(learn_rate=0.001),
+    max_epochs=15,
+    learn_rule=dp.RMSProp(learn_rate=0.01),
 )
 trainer.train(net, train_input)
 
-# Plot feature in 2D space
+# Plot 2D embedding
+test_input = dp.Input(x_test)
+x_test = np.reshape(x_test, (-1,) + dataset.img_shape)
 feat = net.features(test_input)
-colors = ['tomato', 'lawngreen', 'royalblue', 'gold', 'saddlebrown',
-          'violet', 'turquoise', 'mediumpurple', 'darkorange', 'darkgray']
+feat -= np.min(feat, 0)
+feat /= np.max(feat, 0)
+
 plt.figure()
-for i in range(10):
-    plt.scatter(feat[y_test == i, 0], feat[y_test == i, 1], s=3,
-                c=colors[i], linewidths=0)
-plt.legend([str(i) for i in range(10)], scatterpoints=1, markerscale=4)
+ax = plt.subplot(111)
+shown_images = np.array([[1., 1.]])
+for i in range(feat.shape[0]):
+    dist = np.sum((feat[i] - shown_images)**2, 1)
+    if np.min(dist) < 6e-4:
+        # don't show points that are too close
+        continue
+    shown_images = np.r_[shown_images, [feat[i]]]
+    imagebox = offsetbox.AnnotationBbox(
+        offsetbox.OffsetImage(x_test[i], zoom=0.6, cmap=plt.cm.gray_r),
+        xy=feat[i], frameon=False
+    )
+    ax.add_artist(imagebox)
+
+plt.xticks([]), plt.yticks([])
 plt.title('Embedding from the last layer of the network')
