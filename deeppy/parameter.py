@@ -29,7 +29,14 @@ class Parameter(PickleMixin):
         raise ValueError('Invalid parameter arguments')
 
     def _setup(self, shape):
-        self._array = self.filler.array(shape)
+        if self._array is None:
+            self._array = self.filler.array(shape)
+        else:
+            if isinstance(shape, int):
+                shape = (shape,)
+            if self._array.shape != shape:
+                raise ValueError('Shape %s does not match existing shape %s' %
+                                 (shape, self._array.shape))
 
     @property
     def array(self):
