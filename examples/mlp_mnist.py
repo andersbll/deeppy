@@ -35,13 +35,13 @@ net = dp.NeuralNetwork(
             weights=dp.Parameter(dp.AutoFiller(weight_gain),
                                  weight_decay=weight_decay),
         ),
-        dp.Activation('relu'),
+        dp.ReLU(),
         dp.FullyConnected(
             n_out=1024,
             weights=dp.Parameter(dp.AutoFiller(weight_gain),
                                  weight_decay=weight_decay),
         ),
-        dp.Activation('relu'),
+        dp.ReLU(),
         dp.FullyConnected(
             n_out=dataset.n_classes,
             weights=dp.Parameter(dp.AutoFiller()),

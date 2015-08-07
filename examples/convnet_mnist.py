@@ -53,10 +53,10 @@ weight_decay_fc = 0.002
 net = dp.NeuralNetwork(
     layers=[
         conv_layer(32),
-        dp.Activation('relu'),
+        dp.ReLU(),
         pool_layer(),
         conv_layer(64),
-        dp.Activation('relu'),
+        dp.ReLU(),
         pool_layer(),
         dp.Flatten(),
         dp.DropoutFullyConnected(
@@ -65,7 +65,7 @@ net = dp.NeuralNetwork(
             weights=dp.Parameter(dp.AutoFiller(weight_gain_fc),
                                  weight_decay=weight_decay_fc),
         ),
-        dp.Activation('relu'),
+        dp.ReLU(),
         dp.FullyConnected(
             n_out=dataset.n_classes,
             weights=dp.Parameter(dp.AutoFiller(weight_gain_fc)),

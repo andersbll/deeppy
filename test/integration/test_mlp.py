@@ -43,13 +43,13 @@ def test_classification():
                 weights=dp.Parameter(dp.AutoFiller(),
                                      weight_decay=weight_decay),
             ),
-            dp.Activation('relu'),
+            dp.ReLU(),
             dp.FullyConnected(
                 n_out=64,
                 weights=dp.Parameter(dp.AutoFiller(),
                                      weight_decay=weight_decay),
             ),
-            dp.Activation('relu'),
+            dp.ReLU(),
             dp.FullyConnected(
                 n_out=n_classes,
                 weights=dp.Parameter(dp.AutoFiller()),

@@ -140,25 +140,3 @@ def test_fully_connected():
 
         check_grad(layer, x)
         check_params(layer)
-
-
-def test_activation():
-    activations = ['sigmoid', 'tanh', 'relu']
-    confs = itertools.product(batch_sizes, n_ins, activations)
-    for batch_size, n_in, activation in confs:
-        print('Activation: batch_size=%i, n_in=%i, fun=%s'
-              % (batch_size, n_in, activation))
-        x_shape = (batch_size, n_in)
-        x = np.random.normal(size=x_shape)
-        if activation == 'relu':
-            # Change x values that are too close to 0. The numeric
-            # differentiation may make such values change sign resulting in
-            # faulty gradient approximation.
-            thresh = 1e-04
-            x[np.logical_and(-thresh < x, x < thresh)] = 0.1
-        layer = dp.Activation(activation)
-        layer._setup(x_shape)
-
-        assert layer.y_shape(x_shape) == x_shape
-
-        check_grad(layer, x)

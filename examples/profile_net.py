@@ -75,20 +75,20 @@ def pool_layer():
 net = dp.NeuralNetwork(
     layers=[
         conv_layer(32),
-        dp.Activation('relu'),
+        dp.ReLU(),
         pool_layer(),
         conv_layer(32),
-        dp.Activation('relu'),
+        dp.ReLU(),
         pool_layer(),
         conv_layer(64),
-        dp.Activation('relu'),
+        dp.ReLU(),
         pool_layer(),
         dp.Flatten(),
         dp.DropoutFullyConnected(
             n_out=64,
             weights=dp.Parameter(dp.AutoFiller(gain=1.25), weight_decay=0.03)
         ),
-        dp.Activation('relu'),
+        dp.ReLU(),
         dp.FullyConnected(
             n_out=dataset.n_classes,
             weights=dp.Parameter(dp.AutoFiller(gain=1.25)),

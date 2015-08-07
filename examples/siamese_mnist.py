@@ -53,12 +53,12 @@ net = dp.SiameseNetwork(
             n_out=1024,
             weights=dp.Parameter(dp.AutoFiller(w_gain), weight_decay=w_decay),
         ),
-        dp.Activation('relu'),
+        dp.ReLU(),
         dp.FullyConnected(
             n_out=1024,
             weights=dp.Parameter(dp.AutoFiller(w_gain), weight_decay=w_decay),
         ),
-        dp.Activation('relu'),
+        dp.ReLU(),
         dp.FullyConnected(
             n_out=2,
             weights=dp.Parameter(dp.AutoFiller(w_gain)),

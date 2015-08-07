@@ -1,6 +1,7 @@
 import numpy as np
 import cudarray as ca
-from ..feedforward.layers import Activation, FullyConnected
+from ..feedforward.activation_layers import Activation
+from ..feedforward.layers import FullyConnected
 from ..loss import Loss
 from ..base import Model, PickleMixin
 from ..input import Input
@@ -12,8 +13,8 @@ class Autoencoder(Model, PickleMixin):
                  activation='sigmoid', loss='bce'):
         self.name = 'autoenc'
         self.n_out = n_out
-        self.activation = Activation(activation)
-        self.activation_decode = Activation(activation)
+        self.activation = Activation.from_any(activation)
+        self.activation_decode = Activation.from_any(activation)
         self.loss = Loss.from_any(loss)
         self.weights = Parameter.from_any(weights)
         self.bias = Parameter.from_any(bias)
