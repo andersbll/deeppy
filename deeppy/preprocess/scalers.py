@@ -9,8 +9,8 @@ class StandardScaler(object):
         self._x_std = None
 
     def fit(self, x):
-        self._x_mean = np.mean(x)
-        self._x_std = np.std(x)
+        self._x_mean = np.mean(x, dtype=np.float64).astype(x.dtype)
+        self._x_std = np.std(x, dtype=np.float64).astype(x.dtype)
 
     def fit_transform(self, x, copy=True):
         self.fit(x)
