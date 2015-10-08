@@ -26,13 +26,12 @@ def gradclose(a, b, rtol=None, atol=None):
         rtol = 1e-05 if rtol is None else rtol
         atol = 1e-07 if atol is None else atol
     else:
-
-        rtol = 1e-06 if rtol is None else rtol
+        rtol = 1e-05 if rtol is None else rtol
         atol = 1e-08 if atol is None else atol
-    diff = abs(abs(a - b) - atol + rtol * 0.5 * (abs(a) + abs(b)))
-    is_close = np.all(diff > 0)
+    diff = abs(a - b) - atol - rtol * (abs(a) + abs(b))
+    is_close = np.all(diff < 0)
     if not is_close:
-        denom = 0.5 * (abs(a) + abs(b))
+        denom = abs(a) + abs(b)
         mask = denom == 0
         rel_error = abs(a - b) / (denom + mask)
         rel_error[mask] = 0
@@ -125,8 +124,8 @@ def test_fully_connected():
               % (batch_size, n_in, n_out))
         x_shape = (batch_size, n_in)
         x = np.random.normal(size=x_shape).astype(ca.float_)
-        w = np.random.normal(size=(n_in, n_out)).astype(ca.float_)*1e-4
-        b = np.random.normal(size=n_out).astype(ca.float_)*1e-4
+        w = np.random.normal(size=(n_in, n_out)).astype(ca.float_)
+        b = np.random.normal(size=n_out).astype(ca.float_)
         layer = dp.FullyConnected(n_out, weights=w, bias=b)
         layer._setup(x_shape)
         assert layer.y_shape(x_shape) == (batch_size, n_out)

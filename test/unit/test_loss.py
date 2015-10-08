@@ -6,7 +6,7 @@ from feedforward.test_layers import approx_fprime, gradclose
 
 
 batch_sizes = [1, 5, 10]
-n_ins = [1, 2, 8, 7, 25]
+n_ins = [1, 2, 8, 7]
 
 
 def check_grad(loss, x0, y0, seed=1, eps=None, rtol=None, atol=None):

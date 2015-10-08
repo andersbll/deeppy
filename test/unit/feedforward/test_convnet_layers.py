@@ -7,7 +7,7 @@ from deeppy.feedforward.convnet_layers import padding
 from test_layers import check_grad, check_params
 
 
-batch_sizes = [1, 5, 10]
+batch_sizes = [1, 4, 5]
 n_channels = [1, 3, 8]
 img_shapes = [(1, 6), (6, 1), (7, 7), (8, 8), (9, 15)]
 
@@ -75,16 +75,9 @@ def test_pool():
         if img_shape[0] < win_shape[0] or img_shape[1] < win_shape[1]:
             continue
         if border_mode != 'valid' and \
-           (win_shape[0] != 1 or win_shape[1] != 1) and \
-           ca._backend == 'cuda' and \
-           ca.nnet.pool._default_impl == 'cudnn':
+           (win_shape[0] != 1 or win_shape[1] != 1):
             # Bug: I think CUDArray/DeepPy calculates the padding in a manner
             # inconsistent with cuDNN
-            continue
-        if method == 'avg' and \
-           ca._backend == 'cuda' and \
-           ca.nnet.pool._default_impl == 'masked':
-            # Not implemented yet
             continue
         print('Pool: batch_size=%i, n_channel=%i, img_shape=%s, win_shape=%s, '
               'stride=%s, border_mode=%s, method=%s'
@@ -99,4 +92,6 @@ def test_pool():
         y_img_shape = img_out_shape(img_shape, win_shape, stride, border_mode)
         assert layer.y_shape(x_shape) == (batch_size, n_channel) + y_img_shape
 
-        check_grad(layer, x)
+        rtol = 1e-5
+        atol = 1e-7
+        check_grad(layer, x, rtol=rtol, atol=atol)

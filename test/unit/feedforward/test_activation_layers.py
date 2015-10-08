@@ -4,7 +4,7 @@ import deeppy as dp
 from test_layers import check_grad
 
 
-batch_sizes = [1, 4, 5, 10, 24]
+batch_sizes = [1, 4, 5, 10]
 n_ins = [1, 2, 7, 8, 18]
 activations = ['leaky_relu', 'parametric_relu', 'relu', 'sigmoid', 'softplus',
                'tanh']
@@ -20,8 +20,8 @@ def test_activation():
         layer = dp.Activation.from_any(activation)
         layer._setup(x_shape)
         assert layer.y_shape(x_shape) == x_shape
-        if activation == 'sigmoid':
-            rtol = 1e-05
+        if dp.float_ != np.float_:
+            rtol = 1e-02
         else:
             rtol = None
         check_grad(layer, x, rtol=rtol)
