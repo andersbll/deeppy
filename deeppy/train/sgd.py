@@ -16,7 +16,7 @@ class StochasticGradientDescent(object):
         self.patience_incr = patience_incr
         self.improvement_thresh = improvement_thresh
 
-    def train(self, model, input, val_error_fun=None):
+    def train(self, model, input, error_fun=None):
         input = Input.from_any(input)
         model._setup(**input.shapes)
         params = model._params
@@ -34,38 +34,38 @@ class StochasticGradientDescent(object):
         while epoch < self.max_epochs and not converged:
             epoch += 1
 
-            batch_costs = []
+            batch_losses = []
             for batch in input.batches():
-                cost = np.array(ca.mean(model._update(**batch)))
-                batch_costs.append(cost)
+                loss = np.array(ca.mean(model._update(**batch)))
+                batch_losses.append(loss)
                 # Update gradient
                 for param, state in zip(params, learn_rule_states):
                     self.learn_rule.step(param, state)
 
-            epoch_cost = np.mean(batch_costs)
-            if val_error_fun is not None:
-                val_error = val_error_fun()
-                if val_error < best_score:
-                    improvement = val_error / best_score
+            epoch_loss = np.mean(batch_losses)
+            if error_fun is not None:
+                error = error_fun()
+                if error < best_score:
+                    improvement = error / best_score
                     if improvement < self.improvement_thresh:
                         # increase patience on significant improvement
                         patience = max(patience, epoch*self.patience_incr)
-                    best_score = val_error
-                log.info('epoch %d/%d, cost %f, val_error %.4f', epoch,
-                         patience, epoch_cost, val_error)
+                    best_score = error
+                log.info('epoch %d/%d, loss %f, error %.4f', epoch,
+                         patience, epoch_loss, error)
                 for param in params:
                     param.monitor()
                 if patience <= epoch:
                     log.info('SGD: Converged on validation set.')
                     converged = True
             else:
-                if epoch_cost < best_score:
-                    improvement = epoch_cost / best_score
+                if epoch_loss < best_score:
+                    improvement = epoch_loss / best_score
                     if improvement < self.improvement_thresh:
                         # increase patience on significant improvement
                         patience = max(patience, epoch*self.patience_incr)
-                    best_score = epoch_cost
-                log.info('epoch %d/%d, cost %f', epoch, patience, epoch_cost)
+                    best_score = epoch_loss
+                log.info('epoch %d/%d, loss %f', epoch, patience, epoch_loss)
                 for param in params:
                     param.monitor()
                 if patience <= epoch:
