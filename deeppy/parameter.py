@@ -95,6 +95,12 @@ class SharedParameter(Parameter):
 
     # Wrap parent Parameter methods
     def __getattr__(self, attr):
-        if attr in self.__dict__:
-            return getattr(self, attr)
         return getattr(self.parent, attr)
+
+    # Pickle support
+    def __getstate__(self):
+        return self.parent
+
+    def __setstate__(self, state):
+        self.parent = state
+        self._tmp_grad_array = None
