@@ -85,8 +85,8 @@ class BinaryCrossEntropy(Loss):
 
     def loss(self, pred, target):
         pred = ca.maximum(pred, _FLT_MIN)
-        return -ca.mean(target*ca.log(pred) + (1 - target)*ca.log(1 - pred),
-                        axis=1)
+        return -ca.sum(target*ca.log(pred) + (1 - target)*ca.log(1 - pred),
+                       axis=1)
 
     def grad(self, pred, target):
         pred = ca.maximum(pred, _FLT_MIN)
