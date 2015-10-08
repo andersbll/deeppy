@@ -56,6 +56,7 @@ class Parameter(PickleMixin):
         grad = self.grad_array
         for param in self.shares:
             grad += param.grad_array
+        grad = self._add_penalty(grad)
         return grad
 
     def step(self, step):
@@ -64,11 +65,12 @@ class Parameter(PickleMixin):
             self._tmp_step = step
         self._array += step
 
-    def penalty(self):
+    def _add_penalty(self, grad):
         if self.weight_decay == 0.0:
-            return None
+            return grad
         else:
-            return 2*self.weight_decay * self._array
+            grad += 2*self.weight_decay * self._array
+            return grad
 
     def monitor(self):
         if not self._monitor:

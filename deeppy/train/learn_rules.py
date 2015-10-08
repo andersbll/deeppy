@@ -24,9 +24,6 @@ class Momentum(LearnRule):
     def step(self, param, last_step):
         last_step *= self.momentum
         step = param.grad()
-        penalty = param.penalty()
-        if penalty is not None:
-            step -= penalty
         step *= -self.learn_rate
         last_step += step
         param.step(last_step)
@@ -45,9 +42,6 @@ class RMSProp(LearnRule):
     def step(self, param, last_step):
         last_step *= self.decay
         step = param.grad()
-        penalty = param.penalty()
-        if penalty is not None:
-            step -= penalty
         last_step += (1.0 - self.decay) * step**2
         scaling = ca.sqrt(last_step) + self.eps
         step *= -self.learn_rate
@@ -73,9 +67,6 @@ class Adam(LearnRule):
     def step(self, param, state):
         m, v, t = state
         grad = param.grad()
-        penalty = param.penalty()
-        if penalty is not None:
-            grad -= penalty
         t += 1
         t = int(t)
         beta1_t = self.beta1 * self.lambd**(t - 1)
