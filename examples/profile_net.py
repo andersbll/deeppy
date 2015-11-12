@@ -49,7 +49,7 @@ def profile(net, input, reps=50):
 
 # Fetch CIFAR10 data
 dataset = dp.dataset.CIFAR10()
-x_train, y_train, x_test, y_test = dataset.data(dp_dtypes=True)
+x_train, y_train, x_test, y_test = dataset.arrays(dp_dtypes=True)
 
 # Prepare network inputs
 batch_size = 128

@@ -14,7 +14,7 @@ import deeppy as dp
 
 # Fetch CIFAR10 data
 dataset = dp.dataset.CIFAR10()
-x_train, y_train, x_test, y_test = dataset.data(dp_dtypes=True)
+x_train, y_train, x_test, y_test = dataset.arrays(dp_dtypes=True)
 
 # Normalize pixel intensities
 scaler = dp.StandardScaler()

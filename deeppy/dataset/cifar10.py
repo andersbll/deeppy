@@ -1,20 +1,19 @@
 import os
 import pickle
 import numpy as np
+import logging
+
 from ..base import float_, int_
-from .dataset import Dataset
+from .util import download, checksum, archive_extract, checkpoint
 
 
-_URLS = [
-    'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz',
-]
+log = logging.getLogger(__name__)
 
-_SHA1S = [
-    '874905e36347c8536514d0a26261acf3bff89bc7',
-]
+_URL = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
+_SHA1 = '874905e36347c8536514d0a26261acf3bff89bc7'
 
 
-class CIFAR10(Dataset):
+class CIFAR10(object):
     '''
     The CIFAR-10 dataset [1]
     http://www.cs.toronto.edu/~kriz/cifar.html
@@ -32,10 +31,10 @@ class CIFAR10(Dataset):
         self.img_shape = (3, 32, 32)
         self.data_dir = os.path.join(data_root, self.name)
         self._install()
-        self._data = self._load()
+        self._arrays = self._load()
 
-    def data(self, flat=False, dp_dtypes=False):
-        x_train, y_train, x_test, y_test = self._data
+    def arrays(self, flat=False, dp_dtypes=False):
+        x_train, y_train, x_test, y_test = self._arrays
         if dp_dtypes:
             x_train = x_train.astype(float_)
             y_train = y_train.astype(int_)
@@ -47,8 +46,17 @@ class CIFAR10(Dataset):
         return x_train, y_train, x_test, y_test
 
     def _install(self):
-        self._download(_URLS, _SHA1S)
-        self._unpack()
+        checkpoint_file = os.path.join(self.data_dir, '__install_check')
+        with checkpoint(checkpoint_file) as exists:
+            if exists:
+                return
+            log.info('Downloading %s', _URL)
+            filepath = download(_URL, self.data_dir)
+            if _SHA1 != checksum(filepath, method='sha1'):
+                raise RuntimeError('Checksum mismatch for %s.' % _URL)
+
+            log.info('Unpacking %s', filepath)
+            archive_extract(filepath, self.data_dir)
 
     def _load(self):
         dirpath = os.path.join(self.data_dir, 'cifar-10-batches-py')

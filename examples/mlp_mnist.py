@@ -13,7 +13,7 @@ import deeppy as dp
 
 # Fetch MNIST data
 dataset = dp.dataset.MNIST()
-x_train, y_train, x_test, y_test = dataset.data(flat=True, dp_dtypes=True)
+x_train, y_train, x_test, y_test = dataset.arrays(flat=True, dp_dtypes=True)
 
 # Normalize pixel intensities
 scaler = dp.StandardScaler()

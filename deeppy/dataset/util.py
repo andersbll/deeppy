@@ -8,6 +8,7 @@ import hashlib
 import numpy as np
 import struct
 from subprocess import Popen
+from contextlib import contextmanager
 
 
 def touch(filepath, times=None):
@@ -15,14 +16,34 @@ def touch(filepath, times=None):
         os.utime(filepath, times)
 
 
+def require_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def url_filename(url):
+    return url.split('/')[-1].split('#')[0].split('?')[0]
+
+
 def download(url, target_dir, filename=None):
-    filename = url.split('/')[-1].split('#')[0].split('?')[0]
+    require_dir(target_dir)
+    if filename is None:
+        filename = url_filename(url)
     filepath = os.path.join(target_dir, filename)
     if sys.version_info[0] > 2:
         urllib.request.urlretrieve(url, filepath)
     else:
         urllib.urlretrieve(url, filepath)
     return filepath
+
+
+@contextmanager
+def checkpoint(filepath):
+    try:
+        yield os.path.exists(filepath)
+    finally:
+        pass
+    touch(filepath)
 
 
 def is_archive(filepath):
@@ -33,6 +54,7 @@ def is_archive(filepath):
 
 
 def archive_extract(filepath, target_dir):
+    target_dir = os.path.abspath(target_dir)
     if tarfile.is_tarfile(filepath):
         with tarfile.open(filepath, 'r') as tarf:
             # Check that no files get extracted outside target_dir
@@ -62,9 +84,14 @@ def archive_extract(filepath, target_dir):
         raise ValueError('% is not a supported archive file.' % filepath)
 
 
-def checksum(filename):
+def checksum(filename, method='sha1'):
     data = open(filename, 'rb').read()
-    return hashlib.sha1(data).hexdigest()
+    if method == 'sha1':
+        return hashlib.sha1(data).hexdigest()
+    elif method == 'md5':
+        return hashlib.md5(data).hexdigest()
+    else:
+        raise ValueError('Invalid method: %s' % method)
 
 
 def _read_int(buf):

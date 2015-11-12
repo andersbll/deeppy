@@ -4,22 +4,16 @@ import logging
 from subprocess import Popen
 
 from ..base import float_, int_
-from .dataset import Dataset
-from .util import touch, load_idx
+from .util import download, checksum, archive_extract, checkpoint, load_idx
 
 
 log = logging.getLogger(__name__)
 
-_URLS = [
-    'http://leon.bottou.org/_media/projects/infimnist.tar.gz',
-]
-
-_SHA1S = [
-    '7044bf0e85e19dfdc422c3f5dba37348bf6a33ee',
-]
+_URL = 'http://leon.bottou.org/_media/projects/infimnist.tar.gz'
+_SHA1 = '7044bf0e85e19dfdc422c3f5dba37348bf6a33ee'
 
 
-class InfiMNIST(Dataset):
+class InfiMNIST(object):
     '''
     The infinite MNIST dataset (formerly known as MNIST8M) [1, 2]
     http://leon.bottou.org/projects/infimnist
@@ -36,13 +30,13 @@ class InfiMNIST(Dataset):
     def __init__(self, data_root='datasets'):
         self.name = 'infimnist'
         self.data_dir = os.path.join(data_root, self.name)
-        self._data_file = os.path.join(self.data_dir, 'infimnist.npz')
+        self._npz_path = os.path.join(self.data_dir, 'infimnist.npz')
         self.n_classes = 10
         self.img_shape = (28, 28)
         self._infimnist_start = 10000
         self._infimnist_stop = 8109999
         self._install()
-        self._data = self._load()
+        self._arrays = self._load()
 
     def split(self, n_val=10000):
         infimnist_idxs = np.arange(self._infimnist_start, self._infimnist_stop)
@@ -55,8 +49,8 @@ class InfiMNIST(Dataset):
         val_idx = np.logical_not(train_idx)
         return train_idx, val_idx
 
-    def data(self, flat=False, dp_dtypes=False):
-        x, y = self._data
+    def arrays(self, flat=False, dp_dtypes=False):
+        x, y = self._arrays
         if dp_dtypes:
             x = x.astype(float_)
             y = y.astype(int_)
@@ -65,41 +59,46 @@ class InfiMNIST(Dataset):
         return x, y
 
     def _install(self):
-        checkpoint = os.path.join(self.data_dir, self._install_checkpoint)
-        if os.path.exists(checkpoint):
-            return
-        self._download(_URLS, _SHA1S)
-        self._unpack()
+        checkpoint_file = os.path.join(self.data_dir, '__install_check')
+        with checkpoint(checkpoint_file) as exists:
+            if exists:
+                return
+            log.info('Downloading %s', _URL)
+            filepath = download(_URL, self.data_dir)
+            if _SHA1 != checksum(filepath, method='sha1'):
+                raise RuntimeError('Checksum mismatch for %s.' % _URL)
 
-        log.info('Building executable')
-        cwd = os.path.join(self.data_dir, 'infimnist')
-        if os.name == 'posix':
-            Popen('make', cwd=cwd).wait()
-        else:
-            Popen(['nmake', '/f', 'NMakefile'], cwd=cwd).wait()
+            log.info('Unpacking %s', filepath)
+            archive_extract(filepath, self.data_dir)
 
-        log.info('Generating InfiMNIST dataset')
-        lab_file = os.path.join(cwd, 'mnist8m-labels-idx1-ubyte')
-        pat_file = os.path.join(cwd, 'mnist8m-patterns-idx3-ubyte')
-        with open(lab_file, 'wb') as out:
-            Popen(['./infimnist', 'lab', str(self._infimnist_start),
-                   str(self._infimnist_stop)], stdout=out,
-                  cwd=cwd).wait()
-        with open(pat_file, 'wb') as out:
-            Popen(['./infimnist', 'pat', str(self._infimnist_start),
-                   str(self._infimnist_stop)], stdout=out,
-                  cwd=cwd).wait()
+            log.info('Building executable')
+            cwd = os.path.join(self.data_dir, 'infimnist')
+            if os.name == 'posix':
+                Popen('make', cwd=cwd).wait()
+            else:
+                Popen(['nmake', '/f', 'NMakefile'], cwd=cwd).wait()
 
-        log.info('Converting InfiMNIST data to Numpy arrays')
-        x, y = map(load_idx, [pat_file, lab_file])
-        if x.shape[0] != y.shape[0]:
-            raise RuntimeError('dataset has invalid shape')
-        with open(self._data_file, 'wb') as f:
-            np.savez(f, x=x, y=y)
-        touch(checkpoint)
+            log.info('Generating InfiMNIST dataset')
+            lab_file = os.path.join(cwd, 'mnist8m-labels-idx1-ubyte')
+            pat_file = os.path.join(cwd, 'mnist8m-patterns-idx3-ubyte')
+            with open(lab_file, 'wb') as out:
+                Popen(['./infimnist', 'lab', str(self._infimnist_start),
+                       str(self._infimnist_stop)], stdout=out,
+                      cwd=cwd).wait()
+            with open(pat_file, 'wb') as out:
+                Popen(['./infimnist', 'pat', str(self._infimnist_start),
+                       str(self._infimnist_stop)], stdout=out,
+                      cwd=cwd).wait()
+
+            log.info('Converting InfiMNIST data to Numpy arrays')
+            x, y = map(load_idx, [pat_file, lab_file])
+            if x.shape[0] != y.shape[0]:
+                raise RuntimeError('dataset has invalid shape')
+            with open(self._npz_path, 'wb') as f:
+                np.savez(f, x=x, y=y)
 
     def _load(self):
-        with open(self._data_file, 'rb') as f:
+        with open(self._npz_path, 'rb') as f:
             dic = np.load(f)
             x = dic['x']
             y = dic['y']

@@ -3,8 +3,7 @@ import numpy as np
 import logging
 
 from ..base import float_, int_
-from .dataset import Dataset
-from .util import touch, load_idx
+from .util import download, checksum, archive_extract, checkpoint, load_idx
 
 
 log = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ _SHA1S = [
 ]
 
 
-class MNIST(Dataset):
+class MNIST(object):
     '''
     THE MNIST DATABASE of handwritten digits [1]
     http://yann.lecun.com/exdb/mnist/
@@ -38,16 +37,16 @@ class MNIST(Dataset):
     def __init__(self, data_root='datasets'):
         self.name = 'mnist'
         self.data_dir = os.path.join(data_root, self.name)
-        self._data_file = os.path.join(self.data_dir, 'mnist.npz')
+        self._npz_path = os.path.join(self.data_dir, 'mnist.npz')
         self.n_classes = 10
         self.n_test = 10000
         self.n_train = 60000
         self.img_shape = (28, 28)
         self._install()
-        self._data = self._load()
+        self._arrays = self._load()
 
-    def data(self, flat=False, dp_dtypes=False):
-        x_train, y_train, x_test, y_test = self._data
+    def arrays(self, flat=False, dp_dtypes=False):
+        x_train, y_train, x_test, y_test = self._arrays
         if dp_dtypes:
             x_train = x_train.astype(float_)
             y_train = y_train.astype(int_)
@@ -59,26 +58,30 @@ class MNIST(Dataset):
         return x_train, y_train, x_test, y_test
 
     def _install(self):
-        checkpoint = os.path.join(self.data_dir, self._install_checkpoint)
-        if os.path.exists(checkpoint):
-            return
-        self._download(_URLS, _SHA1S)
-        self._unpack()
-        log.info('Converting MNIST data to Numpy arrays')
-        filenames = ['train-images-idx3-ubyte', 'train-labels-idx1-ubyte',
-                     't10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte']
-        filenames = [os.path.join(self.data_dir, f) for f in filenames]
-        x_train, y_train, x_test, y_test = map(load_idx, filenames)
-        with open(self._data_file, 'wb') as f:
-            np.savez(f, x_train=x_train, y_train=y_train, x_test=x_test,
-                     y_test=y_test)
-        touch(checkpoint)
+        checkpoint_file = os.path.join(self.data_dir, '__install_check')
+        with checkpoint(checkpoint_file) as exists:
+            if exists:
+                return
+            for url, sha1 in zip(_URLS, _SHA1S):
+                log.info('Downloading %s', url)
+                filepath = download(url, self.data_dir)
+                if sha1 != checksum(filepath, method='sha1'):
+                    raise RuntimeError('Checksum mismatch for %s.' % url)
+
+                log.info('Unpacking %s', filepath)
+                archive_extract(filepath, self.data_dir)
+
+            log.info('Converting MNIST data to Numpy arrays')
+            filenames = ['train-images-idx3-ubyte', 'train-labels-idx1-ubyte',
+                         't10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte']
+            filenames = [os.path.join(self.data_dir, f) for f in filenames]
+            x_train, y_train, x_test, y_test = map(load_idx, filenames)
+            with open(self._npz_path, 'wb') as f:
+                np.savez(f, x_train=x_train, y_train=y_train, x_test=x_test,
+                         y_test=y_test)
 
     def _load(self):
-        with open(self._data_file, 'rb') as f:
+        with open(self._npz_path, 'rb') as f:
             dic = np.load(f)
-            x_train = dic['x_train']
-            y_train = dic['y_train']
-            x_test = dic['x_test']
-            y_test = dic['y_test']
-        return x_train, y_train, x_test, y_test
+            return (dic['x_train'], dic['y_train'], dic['x_test'],
+                    dic['y_test'])

@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 # Fetch MNIST data
 dataset = dp.dataset.MNIST()
-x_train, y_train, x_test, y_test = dataset.data(dp_dtypes=True)
+x_train, y_train, x_test, y_test = dataset.arrays(dp_dtypes=True)
 
 # Bring images to BCHW format
 x_train = x_train[:, np.newaxis, :, :]
