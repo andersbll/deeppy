@@ -40,16 +40,18 @@ class NormalFiller(Filler):
         self.sigma = sigma
 
     def array(self, shape):
-        return ca.random.normal(loc=self.mu, scale=self.sigma, size=shape)
+        array = np.random.normal(loc=self.mu, scale=self.sigma, size=shape)
+        return ca.array(array)
 
 
 class UniformFiller(Filler):
-    def __init__(self, low, high):
+    def __init__(self, low=0.0, high=1.0):
         self.low = low
         self.high = high
 
     def array(self, shape):
-        return ca.random.uniform(low=self.low, high=self.high, size=shape)
+        array = np.random.uniform(low=self.low, high=self.high, size=shape)
+        return ca.array(array)
 
 
 class CopyFiller(Filler):
@@ -80,4 +82,5 @@ class AutoFiller(Filler):
         else:
             raise ValueError('AutoFiller does not support ndim %i' % ndim)
         scale = self.gain * scale / np.sqrt(3)
-        return ca.random.uniform(low=-scale, high=scale, size=shape)
+        array = np.random.uniform(low=-scale, high=scale, size=shape)
+        return ca.array(array)
