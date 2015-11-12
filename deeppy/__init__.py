@@ -9,7 +9,7 @@ from .feedforward.activation_layers import (
 )
 from .feedforward.neural_network import NeuralNetwork
 from .feedforward.layers import FullyConnected
-from .feedforward.dropout_layers import Dropout, DropoutFullyConnected
+from .feedforward.dropout_layers import Dropout
 from .feedforward.convnet_layers import (
     Convolution, Flatten, Pool, LocalContrastNormalization,
     LocalResponseNormalization

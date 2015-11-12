@@ -59,7 +59,8 @@ net = dp.NeuralNetwork(
         dp.ReLU(),
         pool_layer(),
         dp.Flatten(),
-        dp.DropoutFullyConnected(
+        dp.Dropout(),
+        dp.FullyConnected(
             n_out=512,
             dropout=0.5,
             weights=dp.Parameter(dp.AutoFiller(weight_gain_fc),
