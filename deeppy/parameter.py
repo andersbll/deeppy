@@ -95,8 +95,13 @@ class SharedParameter(Parameter):
     def _setup(self, shape):
         pass
 
+    def grad(self):
+        raise RuntimeError('SharedParameter should not be requested a grad()')
+
     # Wrap parent Parameter methods
     def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return getattr(self, attr)
         return getattr(self.parent, attr)
 
     # Pickle support
