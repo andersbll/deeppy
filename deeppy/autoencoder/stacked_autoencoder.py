@@ -10,20 +10,20 @@ class StackedAutoencoderLayer(Autoencoder):
         self.prev_layers = prev_layers
         self._initialized = False
 
-    def _setup(self, x_shape):
+    def setup(self, x_shape):
         # Setup layers sequentially
         if self._initialized:
             return
         for ae in self.prev_layers:
-            ae._setup(x_shape)
+            ae.setup(x_shape)
             x_shape = ae.output_shape(x_shape)
-        self.ae._setup(x_shape)
+        self.ae.setup(x_shape)
         self._initialized = True
 
-    def _update(self, x):
+    def update(self, x):
         for ae in self.prev_layers:
             x = ae.encode(x)
-        return self.ae._update(x)
+        return self.ae.update(x)
 
     def _reconstruct_batch(self, x):
         for ae in self.prev_layers:
@@ -52,18 +52,18 @@ class StackedAutoencoder(Autoencoder):
         self.layers = layers
         self.loss = Loss.from_any(loss)
 
-    def _setup(self, x_shape):
+    def setup(self, x_shape):
         if self._initialized:
             return
         for ae in self.layers:
-            ae._setup(x_shape)
+            ae.setup(x_shape)
             x_shape = ae.output_shape(x_shape)
-        self.loss._setup(x_shape)
+        self.loss.setup(x_shape)
         self._initialized = True
 
     @property
-    def _params(self):
-        all_params = [ae._params for ae in self.layers
+    def params(self):
+        all_params = [ae.params for ae in self.layers
                       if isinstance(ae, ParamMixin)]
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))

@@ -62,7 +62,6 @@ net = dp.NeuralNetwork(
         dp.Dropout(),
         dp.FullyConnected(
             n_out=512,
-            dropout=0.5,
             weights=dp.Parameter(dp.AutoFiller(weight_gain_fc),
                                  weight_decay=weight_decay_fc),
         ),

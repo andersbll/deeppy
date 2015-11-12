@@ -23,28 +23,28 @@ class Autoencoder(Model, PickleMixin):
         self._tmp_x = None
         self._tmp_y = None
 
-    def _setup(self, x_shape):
+    def setup(self, x_shape):
         if self._initialized:
             return
         n_in = x_shape[1]
-        self.weights._setup((n_in, self.n_out))
+        self.weights.setup((n_in, self.n_out))
         if not self.weights.name:
             self.weights.name = self.name + '_w'
-        self.bias._setup(self.n_out)
+        self.bias.setup(self.n_out)
         if not self.bias.name:
             self.bias.name = self.name + '_b'
-        self.bias_prime._setup(n_in)
+        self.bias_prime.setup(n_in)
         if not self.bias_prime.name:
             self.bias_prime.name = self.name + '_b_prime'
-        self.loss._setup((x_shape[0], self.n_out))
+        self.loss.setup((x_shape[0], self.n_out))
         self._initialized = True
 
     @property
-    def _params(self):
+    def params(self):
         return self.weights, self.bias, self.bias_prime
 
-    @_params.setter
-    def _params(self, params):
+    @params.setter
+    def params(self, params):
         self.weights, self.bias, self.bias_prime = params
 
     def output_shape(self, input_shape):
@@ -75,7 +75,7 @@ class Autoencoder(Model, PickleMixin):
         ca.sum(y_grad, axis=0, out=self.bias.grad_array)
         return ca.dot(y_grad, self.weights.array.T)
 
-    def _update(self, x):
+    def update(self, x):
         y_prime = self.encode(x)
         x_prime = self.decode(y_prime)
         x_prime_grad = self.loss.grad(x_prime, x)
@@ -133,7 +133,7 @@ class DenoisingAutoencoder(Autoencoder):
         mask = ca.random.uniform(size=x.shape) < (1-self.corruption)
         return x * mask
 
-    def _update(self, x):
+    def update(self, x):
         x_tilde = self.corrupt(x)
         y_prime = self.encode(x_tilde)
         x_prime = self.decode(y_prime)

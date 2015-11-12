@@ -82,24 +82,24 @@ def check_grad(layer, x0, seed=1, eps=None, rtol=None, atol=None):
     if isinstance(layer, ParamMixin):
         def fun(x, p_idx):
             ca.random.seed(seed)
-            param_array = layer._params[p_idx].array
+            param_array = layer.params[p_idx].array
             param_array *= 0
             param_array += ca.array(x)
             y = np.array(layer.fprop(ca.array(x0))).astype(np.float_)
             return np.sum(y)
 
         def fun_grad(x, p_idx):
-            param_array = layer._params[p_idx].array
+            param_array = layer.params[p_idx].array
             param_array *= 0
             param_array += ca.array(x)
             out = layer.fprop(ca.array(x0))
             y_grad = ca.ones_like(out, dtype=ca.float_)
             layer.bprop(y_grad)
-            param_grad = np.array(layer._params[p_idx].grad())
+            param_grad = np.array(layer.params[p_idx].grad())
             return param_grad.astype(np.float_)
 
-        for p_idx, p in enumerate(layer._params):
-            x = np.array(layer._params[p_idx].array)
+        for p_idx, p in enumerate(layer.params):
+            x = np.array(layer.params[p_idx].array)
             g_true = fun_grad(x, p_idx)
             g_approx = approx_fprime(x, fun, eps, p_idx)
             assert gradclose(g_true, g_approx, rtol, atol)
@@ -107,13 +107,13 @@ def check_grad(layer, x0, seed=1, eps=None, rtol=None, atol=None):
 
 def check_params(layer):
     assert isinstance(layer, ParamMixin)
-    old_arrays = [np.copy(p.array) for p in layer._params]
-    params = copy(layer._params)
+    old_arrays = [np.copy(p.array) for p in layer.params]
+    params = copy(layer.params)
     for p in params:
         a = p.array
         a *= 2
-    layer._params = params
-    for p, a in zip(layer._params, old_arrays):
+    layer.params = params
+    for p, a in zip(layer.params, old_arrays):
         assert np.allclose(p.array / 2, a)
 
 
@@ -127,7 +127,7 @@ def test_fully_connected():
         w = np.random.normal(size=(n_in, n_out)).astype(ca.float_)
         b = np.random.normal(size=n_out).astype(ca.float_)
         layer = dp.FullyConnected(n_out, weights=w, bias=b)
-        layer._setup(x_shape)
+        layer.setup(x_shape)
         assert layer.y_shape(x_shape) == (batch_size, n_out)
 
         y = np.array(layer.fprop(ca.array(x)))

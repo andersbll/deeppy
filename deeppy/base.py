@@ -14,12 +14,12 @@ float_ = ca.float_
 
 class ParamMixin(object):
     @property
-    def _params(self):
+    def params(self):
         """ List of Parameter objects. """
         raise NotImplementedError()
 
-    @_params.setter
-    def _params(self, params):
+    @params.setter
+    def params(self, params):
         raise NotImplementedError()
 
 
@@ -36,10 +36,10 @@ class PhaseMixin(object):
 
 
 class Model(ParamMixin):
-    def _setup(self, **array_shapes):
+    def setup(self, **array_shapes):
         pass
 
-    def _update(self, **arrays):
+    def update(self, **arrays):
         raise NotImplementedError()
 
 

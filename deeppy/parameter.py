@@ -28,7 +28,7 @@ class Parameter(PickleMixin):
             return cls(arg)
         raise ValueError('Invalid parameter arguments')
 
-    def _setup(self, shape):
+    def setup(self, shape):
         if self._array is None:
             self._array = self.filler.array(shape)
         else:
@@ -92,7 +92,7 @@ class SharedParameter(Parameter):
         self.parent = parent
         self._tmp_grad_array = None
 
-    def _setup(self, shape):
+    def setup(self, shape):
         pass
 
     def grad(self):

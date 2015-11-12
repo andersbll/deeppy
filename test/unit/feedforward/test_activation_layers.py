@@ -18,7 +18,7 @@ def test_activation():
         x_shape = (batch_size, n_in)
         x = np.random.normal(size=x_shape).astype(dp.float_)
         layer = dp.Activation.from_any(activation)
-        layer._setup(x_shape)
+        layer.setup(x_shape)
         assert layer.y_shape(x_shape) == x_shape
         if dp.float_ != np.float_:
             rtol = 1e-02

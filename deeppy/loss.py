@@ -20,7 +20,7 @@ class Loss(PickleMixin):
                 return MeanSquaredError()
         raise ValueError('Invalid constructor arguments: %s' % arg)
 
-    def _setup(self, pred_shape, target_shape=None):
+    def setup(self, pred_shape, target_shape=None):
         pass
 
     def loss(self, pred, target):
@@ -45,7 +45,7 @@ class SoftmaxCrossEntropy(Loss):
         self._tmp_one_hot = None
         self.n_classes = None
 
-    def _setup(self, pred_shape, target_shape=None):
+    def setup(self, pred_shape, target_shape=None):
         self.n_classes = pred_shape[1]
 
     def _softmax(self, x):
@@ -98,7 +98,7 @@ class MeanSquaredError(Loss):
         self.name = 'mse'
         self.n_feats = None
 
-    def _setup(self, pred_shape, target_shape=None):
+    def setup(self, pred_shape, target_shape=None):
         self.n_feats = pred_shape[1]
 
     def loss(self, pred, target):

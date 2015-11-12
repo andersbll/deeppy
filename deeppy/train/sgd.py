@@ -18,8 +18,8 @@ class StochasticGradientDescent(object):
 
     def train(self, model, input, error_fun=None):
         input = Input.from_any(input)
-        model._setup(**input.shapes)
-        params = model._params
+        model.setup(**input.shapes)
+        params = model.params
         self.learn_rule.learn_rate /= input.batch_size
         learn_rule_states = [self.learn_rule.init_state(p) for p in params]
         n_params = np.sum([p.array.size for p in params])
@@ -36,7 +36,7 @@ class StochasticGradientDescent(object):
 
             batch_losses = []
             for batch in input.batches():
-                loss = np.array(ca.mean(model._update(**batch)))
+                loss = np.array(ca.mean(model.update(**batch)))
                 batch_losses.append(loss)
                 # Update gradient
                 for param, state in zip(params, learn_rule_states):

@@ -14,19 +14,19 @@ class NeuralNetwork(Model, PhaseMixin):
         self.layers[self.bprop_until].bprop_to_x = False
         self._initialized = False
 
-    def _setup(self, x_shape, y_shape=None):
+    def setup(self, x_shape, y_shape=None):
         # Setup layers sequentially
         if self._initialized:
             return
         for layer in self.layers:
-            layer._setup(x_shape)
+            layer.setup(x_shape)
             x_shape = layer.y_shape(x_shape)
-        self.loss._setup(x_shape, y_shape)
+        self.loss.setup(x_shape, y_shape)
         self._initialized = True
 
     @property
-    def _params(self):
-        all_params = [layer._params for layer in self.layers
+    def params(self):
+        all_params = [layer.params for layer in self.layers
                       if isinstance(layer, ParamMixin)]
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))
@@ -40,7 +40,7 @@ class NeuralNetwork(Model, PhaseMixin):
             if isinstance(layer, PhaseMixin):
                 layer.phase = phase
 
-    def _update(self, x, y):
+    def update(self, x, y):
         self.phase = 'train'
 
         # Forward propagation

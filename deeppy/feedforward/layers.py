@@ -6,7 +6,7 @@ from ..parameter import Parameter
 class Layer(PickleMixin):
     bprop_to_x = True
 
-    def _setup(self, x_shape):
+    def setup(self, x_shape):
         """ Setup layer with parameters that are unknown at __init__(). """
         pass
 
@@ -34,11 +34,11 @@ class FullyConnected(Layer, ParamMixin):
         self.bias = Parameter.from_any(bias)
         self._tmp_x = None
 
-    def _setup(self, x_shape):
-        self.weights._setup((x_shape[1], self.n_out))
+    def setup(self, x_shape):
+        self.weights.setup((x_shape[1], self.n_out))
         if not self.weights.name:
             self.weights.name = self.name + '_w'
-        self.bias._setup(self.n_out)
+        self.bias.setup(self.n_out)
         if not self.bias.name:
             self.bias.name = self.name + '_b'
 
@@ -53,11 +53,11 @@ class FullyConnected(Layer, ParamMixin):
             return ca.dot(y_grad, self.weights.array.T)
 
     @property
-    def _params(self):
+    def params(self):
         return self.weights, self.bias
 
-    @_params.setter
-    def _params(self, params):
+    @params.setter
+    def params(self, params):
         self.weights, self.bias = params
 
     def y_shape(self, x_shape):

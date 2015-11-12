@@ -20,7 +20,7 @@ def avg_running_time(fun, reps):
 
 def profile(net, input, reps=50):
     input = dp.Input.from_any(input)
-    net._setup(**input.shapes)
+    net.setup(**input.shapes)
     net.phase = 'train'
     batch = next(input.batches())
     x = batch['x']
@@ -42,9 +42,9 @@ def profile(net, input, reps=50):
     print('total_duration: %.6f s' % total_duration)
 
     def nn_bprop():
-        net._update(**batch)
+        net.update(**batch)
     nn_bprop_duration = avg_running_time(nn_bprop, reps)
-    print('net._bprop(): %.6f s' % nn_bprop_duration)
+    print('net.bprop(): %.6f s' % nn_bprop_duration)
 
 
 # Fetch CIFAR10 data

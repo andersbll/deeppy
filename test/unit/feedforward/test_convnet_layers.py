@@ -51,7 +51,7 @@ def test_convolution():
         b = np.random.normal(size=(1, n_filter, 1, 1)).astype(ca.float_)*1e-4
         layer = dp.Convolution(n_filter, win_shape, weights=w, bias=b,
                                strides=stride, border_mode=border_mode)
-        layer._setup(x_shape)
+        layer.setup(x_shape)
         y_img_shape = img_out_shape(img_shape, win_shape, stride, border_mode)
         assert layer.y_shape(x_shape) == (batch_size, n_filter) + y_img_shape
 
@@ -88,7 +88,7 @@ def test_pool():
         x = np.random.normal(size=x_shape).astype(ca.float_)
         layer = dp.Pool(win_shape=win_shape, method=method, strides=stride,
                         border_mode=border_mode)
-        layer._setup(x_shape)
+        layer.setup(x_shape)
         y_img_shape = img_out_shape(img_shape, win_shape, stride, border_mode)
         assert layer.y_shape(x_shape) == (batch_size, n_channel) + y_img_shape
 

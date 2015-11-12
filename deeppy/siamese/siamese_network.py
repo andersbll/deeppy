@@ -14,31 +14,31 @@ class SiameseNetwork(Model, PhaseMixin):
         for layer1, layer2 in zip(self.layers, self.layers2):
             if isinstance(layer1, ParamMixin):
                 # Replace weights in layers2 with shared weights
-                layer2._params = [p.share() for p in layer1._params]
+                layer2.params = [p.share() for p in layer1.params]
         self.bprop_until = next((idx for idx, l in enumerate(self.layers)
                                  if isinstance(l, ParamMixin)), 0)
         self.layers[self.bprop_until].bprop_to_x = False
         self.layers2[self.bprop_until].bprop_to_x = False
         self._initialized = False
 
-    def _setup(self, x_shape, y_shape=None):
+    def setup(self, x_shape, y_shape=None):
         # Setup layers sequentially
         if self._initialized:
             return
         next_shape = x_shape
         for layer in self.layers:
-            layer._setup(next_shape)
+            layer.setup(next_shape)
             next_shape = layer.y_shape(next_shape)
         next_shape = x_shape
         for layer in self.layers2:
-            layer._setup(next_shape)
+            layer.setup(next_shape)
             next_shape = layer.y_shape(next_shape)
         next_shape = self.loss.y_shape(next_shape)
         self._initialized = True
 
     @property
-    def _params(self):
-        all_params = [layer._params for layer in self.layers
+    def params(self):
+        all_params = [layer.params for layer in self.layers
                       if isinstance(layer, ParamMixin)]
         # Concatenate lists in list
         return list(itertools.chain.from_iterable(all_params))
@@ -52,7 +52,7 @@ class SiameseNetwork(Model, PhaseMixin):
             if isinstance(layer, PhaseMixin):
                 layer.phase = phase
 
-    def _update(self, x1, x2, y):
+    def update(self, x1, x2, y):
         self.phase = 'train'
 
         # Forward propagation

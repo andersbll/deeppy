@@ -63,16 +63,16 @@ class ParametricReLU(Activation, ParamMixin):
         self.name = 'prelu'
         self.a = Parameter.from_any(a)
 
-    def _setup(self, x_shape):
-        self.a._setup((1, 1))
+    def setup(self, x_shape):
+        self.a.setup((1, 1))
         self.a.name = self.name + '_a'
 
     @property
-    def _params(self):
+    def params(self):
         return [self.a]
 
-    @_params.setter
-    def _params(self, params):
+    @params.setter
+    def params(self, params):
         self.a = params[0]
 
     def fprop(self, x):

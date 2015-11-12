@@ -28,12 +28,12 @@ class Convolution(Layer, ParamMixin):
         self.conv_op = ca.nnet.ConvBC01(pad, strides)
         self._tmp_x = None
 
-    def _setup(self, x_shape):
+    def setup(self, x_shape):
         n_channels = x_shape[1]
-        self.weights._setup((self.n_filters, n_channels) + self.filter_shape)
+        self.weights.setup((self.n_filters, n_channels) + self.filter_shape)
         if not self.weights.name:
             self.weights.name = self.name + '_weights'
-        self.bias._setup((1, self.n_filters, 1, 1))
+        self.bias.setup((1, self.n_filters, 1, 1))
         if not self.bias.name:
             self.bias.name = self.name + '_bias'
 
@@ -52,11 +52,11 @@ class Convolution(Layer, ParamMixin):
         return x_grad
 
     @property
-    def _params(self):
+    def params(self):
         return self.weights, self.bias
 
-    @_params.setter
-    def _params(self, params):
+    @params.setter
+    def params(self, params):
         self.weights, self.bias = params
 
     def y_shape(self, x_shape):
@@ -127,7 +127,7 @@ class LocalContrastNormalization(Layer):
         pad = padding(kernel.shape[-2:], 'same')
         self.conv_op = ca.nnet.ConvBC01(pad, strides)
 
-    def _setup(self, x_shape):
+    def setup(self, x_shape):
         n_channels = x_shape[1]
         if self.kernel.ndim == 2:
             self.kernel = np.repeat(self.kernel[np.newaxis, np.newaxis, ...],

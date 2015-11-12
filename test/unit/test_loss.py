@@ -36,7 +36,7 @@ def test_softmaxcrossentropy():
         x = np.random.normal(size=x_shape)
         y = np.random.randint(low=0, high=n_in, size=batch_size)
         loss = dp.SoftmaxCrossEntropy()
-        loss._setup(x_shape)
+        loss.setup(x_shape)
         assert loss.loss(ca.array(x), ca.array(y)).shape == x_shape[:1]
         check_grad(loss, x, y)
 
@@ -50,7 +50,7 @@ def test_binarycrossentropy():
         x = np.random.uniform(size=x_shape)
         y = np.random.uniform(size=x_shape)
         loss = dp.BinaryCrossEntropy()
-        loss._setup(x_shape)
+        loss.setup(x_shape)
         assert loss.loss(ca.array(x), ca.array(y)).shape == x_shape[:1]
         check_grad(loss, x, y)
 
@@ -63,6 +63,6 @@ def test_meansquarederror():
         x = np.random.normal(size=x_shape)
         y = np.random.normal(size=x_shape)
         loss = dp.MeanSquaredError()
-        loss._setup(x_shape)
+        loss.setup(x_shape)
         assert loss.loss(ca.array(x), ca.array(y)).shape == x_shape[:1]
         check_grad(loss, x, y)
