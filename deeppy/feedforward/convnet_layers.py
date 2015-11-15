@@ -19,7 +19,6 @@ def padding(win_shape, border_mode):
 class Convolution(Layer, ParamMixin):
     def __init__(self, n_filters, filter_shape, weights, bias=0.0,
                  strides=(1, 1), border_mode='valid'):
-        self.name = 'conv'
         self.n_filters = n_filters
         self.filter_shape = filter_shape
         self.weights = Parameter.from_any(weights)
@@ -31,11 +30,7 @@ class Convolution(Layer, ParamMixin):
     def setup(self, x_shape):
         n_channels = x_shape[1]
         self.weights.setup((self.n_filters, n_channels) + self.filter_shape)
-        if not self.weights.name:
-            self.weights.name = self.name + '_weights'
         self.bias.setup((1, self.n_filters, 1, 1))
-        if not self.bias.name:
-            self.bias.name = self.name + '_bias'
 
     def fprop(self, x):
         self._tmp_x = x
@@ -67,7 +62,6 @@ class Convolution(Layer, ParamMixin):
 class Pool(Layer):
     def __init__(self, win_shape=(3, 3), method='max', strides=(1, 1),
                  border_mode='valid'):
-        self.name = 'pool'
         pad = padding(win_shape, border_mode)
         self.pool_op = ca.nnet.PoolB01(win_shape, pad, strides, method)
         self.img_shape = None
@@ -116,7 +110,6 @@ class LocalContrastNormalization(Layer):
         return kernel/np.sum(kernel)
 
     def __init__(self, kernel, eps=0.1, strides=(1, 1)):
-        self.name = 'lcn'
         self.eps = eps
         if kernel.ndim == 1:
             kernel = np.outer(kernel, kernel)
@@ -167,7 +160,6 @@ class LocalContrastNormalization(Layer):
 
 class Flatten(Layer):
     def __init__(self):
-        self.name = 'flatten'
         self.x_shape = None
 
     def fprop(self, x):

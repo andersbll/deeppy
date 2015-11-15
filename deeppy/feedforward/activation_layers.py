@@ -8,10 +8,6 @@ from .layers import Layer
 class Activation(Layer):
     _tmp_x = None
 
-    def __init__(self):
-        raise NotImplementedError('Use from_any() to construct activation'
-                                  'layers.')
-
     @classmethod
     def from_any(cls, arg):
         if isinstance(arg, Activation):
@@ -43,7 +39,6 @@ class Activation(Layer):
 
 class LeakyReLU(Activation):
     def __init__(self, a=0.25):
-        self.name = 'leaky_relu'
         self.a = a
 
     def fprop(self, x):
@@ -60,12 +55,10 @@ class LeakyReLU(Activation):
 
 class ParametricReLU(Activation, ParamMixin):
     def __init__(self, a=0.25):
-        self.name = 'prelu'
         self.a = Parameter.from_any(a)
 
     def setup(self, x_shape):
         self.a.setup((1, 1))
-        self.a.name = self.name + '_a'
 
     @property
     def params(self):
@@ -90,9 +83,6 @@ class ParametricReLU(Activation, ParamMixin):
 
 
 class ReLU(Activation):
-    def __init__(self):
-        self.name = 'relu'
-
     def fprop(self, x):
         self._tmp_x = x
         return ca.nnet.relu(x)
@@ -103,9 +93,6 @@ class ReLU(Activation):
 
 
 class Sigmoid(Activation):
-    def __init__(self):
-        self.name = 'sigmoid'
-
     def fprop(self, x):
         self._tmp_x = x
         return ca.nnet.sigmoid(x)
@@ -116,9 +103,6 @@ class Sigmoid(Activation):
 
 
 class Softmax(Activation):
-    def __init__(self):
-        self.name = 'softmax'
-
     def fprop(self, x):
         self._tmp_x = x
         return ca.nnet.softmax(x)
@@ -128,9 +112,6 @@ class Softmax(Activation):
 
 
 class Softplus(Activation):
-    def __init__(self):
-        self.name = 'softplus'
-
     def fprop(self, x):
         self._tmp_x = x
         return ca.log(1.0 + ca.exp(x))
@@ -140,9 +121,6 @@ class Softplus(Activation):
 
 
 class Tanh(Activation):
-    def __init__(self):
-        self.name = 'tanh'
-
     def fprop(self, x):
         self._tmp_x = x
         return ca.tanh(x)

@@ -28,7 +28,6 @@ class Layer(PickleMixin):
 
 class FullyConnected(Layer, ParamMixin):
     def __init__(self, n_out, weights, bias=0.0):
-        self.name = 'fullconn'
         self.n_out = n_out
         self.weights = Parameter.from_any(weights)
         self.bias = Parameter.from_any(bias)
@@ -36,11 +35,7 @@ class FullyConnected(Layer, ParamMixin):
 
     def setup(self, x_shape):
         self.weights.setup((x_shape[1], self.n_out))
-        if not self.weights.name:
-            self.weights.name = self.name + '_w'
         self.bias.setup(self.n_out)
-        if not self.bias.name:
-            self.bias.name = self.name + '_b'
 
     def fprop(self, x):
         self._tmp_x = x

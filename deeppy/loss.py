@@ -38,7 +38,6 @@ class SoftmaxCrossEntropy(Loss):
     """
 
     def __init__(self):
-        self.name = 'softmaxce'
         self._tmp_x = None
         self._tmp_y = None
         self._tmp_target = None
@@ -80,9 +79,6 @@ class SoftmaxCrossEntropy(Loss):
 
 
 class BinaryCrossEntropy(Loss):
-    def __init__(self):
-        self.name = 'bce'
-
     def loss(self, pred, target):
         pred = ca.maximum(pred, _FLT_MIN)
         return -ca.sum(target*ca.log(pred) + (1 - target)*ca.log(1 - pred),
@@ -95,7 +91,6 @@ class BinaryCrossEntropy(Loss):
 
 class MeanSquaredError(Loss):
     def __init__(self):
-        self.name = 'mse'
         self.n_feats = None
 
     def setup(self, pred_shape, target_shape=None):

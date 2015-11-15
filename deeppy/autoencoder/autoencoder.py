@@ -11,7 +11,6 @@ from ..parameter import Parameter
 class Autoencoder(Model, PickleMixin):
     def __init__(self, n_out, weights, bias=0.0, bias_prime=0.0,
                  activation='sigmoid', loss='bce'):
-        self.name = 'autoenc'
         self.n_out = n_out
         self.activation = Activation.from_any(activation)
         self.activation_decode = Activation.from_any(activation)
@@ -28,14 +27,8 @@ class Autoencoder(Model, PickleMixin):
             return
         n_in = x_shape[1]
         self.weights.setup((n_in, self.n_out))
-        if not self.weights.name:
-            self.weights.name = self.name + '_w'
         self.bias.setup(self.n_out)
-        if not self.bias.name:
-            self.bias.name = self.name + '_b'
         self.bias_prime.setup(n_in)
-        if not self.bias_prime.name:
-            self.bias_prime.name = self.name + '_b_prime'
         self.loss.setup((x_shape[0], self.n_out))
         self._initialized = True
 

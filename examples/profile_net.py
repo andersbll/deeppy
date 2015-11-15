@@ -36,7 +36,7 @@ def profile(net, input, reps=50):
             layer.bprop(y)
         bprop_duration = avg_running_time(bprop, reps)
         print('%s:   \tfprop(): %.6f s \t bprop(): %.6f s'
-              % (layer.name, fprop_duration, bprop_duration))
+              % (layer.__class__.__name__, fprop_duration, bprop_duration))
         x = y
         total_duration += fprop_duration + bprop_duration
     print('total_duration: %.6f s' % total_duration)

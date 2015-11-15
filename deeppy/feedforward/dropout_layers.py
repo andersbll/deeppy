@@ -5,7 +5,6 @@ from ..base import PhaseMixin
 
 class Dropout(Layer, PhaseMixin):
     def __init__(self, dropout=0.5):
-        self.name = 'dropout'
         self.dropout = dropout
         self._tmp_mask = None
 

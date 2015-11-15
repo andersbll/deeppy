@@ -4,7 +4,6 @@ from ..loss import Loss
 
 class ContrastiveLoss(Loss):
     def __init__(self, margin=1.0):
-        self.name = 'contrastive'
         self.margin = margin
         self._tmp_x1 = None
         self._tmp_x2 = None
