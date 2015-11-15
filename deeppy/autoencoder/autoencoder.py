@@ -1,7 +1,7 @@
 import numpy as np
 import cudarray as ca
 from ..feedforward.activation_layers import Activation
-from ..feedforward.layers import FullyConnected
+from ..feedforward.layers import Affine
 from ..loss import Loss
 from ..base import Model, PickleMixin
 from ..input import Input
@@ -108,8 +108,7 @@ class Autoencoder(Model, PickleMixin):
         return y
 
     def feedforward_layers(self):
-        return [FullyConnected(self.n_out, self.weights.array,
-                               self.bias.array),
+        return [Affine(self.n_out, self.weights.array, self.bias.array),
                 self.activation]
 
 

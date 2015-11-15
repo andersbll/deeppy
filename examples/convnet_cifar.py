@@ -57,12 +57,12 @@ net = dp.NeuralNetwork(
         pool_layer(),
         dp.Flatten(),
         dp.Dropout(),
-        dp.FullyConnected(
+        dp.Affine(
             n_out=64,
             weights=dp.Parameter(dp.AutoFiller(gain=1.25), weight_decay=0.03)
         ),
         dp.ReLU(),
-        dp.FullyConnected(
+        dp.Affine(
             n_out=dataset.n_classes,
             weights=dp.Parameter(dp.AutoFiller(gain=1.25)),
         )

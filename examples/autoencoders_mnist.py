@@ -61,7 +61,7 @@ trainer.train(sae, train_input)
 # Setup neural network using the stacked autoencoder layers
 net = dp.NeuralNetwork(
     layers=sae.feedforward_layers() + [
-        dp.FullyConnected(
+        dp.Affine(
             n_out=dataset.n_classes,
             weights=dp.Parameter(dp.AutoFiller()),
         ),

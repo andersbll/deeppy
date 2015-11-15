@@ -74,7 +74,7 @@ class AutoFiller(Filler):
     def array(self, shape):
         ndim = len(shape)
         if ndim == 2:
-            # FullyConnected weights
+            # Affine weights
             scale = 1.0 / np.sqrt(shape[0])
         elif ndim == 4:
             # Convolution filter

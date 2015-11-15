@@ -120,13 +120,13 @@ def check_params(layer):
 def test_fully_connected():
     confs = itertools.product(batch_sizes, n_ins, n_outs)
     for batch_size, n_in, n_out in confs:
-        print('FullyConnected: batch_size=%i, n_in=%i, n_out=%i'
+        print('Affine: batch_size=%i, n_in=%i, n_out=%i'
               % (batch_size, n_in, n_out))
         x_shape = (batch_size, n_in)
         x = np.random.normal(size=x_shape).astype(ca.float_)
         w = np.random.normal(size=(n_in, n_out)).astype(ca.float_)
         b = np.random.normal(size=n_out).astype(ca.float_)
-        layer = dp.FullyConnected(n_out, weights=w, bias=b)
+        layer = dp.Affine(n_out, weights=w, bias=b)
         layer.setup(x_shape)
         assert layer.y_shape(x_shape) == (batch_size, n_out)
 

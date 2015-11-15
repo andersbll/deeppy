@@ -49,17 +49,17 @@ w_gain = 1.5
 w_decay = 1e-4
 net = dp.SiameseNetwork(
     siamese_layers=[
-        dp.FullyConnected(
+        dp.Affine(
             n_out=1024,
             weights=dp.Parameter(dp.AutoFiller(w_gain), weight_decay=w_decay),
         ),
         dp.ReLU(),
-        dp.FullyConnected(
+        dp.Affine(
             n_out=1024,
             weights=dp.Parameter(dp.AutoFiller(w_gain), weight_decay=w_decay),
         ),
         dp.ReLU(),
-        dp.FullyConnected(
+        dp.Affine(
             n_out=2,
             weights=dp.Parameter(dp.AutoFiller(w_gain)),
         ),

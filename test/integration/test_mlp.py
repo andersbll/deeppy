@@ -38,19 +38,19 @@ def test_classification():
     weight_decay = 1e-03
     net = dp.NeuralNetwork(
         layers=[
-            dp.FullyConnected(
+            dp.Affine(
                 n_out=32,
                 weights=dp.Parameter(dp.AutoFiller(),
                                      weight_decay=weight_decay),
             ),
             dp.ReLU(),
-            dp.FullyConnected(
+            dp.Affine(
                 n_out=64,
                 weights=dp.Parameter(dp.AutoFiller(),
                                      weight_decay=weight_decay),
             ),
             dp.ReLU(),
-            dp.FullyConnected(
+            dp.Affine(
                 n_out=n_classes,
                 weights=dp.Parameter(dp.AutoFiller()),
             ),

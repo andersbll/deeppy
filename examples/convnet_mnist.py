@@ -60,13 +60,13 @@ net = dp.NeuralNetwork(
         pool_layer(),
         dp.Flatten(),
         dp.Dropout(),
-        dp.FullyConnected(
+        dp.Affine(
             n_out=512,
             weights=dp.Parameter(dp.AutoFiller(weight_gain_fc),
                                  weight_decay=weight_decay_fc),
         ),
         dp.ReLU(),
-        dp.FullyConnected(
+        dp.Affine(
             n_out=dataset.n_classes,
             weights=dp.Parameter(dp.AutoFiller(weight_gain_fc)),
         ),

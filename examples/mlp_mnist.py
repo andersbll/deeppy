@@ -30,19 +30,19 @@ weight_gain = 2.0
 weight_decay = 0.0005
 net = dp.NeuralNetwork(
     layers=[
-        dp.FullyConnected(
+        dp.Affine(
             n_out=1024,
             weights=dp.Parameter(dp.AutoFiller(weight_gain),
                                  weight_decay=weight_decay),
         ),
         dp.ReLU(),
-        dp.FullyConnected(
+        dp.Affine(
             n_out=1024,
             weights=dp.Parameter(dp.AutoFiller(weight_gain),
                                  weight_decay=weight_decay),
         ),
         dp.ReLU(),
-        dp.FullyConnected(
+        dp.Affine(
             n_out=dataset.n_classes,
             weights=dp.Parameter(dp.AutoFiller()),
         ),

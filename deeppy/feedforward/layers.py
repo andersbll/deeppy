@@ -26,7 +26,7 @@ class Layer(PickleMixin):
         raise NotImplementedError()
 
 
-class FullyConnected(Layer, ParamMixin):
+class Affine(Layer, ParamMixin):
     def __init__(self, n_out, weights, bias=0.0):
         self.n_out = n_out
         self.weights = Parameter.from_any(weights)

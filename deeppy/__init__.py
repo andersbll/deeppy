@@ -8,7 +8,7 @@ from .feedforward.activation_layers import (
     Tanh
 )
 from .feedforward.neural_network import NeuralNetwork
-from .feedforward.layers import FullyConnected
+from .feedforward.layers import Affine
 from .feedforward.dropout_layers import Dropout
 from .feedforward.convnet_layers import (
     Convolution, Flatten, Pool, LocalContrastNormalization,
