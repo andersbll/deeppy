@@ -44,6 +44,14 @@ class Model(ParamMixin):
 
 
 class PickleMixin(object):
+    _pickle_ignore = ['_tmp_']
+
+    def _pickle_discard(self, attr_name):
+        for s in self._pickle_ignore:
+            if attr_name.startswith(s):
+                return True
+        return False
+
     def __getstate__(self):
-        return dict((k, None) if k.startswith('_tmp_') else (k, v)
+        return dict((k, None) if self._pickle_discard(k) else (k, v)
                     for k, v in self.__dict__.items())
