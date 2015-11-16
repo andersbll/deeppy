@@ -2,6 +2,7 @@ import time
 import numpy as np
 import cudarray as ca
 from ..input import Input
+from ..parameter import SharedParameter
 
 import logging
 log = logging.getLogger(__name__)
@@ -19,7 +20,8 @@ class StochasticGradientDescent(object):
     def train(self, model, input, error_fun=None):
         input = Input.from_any(input)
         model.setup(**input.shapes)
-        params = model.params
+        params = [p for p in model.params
+                  if not isinstance(p, SharedParameter)]
         self.learn_rule.learn_rate /= input.batch_size
         learn_rule_states = [self.learn_rule.init_state(p) for p in params]
         n_params = np.sum([p.array.size for p in params])
