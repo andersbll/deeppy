@@ -1,4 +1,5 @@
 import os
+import shutil
 import logging
 import numpy as np
 from PIL import Image
@@ -60,12 +61,14 @@ class LFW(object):
 
             log.info('Unpacking %s', filepath)
             archive_extract(filepath, self.data_dir)
+            extract_dir = os.path.splitext(os.path.split(filepath)[1])[0]
+            extract_dir = os.path.join(self.data_dir, extract_dir)
 
             log.info('Converting images to NumPy arrays')
             name_dict = {}
             imgs = []
             img_idx = 0
-            for root, dirs, files in os.walk(self.data_dir):
+            for root, dirs, files in os.walk(extract_dir):
                 for filename in files:
                     _, ext = os.path.splitext(filename)
                     if ext.lower() != '.jpg':
@@ -85,6 +88,7 @@ class LFW(object):
                     names_idx[img_idx] = name_idx
             with open(self._npz_path, 'wb') as f:
                 np.savez(f, imgs=imgs, names_idx=names_idx, names=names)
+            shutil.rmtree(extract_dir)
 
     def _load(self):
         with open(self._npz_path, 'rb') as f:

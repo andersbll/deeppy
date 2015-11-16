@@ -1,5 +1,6 @@
 import os
 import glob
+import shutil
 import numpy as np
 from PIL import Image
 import logging
@@ -62,7 +63,8 @@ class MVSC(object):
 
             log.info('Unpacking %s', filepath)
             dirname, _ = os.path.splitext(os.path.split(filepath)[1])
-            archive_extract(filepath, os.path.join(self.data_dir, dirname))
+            extract_dir = os.path.join(self.data_dir, dirname)
+            archive_extract(filepath, extract_dir)
 
             log.info('Converting MVSC data to Numpy arrays')
             scene_dir = os.path.join(self.data_dir, self.scene)
@@ -119,3 +121,4 @@ class MVSC(object):
                     ref_img_ids=ref_img_ids, similarities=similarities,
                     correspondences=correspondences
                 )
+            shutil.rmtree(extract_dir)
