@@ -25,6 +25,6 @@ from .siamese.input import SiameseInput, SupervisedSiameseInput
 from .siamese.loss import ContrastiveLoss
 from .siamese.siamese_network import SiameseNetwork
 from .train.learn_rules import Adam, Momentum, RMSProp
-from .train.sgd import StochasticGradientDescent
+from .train.gradient_descent import GradientDescent
 
 __version__ = '0.1.dev'

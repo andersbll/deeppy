@@ -54,7 +54,7 @@ net = dp.NeuralNetwork(
 n_epochs = [50, 15]
 learn_rate = 0.05
 for i, epochs in enumerate(n_epochs):
-    trainer = dp.StochasticGradientDescent(
+    trainer = dp.GradientDescent(
         max_epochs=epochs,
         learn_rule=dp.Momentum(learn_rate=learn_rate/10**i, momentum=0.94),
     )

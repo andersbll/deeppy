@@ -68,7 +68,7 @@ net = dp.SiameseNetwork(
 )
 
 # Train network
-trainer = dp.StochasticGradientDescent(
+trainer = dp.GradientDescent(
     max_epochs=15,
     learn_rule=dp.RMSProp(learn_rate=0.01),
 )

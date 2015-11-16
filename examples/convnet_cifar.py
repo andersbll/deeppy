@@ -78,7 +78,7 @@ n_epochs = [8, 8]
 learn_rate = 0.05
 for i, max_epochs in enumerate(n_epochs):
     lr = learn_rate/10**i
-    trainer = dp.StochasticGradientDescent(
+    trainer = dp.GradientDescent(
         max_epochs=max_epochs,
         learn_rule=dp.Momentum(learn_rate=lr, momentum=0.9),
     )

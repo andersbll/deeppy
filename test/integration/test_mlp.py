@@ -61,7 +61,7 @@ def test_classification():
     # Train neural network
     def val_error():
         return np.mean(net.predict(val_input) != y_val)
-    trainer = dp.StochasticGradientDescent(
+    trainer = dp.GradientDescent(
         min_epochs=10, learn_rule=dp.Momentum(learn_rate=0.01, momentum=0.9),
     )
     trainer.train(net, train_input, val_error)

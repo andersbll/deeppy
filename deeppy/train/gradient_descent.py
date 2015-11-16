@@ -8,7 +8,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class StochasticGradientDescent(object):
+class GradientDescent(object):
     def __init__(self, learn_rule, min_epochs=5, max_epochs=1000,
                  improvement_thresh=0.995, patience_incr=1.5):
         self.learn_rule = learn_rule
