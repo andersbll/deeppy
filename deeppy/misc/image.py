@@ -20,6 +20,9 @@ def img_tile(imgs, aspect_ratio=1.0, tile_shape=None, border=1,
     imgs = np.array(imgs)
     if imgs.ndim != 3 and imgs.ndim != 4:
         raise ValueError('imgs has wrong number of dimensions.')
+    if imgs.ndim == 4 and imgs.shape[3] == 1:
+        # Squeeze color dimension if grayscale
+        imgs = np.squeeze(imgs)
     n_imgs = imgs.shape[0]
 
     # Grid shape
