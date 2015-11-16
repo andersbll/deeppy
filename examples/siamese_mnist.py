@@ -77,22 +77,22 @@ trainer.train(net, train_input)
 # Plot 2D embedding
 test_input = dp.Input(x_test)
 x_test = np.reshape(x_test, (-1,) + dataset.img_shape)
-feat = net.features(test_input)
-feat -= np.min(feat, 0)
-feat /= np.max(feat, 0)
+embedding = net.embed(test_input)
+embedding -= np.min(embedding, 0)
+embedding /= np.max(embedding, 0)
 
 plt.figure()
 ax = plt.subplot(111)
 shown_images = np.array([[1., 1.]])
-for i in range(feat.shape[0]):
-    dist = np.sum((feat[i] - shown_images)**2, 1)
+for i in range(embedding.shape[0]):
+    dist = np.sum((embedding[i] - shown_images)**2, 1)
     if np.min(dist) < 6e-4:
         # don't show points that are too close
         continue
-    shown_images = np.r_[shown_images, [feat[i]]]
+    shown_images = np.r_[shown_images, [embedding[i]]]
     imagebox = offsetbox.AnnotationBbox(
         offsetbox.OffsetImage(x_test[i], zoom=0.6, cmap=plt.cm.gray_r),
-        xy=feat[i], frameon=False
+        xy=embedding[i], frameon=False
     )
     ax.add_artist(imagebox)
 

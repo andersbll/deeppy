@@ -59,7 +59,7 @@ class SiameseNetwork(Model, CollectionMixin, PhaseMixin):
 
         return self.loss.loss(y, x1, x2)
 
-    def features(self, input):
+    def embed(self, input):
         self.phase = 'test'
         input = Input.from_any(input)
         next_shape = input.x.shape
