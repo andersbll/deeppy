@@ -21,7 +21,9 @@ class ParamMixin(object):
     def params(self):
         """ List of Parameter objects. """
         if not isinstance(self, CollectionMixin):
-            raise NotImplementedError()
+            raise NotImplementedError('%s inherits ParamMixin but has not '
+                                      'defined a getter for member "params"'
+                                      % self.__class__.__name__)
         params = []
         for obj in self.collection:
             if isinstance(obj, ParamMixin):
@@ -31,7 +33,9 @@ class ParamMixin(object):
     @params.setter
     def params(self, params):
         if not isinstance(self, CollectionMixin):
-            raise NotImplementedError()
+            raise NotImplementedError('%s inherits ParamMixin but has not '
+                                      'defined a setter for member "params"'
+                                      % self.__class__.__name__)
         idx = 0
         for obj in self.collection:
             if isinstance(obj, ParamMixin):
