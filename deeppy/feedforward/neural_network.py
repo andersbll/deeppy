@@ -1,17 +1,17 @@
 import numpy as np
-import itertools
-from ..base import Model, ParamMixin, PhaseMixin
+from ..base import Model, CollectionMixin, ParamMixin, PhaseMixin
 from ..input import Input
 from ..loss import SoftmaxCrossEntropy
 
 
-class NeuralNetwork(Model, PhaseMixin):
+class NeuralNetwork(Model, CollectionMixin, PhaseMixin):
     def __init__(self, layers, loss):
         self.layers = layers
         self.loss = loss
         self.bprop_until = next((idx for idx, l in enumerate(self.layers)
                                  if isinstance(l, ParamMixin)), 0)
         self.layers[self.bprop_until].bprop_to_x = False
+        self.collection = self.layers
         self._initialized = False
 
     def setup(self, x_shape, y_shape=None):
@@ -23,22 +23,6 @@ class NeuralNetwork(Model, PhaseMixin):
             x_shape = layer.y_shape(x_shape)
         self.loss.setup(x_shape, y_shape)
         self._initialized = True
-
-    @property
-    def params(self):
-        all_params = [layer.params for layer in self.layers
-                      if isinstance(layer, ParamMixin)]
-        # Concatenate lists in list
-        return list(itertools.chain.from_iterable(all_params))
-
-    @PhaseMixin.phase.setter
-    def phase(self, phase):
-        if self._phase == phase:
-            return
-        self._phase = phase
-        for layer in self.layers:
-            if isinstance(layer, PhaseMixin):
-                layer.phase = phase
 
     def update(self, x, y):
         self.phase = 'train'

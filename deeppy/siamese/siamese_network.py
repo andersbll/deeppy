@@ -1,11 +1,10 @@
 from copy import copy
 import numpy as np
-import itertools
-from ..base import Model, ParamMixin, PhaseMixin, float_
+from ..base import Model, CollectionMixin, ParamMixin, PhaseMixin, float_
 from ..input import Input
 
 
-class SiameseNetwork(Model, PhaseMixin):
+class SiameseNetwork(Model, CollectionMixin, PhaseMixin):
     def __init__(self, siamese_layers, loss):
         self.layers = siamese_layers
         self.loss = loss
@@ -19,6 +18,7 @@ class SiameseNetwork(Model, PhaseMixin):
                                  if isinstance(l, ParamMixin)), 0)
         self.layers[self.bprop_until].bprop_to_x = False
         self.layers2[self.bprop_until].bprop_to_x = False
+        self.collection = self.layers + self.layers2
         self._initialized = False
 
     def setup(self, x_shape, y_shape=None):
@@ -35,22 +35,6 @@ class SiameseNetwork(Model, PhaseMixin):
             next_shape = layer.y_shape(next_shape)
         next_shape = self.loss.y_shape(next_shape)
         self._initialized = True
-
-    @property
-    def params(self):
-        all_params = [layer.params for layer in self.layers
-                      if isinstance(layer, ParamMixin)]
-        # Concatenate lists in list
-        return list(itertools.chain.from_iterable(all_params))
-
-    @PhaseMixin.phase.setter
-    def phase(self, phase):
-        if self._phase == phase:
-            return
-        self._phase = phase
-        for layer in self.layers + self.layers2:
-            if isinstance(layer, PhaseMixin):
-                layer.phase = phase
 
     def update(self, x1, x2, y):
         self.phase = 'train'

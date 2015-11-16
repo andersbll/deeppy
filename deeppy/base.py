@@ -12,15 +12,32 @@ int_ = ca.int_
 float_ = ca.float_
 
 
+class CollectionMixin(object):
+    collection = []
+
+
 class ParamMixin(object):
     @property
     def params(self):
         """ List of Parameter objects. """
-        raise NotImplementedError()
+        if not isinstance(self, CollectionMixin):
+            raise NotImplementedError()
+        params = []
+        for obj in self.collection:
+            if isinstance(obj, ParamMixin):
+                params.extend(obj.params)
+        return params
 
     @params.setter
     def params(self, params):
-        raise NotImplementedError()
+        if not isinstance(self, CollectionMixin):
+            raise NotImplementedError()
+        idx = 0
+        for obj in self.collection:
+            if isinstance(obj, ParamMixin):
+                n_params = len(obj._params)
+                obj._params = params[idx:idx+n_params]
+                idx += n_params
 
 
 class PhaseMixin(object):
@@ -32,7 +49,13 @@ class PhaseMixin(object):
 
     @phase.setter
     def phase(self, phase):
+        if self._phase == phase:
+            return
         self._phase = phase
+        if isinstance(self, CollectionMixin):
+            for obj in self.collection:
+                if isinstance(obj, PhaseMixin):
+                    obj.phase = phase
 
 
 class Model(ParamMixin):
