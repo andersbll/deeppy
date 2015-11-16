@@ -69,3 +69,15 @@ def conv_filter_tile(filters):
         filters = np.resize(filters, (n_filters*n_channels, height, width))
     filters = img_stretch(filters)
     return img_tile(filters, tile_shape=tile_shape)
+
+
+def to_bc01(imgs_b01c):
+    if imgs_b01c.ndim == 3:
+        imgs_b01c = imgs_b01c[:, :, :, np.newaxis]
+    return np.transpose(imgs_b01c, (0, 3, 1, 2))
+
+
+def to_b01c(imgs_bc01):
+    if imgs_bc01.ndim == 3:
+        imgs_bc01 = imgs_bc01[:, np.newaxis, :, :]
+    return np.transpose(imgs_bc01, (0, 2, 3, 1))
