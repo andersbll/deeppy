@@ -40,8 +40,6 @@ class SoftmaxCrossEntropy(Loss):
     def __init__(self):
         self._tmp_x = None
         self._tmp_y = None
-        self._tmp_target = None
-        self._tmp_one_hot = None
         self.n_classes = None
 
     def setup(self, pred_shape, target_shape=None):
@@ -54,21 +52,14 @@ class SoftmaxCrossEntropy(Loss):
             self._tmp_x = x
         return self._tmp_y
 
-    def _one_hot(self, target):
-        # caching wrapper
-        if self._tmp_target is not target:
-            self._tmp_one_hot = ca.nnet.one_hot_encode(target, self.n_classes)
-            self._tmp_target = target
-        return self._tmp_one_hot
-
     def loss(self, pred, target):
         pred = self._softmax(pred)
-        target = self._one_hot(target)
+        target = ca.nnet.one_hot_encode(target, self.n_classes)
         return ca.nnet.categorical_cross_entropy(y_pred=pred, y_true=target)
 
     def grad(self, pred, target):
         pred = self._softmax(pred)
-        target = self._one_hot(target)
+        target = ca.nnet.one_hot_encode(target, self.n_classes)
         return -(target - pred)
 
     def fprop(self, x):
