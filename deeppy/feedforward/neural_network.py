@@ -55,14 +55,11 @@ class NeuralNetwork(Model, CollectionMixin, PhaseMixin):
             # Add softmax from SoftmaxCrossEntropy
             self.layers += [self.loss]
 
-        y = np.empty(self.y_shape(input.x.shape))
-        y_offset = 0
+        y = []
         for batch in input.batches():
             x_batch = batch['x']
-            y_batch = np.array(self.fprop(x_batch))
-            batch_size = x_batch.shape[0]
-            y[y_offset:y_offset+batch_size, ...] = y_batch
-            y_offset += batch_size
+            y.append(np.array(self.fprop(x_batch)))
+        y = np.concatenate(y)[:input.n_samples]
 
         if isinstance(self.loss, SoftmaxCrossEntropy):
             self.layers = self.layers[:-1]

@@ -1,6 +1,6 @@
 from copy import copy
 import numpy as np
-from ..base import Model, CollectionMixin, ParamMixin, PhaseMixin, float_
+from ..base import Model, CollectionMixin, ParamMixin, PhaseMixin
 from ..input import Input
 
 
@@ -65,32 +65,26 @@ class SiameseNetwork(Model, CollectionMixin, PhaseMixin):
         next_shape = input.x.shape
         for layer in self.layers:
             next_shape = layer.y_shape(next_shape)
-        feats = np.empty(next_shape)
-        idx = 0
+        feats = []
         for batch in input.batches():
             x_batch = batch['x']
             x_next = x_batch
             for layer in self.layers:
                 x_next = layer.fprop(x_next)
-            feats_batch = np.array(x_next)
-            batch_size = x_batch.shape[0]
-            feats[idx:idx+batch_size, ...] = feats_batch
-            idx += batch_size
+            feats.append(np.array(x_next))
+        feats = np.concatenate(feats)[:input.n_samples]
         return feats
 
     def distances(self, input):
         self.phase = 'test'
-        dists = np.empty((input.n_samples,), dtype=float_)
-        offset = 0
+        input = Input.from_any(input)
+        dists = []
         for batch in input.batches():
             x1, x2 = batch
             for layer in self.layers:
                 x1 = layer.fprop(x1)
             for layer in self.layers2:
                 x2 = layer.fprop(x2)
-            dists_batch = self.loss.fprop(x1, x2)
-            dists_batch = np.ravel(np.array(dists_batch))
-            batch_size = x1.shape[0]
-            dists[offset:offset+batch_size, ...] = dists_batch
-            offset += batch_size
+            dists.append(np.ravel(np.array(self.loss.fprop(x1, x2))))
+        dists = np.concatenate(dists)[:input.n_samples]
         return dists

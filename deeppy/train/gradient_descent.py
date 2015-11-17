@@ -26,7 +26,7 @@ class GradientDescent(object):
         learn_rule_states = [self.learn_rule.init_state(p) for p in params]
         n_params = np.sum([p.array.size for p in params])
         log.info('SGD: Model contains %i parameters.', n_params)
-        log.info('SGD: %d gradient updates per epoch.', input.n_batches)
+        log.info('SGD: %d gradient updates per epoch.', input.epoch_size)
 
         epoch = 0
         converged = False
