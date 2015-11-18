@@ -1,10 +1,10 @@
 import numpy as np
-from ..base import Model, CollectionMixin, ParamMixin, PhaseMixin
+from ..base import Model, ParamMixin, CollectionMixin
 from ..input import Input
 from ..loss import SoftmaxCrossEntropy
 
 
-class NeuralNetwork(Model, CollectionMixin, PhaseMixin):
+class NeuralNetwork(Model, CollectionMixin):
     def __init__(self, layers, loss):
         self.layers = layers
         self.loss = loss

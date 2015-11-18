@@ -1,10 +1,10 @@
 from copy import copy
 import numpy as np
-from ..base import Model, CollectionMixin, ParamMixin, PhaseMixin
+from ..base import Model, CollectionMixin, ParamMixin
 from ..input import Input
 
 
-class SiameseNetwork(Model, CollectionMixin, PhaseMixin):
+class SiameseNetwork(Model, CollectionMixin):
     def __init__(self, siamese_layers, loss):
         self.layers = siamese_layers
         self.loss = loss

@@ -12,36 +12,15 @@ int_ = ca.int_
 float_ = ca.float_
 
 
-class CollectionMixin(object):
-    collection = []
-
-
 class ParamMixin(object):
     @property
     def params(self):
         """ List of Parameter objects. """
-        if not isinstance(self, CollectionMixin):
-            raise NotImplementedError('%s inherits ParamMixin but has not '
-                                      'defined a getter for member "params"'
-                                      % self.__class__.__name__)
-        params = []
-        for obj in self.collection:
-            if isinstance(obj, ParamMixin):
-                params.extend(obj.params)
-        return params
+        raise NotImplementedError()
 
     @params.setter
     def params(self, params):
-        if not isinstance(self, CollectionMixin):
-            raise NotImplementedError('%s inherits ParamMixin but has not '
-                                      'defined a setter for member "params"'
-                                      % self.__class__.__name__)
-        idx = 0
-        for obj in self.collection:
-            if isinstance(obj, ParamMixin):
-                n_params = len(obj._params)
-                obj._params = params[idx:idx+n_params]
-                idx += n_params
+        raise NotImplementedError()
 
 
 class PhaseMixin(object):
@@ -53,13 +32,41 @@ class PhaseMixin(object):
 
     @phase.setter
     def phase(self, phase):
+        self._phase = phase
+
+
+class CollectionMixin(ParamMixin, PhaseMixin):
+    collection = []
+
+    @property
+    def params(self):
+        params = []
+        for obj in self.collection:
+            if isinstance(obj, ParamMixin):
+                params.extend(obj.params)
+        return params
+
+    @params.setter
+    def params(self, params):
+        idx = 0
+        for obj in self.collection:
+            if isinstance(obj, ParamMixin):
+                n_params = len(obj.params)
+                obj.params = params[idx:idx+n_params]
+                idx += n_params
+
+    @property
+    def phase(self):
+        return self._phase
+
+    @phase.setter
+    def phase(self, phase):
         if self._phase == phase:
             return
         self._phase = phase
-        if isinstance(self, CollectionMixin):
-            for obj in self.collection:
-                if isinstance(obj, PhaseMixin):
-                    obj.phase = phase
+        for obj in self.collection:
+            if isinstance(obj, PhaseMixin):
+                obj.phase = phase
 
 
 class Model(ParamMixin):
