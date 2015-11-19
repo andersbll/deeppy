@@ -1,5 +1,7 @@
 from . import dataset
+from . import expr
 from . import misc
+from . import model
 from .autoencoder.autoencoder import Autoencoder, DenoisingAutoencoder
 from .autoencoder.stacked_autoencoder import StackedAutoencoder
 from .base import bool_, int_, float_
