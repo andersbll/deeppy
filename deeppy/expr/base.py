@@ -111,12 +111,14 @@ class Identity(Expr):
     def __call__(self, x):
         self.x = x
         self.inputs = [x]
+        self.bpropable = x.bpropable
         return self
 
     def setup(self):
         self.out_shape = self.x.out_shape
         self.out = self.x.out
-        self.out_grad = self.x.out_grad
+        if self.bpropable:
+            self.out_grad = self.x.out_grad
 
     def fprop(self):
         self.out = self.x.out

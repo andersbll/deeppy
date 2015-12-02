@@ -17,6 +17,7 @@ class Split(Expr, SplitMixin):
         self.x = x
         self.inputs = [x]
         self.outputs = [Output()(self) for i in range(self.n_splits)]
+        self.bpropable = x.bpropable
         return self.outputs
 
     def setup(self):
@@ -24,7 +25,9 @@ class Split(Expr, SplitMixin):
         for i in range(self.n_splits):
             self.outputs[i].out_shape = out_shape
             self.outputs[i].out = self.x.out
-            self.outputs[i].out_grad = ca.zeros(out_shape)
+            self.outputs[i].bpropable = self.bpropable
+            if self.bpropable:
+                self.outputs[i].out_grad = ca.zeros(out_shape)
 
     def fprop(self):
         for i in range(self.n_splits):
