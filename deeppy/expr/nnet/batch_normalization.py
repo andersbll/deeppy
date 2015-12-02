@@ -4,7 +4,7 @@ Covariate Shift, http://arxiv.org/abs/1502.03167
 
 This implementation is heavily inspired by code from http://github.com/torch/nn
 """
-
+import numpy as np
 import cudarray as ca
 from ...base import ParamMixin, PhaseMixin
 from ...parameter import Parameter
@@ -13,7 +13,7 @@ from ..base import UnaryElementWise
 
 
 class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
-    def __init__(self, momentum=0.75, eps=1e-5, affine=True):
+    def __init__(self, momentum=0.9, eps=1e-5, affine=True):
         self.momentum = momentum
         self.eps = eps
         self.phase = 'train'
@@ -21,27 +21,36 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
         if self.affine:
             self.gamma = Parameter(UniformFiller(low=0, high=1))
             self.beta = Parameter(0.0)
+        self.running_mean = None
 
     def setup(self):
         super(BatchNormalization, self).setup()
         if len(self.out_shape) != 2:
             raise ValueError('Only 1D data supported')
         reduced_shape = 1, self.out_shape[1]
-        self.running_mean = ca.zeros(reduced_shape)
-        self.running_std = ca.ones(reduced_shape)
-        self._tmp_batch_centered = ca.zeros(self.out_shape)
+        if self.running_mean is None:
+            self.running_mean = ca.zeros(reduced_shape)
+            self.running_std = ca.ones(reduced_shape)
+            if self.affine:
+                self.gamma.setup(reduced_shape)
+                self.beta.setup(reduced_shape)
+        else:
+            if self.running_mean.shape != reduced_shape:
+                raise ValueError('New input shape is not compatible')
         self._tmp_batch_inv_std = ca.zeros(reduced_shape)
-        if self.affine:
-            self.gamma.setup(reduced_shape)
-            self.beta.setup(reduced_shape)
+        self._tmp_batch_centered = ca.zeros(self.out_shape)
 
     @property
     def params(self):
-        return self.gamma, self.beta
+        params = []
+        if self.affine:
+            params = [self.gamma, self.beta]
+        return params
 
     @params.setter
     def params(self, params):
-        self.gamma, self.beta = params
+        if self.affine:
+            self.gamma, self.beta = params
 
     def fprop(self):
         if self.phase == 'train':
@@ -102,7 +111,7 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
 
 
 class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
-    def __init__(self, momentum=0.75, eps=1e-5, affine=True):
+    def __init__(self, momentum=0.9, eps=1e-5, affine=True):
         self.momentum = momentum
         self.eps = eps
         self.phase = 'train'
@@ -110,27 +119,36 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
         if self.affine:
             self.gamma = Parameter(UniformFiller(low=0, high=1))
             self.beta = Parameter(0.0)
+        self.running_mean = None
 
     def setup(self):
         super(SpatialBatchNormalization, self).setup()
         if len(self.out_shape) != 4:
             raise ValueError('Only 4D data supported')
         reduced_shape = 1, self.out_shape[1], 1, 1
-        self.running_mean = ca.zeros(reduced_shape)
-        self.running_std = ca.ones(reduced_shape)
-        self._tmp_batch_centered = ca.zeros(self.out_shape)
+        if self.running_mean is None:
+            self.running_mean = ca.zeros(reduced_shape)
+            self.running_std = ca.ones(reduced_shape)
+            if self.affine:
+                self.gamma.setup(reduced_shape)
+                self.beta.setup(reduced_shape)
+        else:
+            if self.running_mean.shape != reduced_shape:
+                raise ValueError('New input shape is not compatible')
         self._tmp_batch_inv_std = ca.zeros(reduced_shape)
-        if self.affine:
-            self.gamma.setup(reduced_shape)
-            self.beta.setup(reduced_shape)
+        self._tmp_batch_centered = ca.zeros(self.out_shape)
 
     @property
     def params(self):
-        return self.gamma, self.beta
+        params = []
+        if self.affine:
+            params = [self.gamma, self.beta]
+        return params
 
     @params.setter
     def params(self, params):
-        self.gamma, self.beta = params
+        if self.affine:
+            self.gamma, self.beta = params
 
     def fprop(self):
         if self.phase == 'train':
