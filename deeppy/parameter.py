@@ -93,7 +93,7 @@ class SharedParameter(Parameter):
         self._tmp_grad_array = None
 
     def setup(self, shape):
-        pass
+        self.parent.setup(shape)
 
     def grad(self):
         raise RuntimeError('SharedParameter should not be requested a grad()')
