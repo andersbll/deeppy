@@ -39,5 +39,5 @@ class Print(Identity):
 
     def bprop(self):
         if self.print_bprop and (self.i-1) % self.rate == 0:
-            print(self._message(np.array(self.out)))
+            print(self._message(np.array(self.out_grad)))
         super(Print, self).bprop()
