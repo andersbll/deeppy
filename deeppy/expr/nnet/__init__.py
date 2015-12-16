@@ -1,5 +1,6 @@
 from .activation import (
-    relu, ReLU, Sigmoid, sigmoid, Softmax, softmax, Softplus, softplus
+    leaky_relu, LeakyReLU, relu, ReLU, Sigmoid, sigmoid, Softmax, softmax,
+    Softplus, softplus
 )
 from .affine import Affine, Linear
 from .batch_normalization import BatchNormalization, SpatialBatchNormalization

@@ -2,6 +2,22 @@ import cudarray as ca
 from ..base import UnaryElementWise
 
 
+class LeakyReLU(UnaryElementWise):
+    def __init__(self, a=0.2):
+        self.a = a
+
+    def fprop(self):
+        ca.minimum(self.x.out, 0, out=self.out)
+        self.out *= self.a
+        self.out += ca.maximum(self.x.out, 0)
+
+    def bprop(self):
+        self.x.out_grad = ca.less(self.x.out, 0) * self.a
+        pos = ca.nnet.relu_d(self.x.out)
+        self.x.out_grad += pos
+        self.x.out_grad *= self.out_grad
+
+
 class ReLU(UnaryElementWise):
     def fprop(self):
         ca.nnet.relu(self.x.out, self.out)
@@ -41,6 +57,10 @@ class Softplus(UnaryElementWise):
         self.x.out_grad += 1
         ca.divide(1.0, self.x.out_grad, out=self.x.out_grad)
         self.x.out_grad *= self.out_grad
+
+
+def leaky_relu(x):
+    return LeakyReLU()(x)
 
 
 def relu(x):
