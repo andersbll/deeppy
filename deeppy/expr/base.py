@@ -251,8 +251,12 @@ class Source(Expr, NoBPropMixin, NoFPropMixin):
         self.out_shape = shape
 
     def setup(self):
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        if not (isinstance(self.out, ca.ndarray)
+                and self.out.shape == self.out_shape):
+            self.out = ca.empty(self.out_shape)
+        if not (isinstance(self.out_grad, ca.ndarray)
+                and self.out_grad.shape == self.out_shape):
+            self.out_grad = ca.empty(self.out_shape)
 
 
 class Variable(Expr):
