@@ -37,6 +37,7 @@ class Slices(Expr, SplitMixin):
         self.x = x
         self.inputs = [x]
         self.outputs = [Output()(self) for _ in range(len(self.splits)+1)]
+        self.bpropable = x.bpropable
         return self.outputs
 
     def setup(self):
@@ -48,7 +49,9 @@ class Slices(Expr, SplitMixin):
             out_shape = (end-start,) + self.x.out_shape[1:]
             self.outputs[i].out_shape = out_shape
             self.outputs[i].out = self.x.out[start:end, :]
-            self.outputs[i].out_grad = ca.empty(out_shape)
+            self.outputs[i].bpropable = self.bpropable
+            if self.bpropable:
+                self.outputs[i].out_grad = ca.zeros(out_shape)
 
     def fprop(self):
         for i, (start, end) in enumerate(self.slices):
@@ -92,6 +95,7 @@ class VSplit(Expr, SplitMixin):
     def __call__(self, x):
         self.x = x
         self.inputs = [x]
+        self.bpropable = x.bpropable
         self.outputs = [Output()(self) for i in range(self.n_splits)]
         return self.outputs
 

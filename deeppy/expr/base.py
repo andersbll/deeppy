@@ -191,7 +191,6 @@ class Binary(Expr):
             return Constant(self.out)
         self.lhs_bprop = lhs.bpropable
         self.rhs_bprop = rhs.bpropable
-        self.bpropable = lhs.bpropable or rhs.bpropable
         self.inputs = [lhs, rhs]
         return self
 
