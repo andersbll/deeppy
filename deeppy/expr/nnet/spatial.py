@@ -23,7 +23,9 @@ class Convolution(Unary, ParamMixin):
         self.n_filters = n_filters
         self.filter_shape = filter_shape
         self.weights = Parameter.from_any(weights)
-        self.bias = Parameter.from_any(bias)
+        if bias is not None:
+            bias = Parameter.from_any(bias)
+        self.bias = bias
         self.padding = padding(filter_shape, border_mode)
         self.strides = strides
         self.conv_op = ca.nnet.ConvBC01(self.padding, self.strides)
@@ -52,23 +54,31 @@ class Convolution(Unary, ParamMixin):
 
     def fprop(self):
         self.conv_op.fprop(self.x.out, self.weights.array, convout=self.out)
-        self.out += self.bias.array
+        if self.bias is not None:
+            self.out += self.bias.array
 
     def bprop(self):
         self.conv_op.bprop(
             self.x.out, self.weights.array, self.out_grad,
             filters_d=self.weights.grad_array, imgs_d=self.x.out_grad
         )
-        ca.sum(ca.sum(self.out_grad, axis=(2, 3), keepdims=True), axis=0,
-               keepdims=True, out=self.bias.grad_array)
+        if self.bias is not None:
+            ca.sum(ca.sum(self.out_grad, axis=(2, 3), keepdims=True), axis=0,
+                   keepdims=True, out=self.bias.grad_array)
 
     @property
     def params(self):
-        return self.weights, self.bias
+        if self.bias is None:
+            return self.weights,
+        else:
+            return self.weights, self.bias
 
     @params.setter
     def params(self, params):
-        self.weights, self.bias = params
+        if self.bias is None:
+            self.weights, = params
+        else:
+            self.weights, self.bias = params
 
 
 class BackwardConvolution(Convolution):
@@ -104,7 +114,8 @@ class BackwardConvolution(Convolution):
             None, self.weights.array, self.x.out,
             to_filters=False, imgs_d=self.out
         )
-        self.out += self.bias.array
+        if self.bias is not None:
+            self.out += self.bias.array
 
     def bprop(self):
         self.conv_op.bprop(
@@ -113,8 +124,9 @@ class BackwardConvolution(Convolution):
         )
         self.conv_op.fprop(self.out_grad, self.weights.array,
                            convout=self.x.out_grad)
-        ca.sum(ca.sum(self.out_grad, axis=(2, 3), keepdims=True), axis=0,
-               keepdims=True, out=self.bias.grad_array)
+        if self.bias is not None:
+            ca.sum(ca.sum(self.out_grad, axis=(2, 3), keepdims=True), axis=0,
+                   keepdims=True, out=self.bias.grad_array)
 
 
 class Pool(Unary):
