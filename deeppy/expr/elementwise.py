@@ -1,3 +1,4 @@
+import numpy as np
 import cudarray as ca
 
 from .base import UnaryElementWise, BinaryElementWise
@@ -66,6 +67,15 @@ class Tanh(UnaryElementWise):
 
 
 class Add(BinaryElementWise):
+    def __call__(self, lhs, rhs):
+        if lhs is rhs:
+            return 2*lhs
+        if isinstance(lhs, np.ScalarType) and lhs == 0:
+            return rhs
+        if isinstance(rhs, np.ScalarType) and rhs == 0:
+            return lhs
+        return super(Add, self).__call__(lhs, rhs)
+
     def fprop(self):
         ca.add(self.lhs.out, self.rhs.out, out=self.out)
 
@@ -77,6 +87,15 @@ class Add(BinaryElementWise):
 
 
 class Subtract(BinaryElementWise):
+    def __call__(self, lhs, rhs):
+        if lhs is rhs:
+            return 0.0
+        if isinstance(lhs, np.ScalarType) and lhs == 0:
+            return -rhs
+        if isinstance(rhs, np.ScalarType) and rhs == 0:
+            return lhs
+        return super(Subtract, self).__call__(lhs, rhs)
+
     def fprop(self):
         ca.subtract(self.lhs.out, self.rhs.out, out=self.out)
 
@@ -88,6 +107,15 @@ class Subtract(BinaryElementWise):
 
 
 class Multiply(BinaryElementWise):
+    def __call__(self, lhs, rhs):
+        if lhs is rhs:
+            return lhs**2
+        if isinstance(lhs, np.ScalarType) and lhs == 1:
+            return rhs
+        if isinstance(rhs, np.ScalarType) and rhs == 1:
+            return lhs
+        return super(Multiply, self).__call__(lhs, rhs)
+
     def fprop(self):
         ca.multiply(self.lhs.out, self.rhs.out, out=self.out)
 
@@ -99,6 +127,13 @@ class Multiply(BinaryElementWise):
 
 
 class Divide(BinaryElementWise):
+    def __call__(self, lhs, rhs):
+        if lhs is rhs:
+            return 1.0
+        if isinstance(rhs, np.ScalarType) and rhs == 1:
+            return lhs
+        return super(Divide, self).__call__(lhs, rhs)
+
     def fprop(self):
         ca.divide(self.lhs.out, self.rhs.out, out=self.out)
 
@@ -112,6 +147,11 @@ class Divide(BinaryElementWise):
 
 
 class Power(BinaryElementWise):
+    def __call__(self, lhs, rhs):
+        if lhs is rhs:
+            raise NotImplementedError()
+        return super(Power, self).__call__(lhs, rhs)
+
     def fprop(self):
         ca.power(self.lhs.out, self.rhs.out, out=self.out)
 
@@ -128,13 +168,18 @@ class Power(BinaryElementWise):
 
 
 class Maximum(BinaryElementWise):
+    def __call__(self, lhs, rhs):
+        if lhs is rhs:
+            return lhs
+        return super(Maximum, self).__call__(lhs, rhs)
+
     def fprop(self):
         ca.maximum(self.lhs.out, self.rhs.out, out=self.out)
 
     def bprop(self):
         if self.lhs_bprop:
-            ca.equal(self.lhs.out, self.out, self.lhs.out_grad)
-            self.lhs.out_grad *= self.out_grad
+            tmp = ca.equal(self.lhs.out, self.out)
+            ca.multiply(self.out_grad, tmp, self.lhs.out_grad)
         if self.rhs_bprop:
             ca.equal(self.rhs.out, self.out, self.rhs.out_grad)
             self.rhs.out_grad *= self.out_grad
