@@ -86,7 +86,16 @@ class ExprGraph(CollectionMixin):
         # Prepare fprop and bprop orderings
         fprop_top = digraph.topsort(graph)
         for node in fprop_top:
-            node.setup()
+            try:
+                node.setup()
+            except Exception as e:
+                msg = 'Exception occurs in node %s' % node.__class__.__name__
+                if node.inputs:
+                    msg += ' with inputs:'
+                    for n in node.inputs:
+                        msg += '\n    %s, shape: %s' % (n.__class__.__name__,
+                                                        n.out_shape)
+                raise type(e)(e.message + '\n\n' + msg)
 
         # We need to rebuild graph because setup() may change the graph to
         # facilitate broadcasting operations
