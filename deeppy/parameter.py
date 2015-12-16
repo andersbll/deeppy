@@ -46,6 +46,8 @@ class Parameter(PickleMixin):
     def grad_array(self):
         ''' Returns the gradient array. '''
         if self._tmp_grad_array is None:
+            if self.array is None:
+                raise ValueError('Parameter not setup')
             self._tmp_grad_array = ca.zeros_like(self.array)
         return self._tmp_grad_array
 
