@@ -23,7 +23,8 @@ class Affine(Unary, ParamMixin):
         self.out = ca.empty(self.out_shape)
         self.out_grad = ca.empty(self.out_shape)
         self.weights.setup((x_shape[1], self.n_out))
-        self.bias.setup(self.n_out)
+        if self.bias is not None:
+            self.bias.setup(self.n_out)
 
     def fprop(self):
         ca.dot(self.x.out, self.weights.array, out=self.out)
@@ -32,9 +33,9 @@ class Affine(Unary, ParamMixin):
 
     def bprop(self):
         ca.dot(self.x.out.T, self.out_grad, out=self.weights.grad_array)
-        ca.sum(self.out_grad, axis=0, out=self.bias.grad_array)
+        ca.dot(self.out_grad, self.weights.array.T, out=self.x.out_grad)
         if self.bias is not None:
-            ca.dot(self.out_grad, self.weights.array.T, out=self.x.out_grad)
+            ca.sum(self.out_grad, axis=0, out=self.bias.grad_array)
 
     @property
     def params(self):

@@ -45,7 +45,8 @@ class Convolution(Unary, ParamMixin):
         x_shape = self.x.out_shape
         batch_size, n_channels = x_shape[:2]
         self.weights.setup((self.n_filters, n_channels) + self.filter_shape)
-        self.bias.setup((1, self.n_filters, 1, 1))
+        if self.bias is not None:
+            self.bias.setup((1, self.n_filters, 1, 1))
         out_shape = self.img_out_shape(x_shape[2:], self.filter_shape,
                                        self.strides, self.padding)
         self.out_shape = (batch_size, self.n_filters) + out_shape
