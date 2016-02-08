@@ -11,6 +11,9 @@ from subprocess import Popen
 from contextlib import contextmanager
 
 
+dataset_home = os.getenv('DATASET_HOME', 'datasets')
+
+
 def touch(filepath, times=None):
     with open(filepath, 'a'):
         os.utime(filepath, times)

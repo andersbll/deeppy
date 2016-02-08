@@ -4,7 +4,8 @@ import logging
 from subprocess import Popen
 
 from ..base import float_, int_
-from .util import download, checksum, archive_extract, checkpoint, load_idx
+from .util import (dataset_home, download, checksum, archive_extract,
+                   checkpoint, load_idx)
 
 
 log = logging.getLogger(__name__)
@@ -27,9 +28,9 @@ class InfiMNIST(object):
          information processing systems. 1992.
     '''
 
-    def __init__(self, data_root='datasets'):
+    def __init__(self):
         self.name = 'infimnist'
-        self.data_dir = os.path.join(data_root, self.name)
+        self.data_dir = os.path.join(dataset_home, self.name)
         self._npz_path = os.path.join(self.data_dir, 'infimnist.npz')
         self.n_classes = 10
         self.img_shape = (28, 28)

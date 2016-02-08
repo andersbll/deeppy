@@ -3,7 +3,7 @@ import shutil
 import logging
 import numpy as np
 from PIL import Image
-from .util import download, checksum, archive_extract, checkpoint
+from .util import dataset_home, download, checksum, archive_extract, checkpoint
 
 
 log = logging.getLogger(__name__)
@@ -64,12 +64,12 @@ class LFW(object):
          Technical Report 07-49, October, 2007.
     '''
 
-    def __init__(self, alignment='original', data_root='datasets'):
+    def __init__(self, alignment='original'):
         if alignment not in ['original', 'deepfunneled']:
             raise ValueError('Invalid alignment: %s' % alignment)
         self.alignment = alignment
         self.name = 'lfw_' + alignment
-        self.data_dir = os.path.join(data_root, self.name)
+        self.data_dir = os.path.join(dataset_home, self.name)
         self._npz_path = os.path.join(self.data_dir, self.name+'.npz')
         self._install()
         self.people_splits = self._load()

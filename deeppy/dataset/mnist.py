@@ -3,7 +3,8 @@ import numpy as np
 import logging
 
 from ..base import float_, int_
-from .util import download, checksum, archive_extract, checkpoint, load_idx
+from .util import (dataset_home, download, checksum, archive_extract,
+                   checkpoint, load_idx)
 
 
 log = logging.getLogger(__name__)
@@ -34,9 +35,9 @@ class MNIST(object):
          86(11):2278-2324, November 1998
     '''
 
-    def __init__(self, data_root='datasets'):
+    def __init__(self):
         self.name = 'mnist'
-        self.data_dir = os.path.join(data_root, self.name)
+        self.data_dir = os.path.join(dataset_home, self.name)
         self._npz_path = os.path.join(self.data_dir, 'mnist.npz')
         self.n_classes = 10
         self.n_test = 10000

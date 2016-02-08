@@ -4,7 +4,7 @@ import numpy as np
 import logging
 
 from ..base import float_, int_
-from .util import download, checksum, archive_extract, checkpoint
+from .util import dataset_home, download, checksum, archive_extract, checkpoint
 
 
 log = logging.getLogger(__name__)
@@ -23,13 +23,13 @@ class CIFAR10(object):
          Krizhevsky, 2009.
     '''
 
-    def __init__(self, data_root='datasets'):
+    def __init__(self):
         self.name = 'cifar10'
         self.n_classes = 10
         self.n_test = 10000
         self.n_train = 50000
         self.img_shape = (3, 32, 32)
-        self.data_dir = os.path.join(data_root, self.name)
+        self.data_dir = os.path.join(dataset_home, self.name)
         self._install()
         self._arrays = self._load()
 

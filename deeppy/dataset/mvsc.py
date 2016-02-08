@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 import logging
 
-from .util import download, checksum, archive_extract, checkpoint
+from .util import dataset_home, download, checksum, archive_extract, checkpoint
 
 
 log = logging.getLogger(__name__)
@@ -34,10 +34,10 @@ class MVSC(object):
          IEEE Transactions on , vol.33, no.1, pp.43,57, Jan. 2011
     '''
 
-    def __init__(self, scene='liberty', data_root='datasets'):
+    def __init__(self, scene='liberty'):
         self.scene = scene
         self.name = 'mvsc_' + scene
-        self.data_dir = os.path.join(data_root, self.name)
+        self.data_dir = os.path.join(dataset_home, self.name)
         self._npz_path = os.path.join(self.data_dir, scene+'.npz')
         self.img_shape = (64, 64)
         self._install()
