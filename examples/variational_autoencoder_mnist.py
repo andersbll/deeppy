@@ -56,12 +56,10 @@ net = dp.model.VariationalAutoencoder(
 )
 
 # Train network
-n_epochs = 25
-trainer = dp.GradientDescent(
-    min_epochs=n_epochs, max_epochs=n_epochs,
-    learn_rule=dp.RMSProp(learn_rate=0.25),
-)
-trainer.train(net, train_input)
+learn_rate = 0.25/batch_size
+learn_rule = dp.RMSProp(learn_rate)
+trainer = dp.GradientDescent(net, train_input, learn_rule)
+trainer.train_epochs(n_epochs=25)
 
 
 def plot_tile(imgs, title):

@@ -52,13 +52,12 @@ net = dp.NeuralNetwork(
 
 # Train network
 n_epochs = [50, 15]
-learn_rate = 0.05
+learn_rate = 0.05/batch_size
+learn_rule = dp.Momentum(momentum=0.94)
+trainer = dp.GradientDescent(net, train_input, learn_rule)
 for i, epochs in enumerate(n_epochs):
-    trainer = dp.GradientDescent(
-        max_epochs=epochs,
-        learn_rule=dp.Momentum(learn_rate=learn_rate/10**i, momentum=0.94),
-    )
-    trainer.train(net, train_input)
+    learn_rule.learn_rate = learn_rate/10**i
+    trainer.train_epochs(n_epochs=25)
 
 # Evaluate on test data
 error = np.mean(net.predict(test_input) != y_test)

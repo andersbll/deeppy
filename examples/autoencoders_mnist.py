@@ -49,14 +49,16 @@ sae = dp.StackedAutoencoder(
 )
 
 # Train autoencoders layer-wise
-trainer = dp.GradientDescent(
-    max_epochs=25, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
-)
+n_epochs = 25
+learn_rate = 0.025/batch_size
+learn_rule = dp.Momentum(learn_rate, momentum=0.9)
 for ae in sae.ae_models():
-    trainer.train(ae, train_input)
+    trainer = dp.GradientDescent(ae, train_input, learn_rule)
+    trainer.train_epochs(n_epochs)
 
 # Train stacked autoencoders
-trainer.train(sae, train_input)
+trainer = dp.GradientDescent(sae, train_input, learn_rule)
+trainer.train_epochs(n_epochs)
 
 # Setup neural network using the stacked autoencoder layers
 net = dp.NeuralNetwork(
@@ -72,10 +74,8 @@ net = dp.NeuralNetwork(
 # Fine-tune neural network
 train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
 test_input = dp.Input(x_test)
-trainer = dp.GradientDescent(
-    max_epochs=25, learn_rule=dp.Momentum(learn_rate=0.05, momentum=0.9),
-)
-trainer.train(net, train_input)
+trainer = dp.GradientDescent(net, train_input, learn_rule)
+trainer.train_epochs(n_epochs)
 
 # Evaluate on test data
 error = np.mean(net.predict(test_input) != y_test)

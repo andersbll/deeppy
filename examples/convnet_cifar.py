@@ -75,14 +75,12 @@ net = dp.NeuralNetwork(
 def test_error():
     return np.mean(net.predict(test_input) != y_test)
 n_epochs = [8, 8]
-learn_rate = 0.05
-for i, max_epochs in enumerate(n_epochs):
-    lr = learn_rate/10**i
-    trainer = dp.GradientDescent(
-        max_epochs=max_epochs,
-        learn_rule=dp.Momentum(learn_rate=lr, momentum=0.9),
-    )
-    trainer.train(net, train_input, test_error)
+learn_rate = 0.05/batch_size
+learn_rule = dp.Momentum(momentum=0.9)
+trainer = dp.GradientDescent(net, train_input, learn_rule)
+for i, epochs in enumerate(n_epochs):
+    learn_rule.learn_rate = learn_rate/10**i
+    trainer.train_epochs(epochs, error_fun=test_error)
 
 
 # Evaluate on test data

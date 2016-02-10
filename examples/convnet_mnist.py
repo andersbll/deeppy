@@ -76,15 +76,12 @@ net = dp.NeuralNetwork(
 
 # Train network
 n_epochs = [50, 15, 15]
-learn_rate = 0.05
-momentum = 0.88
+learn_rate = 0.05/batch_size
+learn_rule = dp.Momentum(momentum=0.9)
+trainer = dp.GradientDescent(net, train_input, learn_rule)
 for i, epochs in enumerate(n_epochs):
-    trainer = dp.GradientDescent(
-        max_epochs=epochs, learn_rule=dp.Momentum(learn_rate=learn_rate/10**i,
-                                                  momentum=momentum),
-    )
-    trainer.train(net, train_input)
-
+    learn_rule.learn_rate = learn_rate/10**i
+    trainer.train_epochs(epochs)
 
 # Plot misclassified images.
 def plot_img(img, title):

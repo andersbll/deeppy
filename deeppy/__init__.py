@@ -26,6 +26,7 @@ from .preprocess.scalers import StandardScaler, UniformScaler
 from .siamese.input import SiameseInput, SupervisedSiameseInput
 from .siamese.loss import ContrastiveLoss
 from .siamese.siamese_network import SiameseNetwork
+from .train.annealers import ZeroAnnealer, DecayAnnealer, GammaAnnealer
 from .train.learn_rules import Adam, Momentum, RMSProp
 from .train.gradient_descent import GradientDescent
 
