@@ -28,7 +28,9 @@ class Clip(UnaryElementWise):
         if self.keepgrads:
             self.x.out_grad = self.out_grad
         else:
-            raise NotImplementedError()
+            ca.multiply(self.out_grad, self.x.out > self.a_min,
+                        self.x.out_grad)
+            self.x.out_grad *= self.x.out < self.a_max
 
 
 class Negative(UnaryElementWise):
