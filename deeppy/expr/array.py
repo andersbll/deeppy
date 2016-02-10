@@ -3,6 +3,20 @@ import cudarray as ca
 from .base import Expr, Output, SplitMixin, Unary
 
 
+class Flatten(Unary):
+    def setup(self):
+        shape = self.x.out_shape
+        self.out_shape = (shape[0], np.prod(shape[1:]))
+        self.out = ca.empty(self.out_shape)
+        self.out_grad = ca.empty(self.out_shape)
+
+    def fprop(self):
+        self.out = ca.reshape(self.x.out, self.out_shape)
+
+    def bprop(self):
+        self.x.out_grad = ca.reshape(self.out_grad, self.x.out_shape)
+
+
 class Reshape(Unary):
     def __init__(self, newshape):
         if not isinstance(newshape, tuple):

@@ -1,5 +1,6 @@
 from .array import (
-    Reshape, Slices, Transpose, VSplit, VStack, Concatenate, transpose,
+    Flatten, Reshape, Slices, Transpose, VSplit, VStack, Concatenate,
+    transpose,
 )
 from .base import (
     Expr, Variable, Source,
