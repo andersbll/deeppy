@@ -7,4 +7,4 @@ from .batch_normalization import BatchNormalization, SpatialBatchNormalization
 from .dropout import Dropout, SpatialDropout
 from .one_hot import OneHot
 from .spatial import BackwardConvolution, Convolution, Pool, Rescale
-from .loss import BinaryCrossEntropy, SoftmaxCrossEntropy
+from .loss import BinaryCrossEntropy, SquareError, SoftmaxCrossEntropy
