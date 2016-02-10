@@ -46,16 +46,10 @@ class Softmax(UnaryElementWise):
 
 class Softplus(UnaryElementWise):
     def fprop(self):
-        ca.exp(self.x.out, self.out)
-        # TODO: use log1p()
-        self.out += 1
-        ca.log(self.out, self.out)
+        ca.nnet.softplus(self.x.out, self.out)
 
     def bprop(self):
-        ca.negative(self.x.out, self.x.out_grad)
-        ca.exp(self.x.out_grad, self.x.out_grad)
-        self.x.out_grad += 1
-        ca.divide(1.0, self.x.out_grad, out=self.x.out_grad)
+        ca.nnet.softplus_d(self.x.out, out=self.x.out_grad)
         self.x.out_grad *= self.out_grad
 
 
