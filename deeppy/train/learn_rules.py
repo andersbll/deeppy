@@ -13,7 +13,7 @@ class LearnRule(object):
 
 
 class Momentum(LearnRule):
-    def __init__(self, learn_rate, momentum=0.9):
+    def __init__(self, learn_rate=0.01, momentum=0.9):
         self.learn_rate = learn_rate
         self.momentum = momentum
 
@@ -30,7 +30,7 @@ class Momentum(LearnRule):
 
 
 class RMSProp(LearnRule):
-    def __init__(self, learn_rate, decay=0.9, eps=1e-8):
+    def __init__(self, learn_rate=0.1, decay=0.9, eps=1e-8):
         self.learn_rate = learn_rate
         self.decay = decay
         self.eps = eps
@@ -50,7 +50,7 @@ class RMSProp(LearnRule):
 
 
 class Adam(LearnRule):
-    def __init__(self, learn_rate, beta1=0.9, beta2=0.999, lambd=1-1e-8,
+    def __init__(self, learn_rate=0.1, beta1=0.9, beta2=0.999, lambd=1-1e-8,
                  eps=1e-8):
         self.learn_rate = learn_rate
         self.beta1 = beta1
