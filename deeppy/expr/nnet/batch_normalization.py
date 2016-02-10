@@ -4,7 +4,6 @@ Covariate Shift, http://arxiv.org/abs/1502.03167
 
 This implementation is heavily inspired by code from http://github.com/torch/nn
 """
-import numpy as np
 import cudarray as ca
 from ...base import ParamMixin, PhaseMixin
 from ...parameter import Parameter
@@ -13,7 +12,7 @@ from ..base import UnaryElementWise
 
 
 class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
-    def __init__(self, momentum=0.9, eps=1e-5, affine=True):
+    def __init__(self, momentum=0.9, eps=1e-5, noise_std=0.0, affine=True):
         self.momentum = momentum
         self.eps = eps
         self.phase = 'train'
@@ -22,12 +21,11 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
             self.gamma = Parameter(UniformFiller(low=0, high=1))
             self.beta = Parameter(0.0)
         self.running_mean = None
+        self.noise_std = noise_std
 
     def setup(self):
         super(BatchNormalization, self).setup()
-        if len(self.out_shape) != 2:
-            raise ValueError('Only 1D data supported')
-        reduced_shape = 1, self.out_shape[1]
+        reduced_shape = (1,) + self.out_shape[1:]
         if self.running_mean is None:
             self.running_mean = ca.zeros(reduced_shape)
             self.running_std = ca.ones(reduced_shape)
@@ -77,6 +75,11 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
             self.running_std *= self.momentum
             ca.multiply(self._tmp_batch_inv_std, 1-self.momentum, tmp)
             self.running_std += tmp
+
+            if self.noise_std > 0.0:
+                noise = ca.random.normal(scale=self.noise_std,
+                                         size=self.out_shape)
+                ca.add(self.out, noise, self.out)
         elif self.phase == 'test':
             ca.subtract(self.x.out, self.running_mean, self.out)
             self.out *= self.running_std
@@ -111,7 +114,7 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
 
 
 class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
-    def __init__(self, momentum=0.9, eps=1e-5, affine=True):
+    def __init__(self, momentum=0.9, eps=1e-5, noise_std=0.0, affine=True):
         self.momentum = momentum
         self.eps = eps
         self.phase = 'train'
@@ -120,6 +123,7 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
             self.gamma = Parameter(UniformFiller(low=0, high=1))
             self.beta = Parameter(0.0)
         self.running_mean = None
+        self.noise_std = noise_std
 
     def setup(self):
         super(SpatialBatchNormalization, self).setup()
@@ -176,6 +180,12 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
             self.running_std *= self.momentum
             ca.multiply(self._tmp_batch_inv_std, 1-self.momentum, tmp)
             self.running_std += tmp
+
+            if self.noise_std > 0.0:
+                noise = ca.random.normal(scale=self.noise_std,
+                                         size=self.out_shape)
+                ca.add(self.out, noise, self.out)
+
         elif self.phase == 'test':
             ca.subtract(self.x.out, self.running_mean, self.out)
             self.out *= self.running_std
