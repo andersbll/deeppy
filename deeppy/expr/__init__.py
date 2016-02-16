@@ -15,5 +15,5 @@ from .linalg import Dot, dot
 from .graph import ExprGraph
 from .reduce import Mean, Sum, mean, sum
 from .util import Print
-import nnet
-import random
+from . import nnet
+from . import random
