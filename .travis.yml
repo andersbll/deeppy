@@ -28,6 +28,7 @@ install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy cython pillow pytest scikit-learn
   - source activate test-environment
 
+  - git clone https://github.com/andersbll/cudarray.git
   - cd cudarray && python setup.py --without-cuda develop && cd ..
   - python setup.py develop
 
