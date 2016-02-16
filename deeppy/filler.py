@@ -84,3 +84,18 @@ class AutoFiller(Filler):
         scale = self.gain * scale / np.sqrt(3)
         array = np.random.uniform(low=-scale, high=scale, size=shape)
         return ca.array(array)
+
+
+class OrthogonalFiller(Filler):
+    def __init__(self, gain=1.0):
+        self.gain = gain
+
+    def array(self, shape):
+        # Implementation inspired by Lasagne.
+        # https://github.com/Lasagne/Lasagne/blob/master/lasagne/init.py
+        flat_shape = (shape[0], np.prod(shape[1:]))
+        array = np.random.normal(size=flat_shape)
+        u, _, v = np.linalg.svd(array, full_matrices=False)
+        array = u if u.shape == flat_shape else v
+        array = np.reshape(array*self.gain, shape)
+        return ca.array(array)
