@@ -18,7 +18,7 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
         self.phase = 'train'
         self.affine = affine
         if self.affine:
-            self.gamma = Parameter(UniformFiller(low=0, high=1))
+            self.gamma = Parameter(1.0)
             self.beta = Parameter(0.0)
         self.running_mean = None
         self.noise_std = noise_std
@@ -120,7 +120,7 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
         self.phase = 'train'
         self.affine = affine
         if self.affine:
-            self.gamma = Parameter(UniformFiller(low=0, high=1))
+            self.gamma = Parameter(1.0)
             self.beta = Parameter(0.0)
         self.running_mean = None
         self.noise_std = noise_std
