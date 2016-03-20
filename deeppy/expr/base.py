@@ -176,8 +176,6 @@ class UnaryElementWise(Unary):
 class Binary(Op):
     lhs = None
     rhs = None
-    lhs_bprop = True
-    rhs_bprop = True
 
     def __call__(self, lhs, rhs):
         lhs = _require_expr(lhs)
@@ -189,8 +187,6 @@ class Binary(Op):
             self.setup()
             self.fprop()
             return Constant(self.array)
-        self.lhs_bprop = lhs.bpropable
-        self.rhs_bprop = rhs.bpropable
         self.inputs = [lhs, rhs]
         return self
 
@@ -224,11 +220,12 @@ class BinaryElementWise(Binary):
         try:
             self.shape = np.add(np.zeros_like(self.lhs.array),
                                 np.zeros_like(self.rhs.array)).shape
-            if self.lhs_bprop and np.prod(self.shape) > self.lhs.array.size:
+            size = np.prod(self.shape)
+            if self.lhs.bpropable and size > self.lhs.array.size:
                 self.lhs = Broadcast(self.lhs.shape, self.shape)(self.lhs)
                 self.inputs = [self.lhs, self.rhs]
                 self.lhs.setup()
-            if self.rhs_bprop and np.prod(self.shape) > self.rhs.array.size:
+            if self.rhs.bpropable and size > self.rhs.array.size:
                 self.rhs = Broadcast(self.rhs.shape,
                                      self.shape)(self.rhs)
                 self.rhs_broadcast = True

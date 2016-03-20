@@ -18,9 +18,9 @@ class Dot(Binary):
         ca.dot(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
-        if self.lhs_bprop:
+        if self.lhs.bpropable:
             ca.dot(self.grad_array, self.rhs.array.T, out=self.lhs.grad_array)
-        if self.rhs_bprop:
+        if self.rhs.bpropable:
             ca.dot(self.lhs.array.T, self.grad_array, out=self.rhs.grad_array)
 
 

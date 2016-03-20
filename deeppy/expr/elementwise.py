@@ -82,9 +82,9 @@ class Add(BinaryElementWise):
         ca.add(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
-        if self.lhs_bprop:
+        if self.lhs.bpropable:
             self.lhs.grad_array = self.grad_array
-        if self.rhs_bprop:
+        if self.rhs.bpropable:
             self.rhs.grad_array = self.grad_array
 
 
@@ -102,9 +102,9 @@ class Subtract(BinaryElementWise):
         ca.subtract(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
-        if self.lhs_bprop:
+        if self.lhs.bpropable:
             self.lhs.grad_array = self.grad_array
-        if self.rhs_bprop:
+        if self.rhs.bpropable:
             ca.negative(self.grad_array, out=self.rhs.grad_array)
 
 
@@ -122,9 +122,9 @@ class Multiply(BinaryElementWise):
         ca.multiply(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
-        if self.lhs_bprop:
+        if self.lhs.bpropable:
             ca.multiply(self.grad_array, self.rhs.array, self.lhs.grad_array)
-        if self.rhs_bprop:
+        if self.rhs.bpropable:
             ca.multiply(self.grad_array, self.lhs.array, self.rhs.grad_array)
 
 
@@ -140,9 +140,9 @@ class Divide(BinaryElementWise):
         ca.divide(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
-        if self.lhs_bprop:
+        if self.lhs.bpropable:
             ca.divide(self.grad_array, self.rhs.array, out=self.lhs.grad_array)
-        if self.rhs_bprop:
+        if self.rhs.bpropable:
             ca.multiply(self.grad_array, self.array, out=self.rhs.grad_array)
             self.rhs.grad_array /= self.rhs.array
             ca.negative(self.rhs.grad_array, out=self.rhs.grad_array)
@@ -158,12 +158,12 @@ class Power(BinaryElementWise):
         ca.power(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
-        if self.lhs_bprop:
+        if self.lhs.bpropable:
             tmp = self.rhs.array - 1
             ca.power(self.lhs.array, tmp, out=self.lhs.grad_array)
             self.lhs.grad_array *= self.rhs.array
             self.lhs.grad_array *= self.grad_array
-        if self.rhs_bprop:
+        if self.rhs.bpropable:
             ca.log(self.lhs.array, out=self.rhs.grad_array)
             self.rhs.grad_array *= self.array
             self.rhs.grad_array *= self.grad_array
@@ -179,10 +179,10 @@ class Maximum(BinaryElementWise):
         ca.maximum(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
-        if self.lhs_bprop:
+        if self.lhs.bpropable:
             tmp = ca.equal(self.lhs.array, self.array)
             ca.multiply(self.grad_array, tmp, self.lhs.grad_array)
-        if self.rhs_bprop:
+        if self.rhs.bpropable:
             ca.equal(self.rhs.array, self.array, self.rhs.grad_array)
             self.rhs.grad_array *= self.grad_array
 
