@@ -9,7 +9,7 @@ class Normal(Op, NoBPropMixin):
         self.shape = shape
         self.mu = mu
         self.sigma = sigma
-        self.array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
 
     def fprop(self):
         self.array = ca.random.normal(loc=self.mu, scale=self.sigma,
@@ -23,7 +23,7 @@ class Uniform(Op, NoBPropMixin):
         self.shape = shape
         self.low = low
         self.high = high
-        self.array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
 
     def fprop(self):
         self.array = ca.random.uniform(low=self.low, high=self.high,

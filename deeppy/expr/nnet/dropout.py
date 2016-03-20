@@ -17,7 +17,7 @@ class Dropout(UnaryElementWise, PhaseMixin):
     def setup(self):
         super(Dropout, self).setup()
         self.mask_shape = self.shape
-        self._tmp_mask = ca.empty(self.mask_shape, dtype=ca.int_)
+        self._tmp_mask = ca.zeros(self.mask_shape, dtype=ca.int_)
 
     def fprop(self):
         if self.phase == 'train':
@@ -37,4 +37,4 @@ class SpatialDropout(Dropout):
     def setup(self):
         super(SpatialDropout, self).setup()
         self.mask_shape = self.shape[:2] + (1, 1)
-        self._tmp_mask = ca.empty(self.mask_shape, dtype=ca.int_)
+        self._tmp_mask = ca.zeros(self.mask_shape, dtype=ca.int_)

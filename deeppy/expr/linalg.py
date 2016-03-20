@@ -11,8 +11,8 @@ class Dot(Binary):
             raise ValueError('Shape mismatch: %s and %s for %s. LHS: %s RHS: '
                              '%s.' % (self.lhs.shape, self.rhs.shape,
                                       self, self.lhs, self.rhs))
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         ca.dot(self.lhs.array, self.rhs.array, out=self.array)

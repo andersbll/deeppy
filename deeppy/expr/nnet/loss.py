@@ -15,7 +15,7 @@ class Loss(Op):
 
     def setup(self):
         self.shape = (self.pred.shape[0], 1)
-        self.array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
         self.grad_array = ca.ones(self.shape)
 
 

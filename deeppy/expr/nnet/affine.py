@@ -20,8 +20,8 @@ class Affine(Unary, ParamMixin):
     def setup(self):
         x_shape = self.x.shape
         self.shape = (x_shape[0], self.n_out)
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
         self.weights.setup((x_shape[1], self.n_out))
         if self.bias is not None:
             self.bias.setup(self.n_out)
@@ -58,7 +58,7 @@ class OneHot(Unary):
 
     def setup(self):
         self.shape = self.x.shape + (self.n_classes,)
-        self.array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
 
     def fprop(self):
         ca.nnet.one_hot_encode(self.x.array, self.n_classes, self.array)

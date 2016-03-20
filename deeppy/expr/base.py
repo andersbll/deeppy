@@ -169,8 +169,8 @@ class Unary(Op):
 class UnaryElementWise(Unary):
     def setup(self):
         self.shape = self.x.shape
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
 
 class Binary(Op):
@@ -208,8 +208,8 @@ class Broadcast(Unary):
         self.keepdims = True
 
     def setup(self):
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.broadcast_shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.broadcast_shape)
 
     def fprop(self):
         self.array = self.x.array
@@ -239,8 +239,8 @@ class BinaryElementWise(Binary):
             raise ValueError('Shape mismatch: %s and %s for %s. LHS: %s RHS: '
                              '%s.' % (self.lhs.shape, self.rhs.shape,
                                       self, self.lhs, self.rhs))
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
 
 class Source(Op, NoBPropMixin, NoFPropMixin):
@@ -252,10 +252,10 @@ class Source(Op, NoBPropMixin, NoFPropMixin):
     def setup(self):
         if not (isinstance(self.array, ca.ndarray)
                 and self.array.shape == self.shape):
-            self.array = ca.empty(self.shape)
+            self.array = ca.zeros(self.shape)
         if not (isinstance(self.grad_array, ca.ndarray)
                 and self.grad_array.shape == self.shape):
-            self.grad_array = ca.empty(self.shape)
+            self.grad_array = ca.zeros(self.shape)
 
 
 class Variable(Op):

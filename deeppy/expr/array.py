@@ -7,8 +7,8 @@ class Flatten(Unary):
     def setup(self):
         shape = self.x.shape
         self.shape = (shape[0], np.prod(shape[1:]))
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         self.array = ca.reshape(self.x.array, self.shape)
@@ -33,8 +33,8 @@ class Reshape(Unary):
         newshape_size = np.prod(self.newshape)
         self.shape = tuple(d if d != -1 else -size//newshape_size
                            for d in self.newshape)
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         self.array = ca.reshape(self.x.array, self.shape)
@@ -89,8 +89,8 @@ class Transpose(Unary):
         else:
             raise ValueError('invalid shape for transpose: %s'
                              % str(self.x.shape))
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         self.array = ca.transpose(self.x.array)
@@ -119,7 +119,7 @@ class VSplit(Op, SplitMixin):
         for i in range(self.n_splits):
             self.outputs[i].shape = shape
             self.outputs[i].array = self.x.array[i]
-            self.outputs[i].grad_array = ca.empty(shape)
+            self.outputs[i].grad_array = ca.zeros(shape)
 
     def fprop(self):
         for i in range(self.n_splits):
@@ -143,8 +143,8 @@ class VStack(Op):
                 raise ValueError('shape mismatch: %s and %s'
                                  % (shape, expr.shape))
         self.shape = (self.n_sources,) + shape
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         for i in range(self.n_sources):
@@ -173,8 +173,8 @@ class Concatenate(Op):
         concat_size = a_shp[self.axis] + b_shp[self.axis]
         self.a_size = a_shp[self.axis]
         self.shape = (a_shp[:self.axis] + (concat_size,) + a_shp[self.axis+1:])
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         ca.extra.concatenate(self.a.array, self.b.array, axis=self.axis,

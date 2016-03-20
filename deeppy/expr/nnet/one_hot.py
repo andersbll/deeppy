@@ -9,7 +9,7 @@ class OneHot(Unary):
 
     def setup(self):
         self.shape = self.x.shape + (self.n_classes,)
-        self.array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
 
     def fprop(self):
         ca.nnet.one_hot_encode(self.x.array, self.n_classes, self.array)
@@ -18,7 +18,7 @@ class OneHot(Unary):
 class OneHotDecode(Unary):
     def setup(self):
         self.shape = self.x.shape[:1]
-        self.array = ca.empty(self.shape, dtype=int_)
+        self.array = ca.zeros(self.shape, dtype=int_)
 
     def fprop(self):
         ca.nnet.one_hot_decode(self.x.array, self.array)

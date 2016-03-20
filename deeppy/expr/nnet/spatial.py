@@ -50,8 +50,8 @@ class Convolution(Unary, ParamMixin):
         img_shape = self.img_out_shape(x_shape[2:], self.filter_shape,
                                        self.strides, self.padding)
         self.shape = (batch_size, self.n_filters) + img_shape
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         self.conv_op.fprop(self.x.array, self.weights.array,
@@ -106,8 +106,8 @@ class BackwardConvolution(Convolution):
         img_shape = self.img_out_shape(x_shape[2:], self.filter_shape,
                                        self.strides, self.padding)
         self.shape = (batch_size, self.n_filters) + img_shape
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
         # make sure conv_op is initialized
         self.conv_op.fprop(self.grad_array, self.weights.array,
                            convout=self.x.grad_array)
@@ -141,8 +141,8 @@ class Pool(Unary):
 
     def setup(self):
         self.shape = self.pool_op.fprop(self.x.array).shape
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         self.pool_op.fprop(self.x.array, self.array)
@@ -160,8 +160,8 @@ class Rescale(Unary):
     def setup(self):
         self.shape = ca.nnet.rescale(self.x.array, self.factor,
                                      self.method).shape
-        self.array = ca.empty(self.shape)
-        self.grad_array = ca.empty(self.shape)
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         ca.nnet.rescale(self.x.array, self.factor, self.method, self.array)
