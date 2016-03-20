@@ -1,8 +1,8 @@
 from ..base import CollectionMixin
-from .base import Expr
+from .base import Op
 
 
-class Sequential(Expr, CollectionMixin):
+class Sequential(Op, CollectionMixin):
     def __init__(self, ops):
         self.collection = ops
 

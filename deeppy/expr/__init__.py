@@ -3,7 +3,7 @@ from .array import (
     transpose,
 )
 from .base import (
-    Expr, Variable, Source,
+    Op, Variable, Source,
 )
 from .composition import Sequential
 from .elementwise import (

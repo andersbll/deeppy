@@ -7,38 +7,38 @@ class LeakyReLU(UnaryElementWise):
         self.a = a
 
     def fprop(self):
-        ca.minimum(self.x.out, 0, out=self.out)
-        self.out *= self.a
-        self.out += ca.maximum(self.x.out, 0)
+        ca.minimum(self.x.array, 0, out=self.array)
+        self.array *= self.a
+        self.array += ca.maximum(self.x.array, 0)
 
     def bprop(self):
-        self.x.out_grad = ca.less(self.x.out, 0) * self.a
-        pos = ca.nnet.relu_d(self.x.out)
-        self.x.out_grad += pos
-        self.x.out_grad *= self.out_grad
+        self.x.grad_array = ca.less(self.x.array, 0) * self.a
+        pos = ca.nnet.relu_d(self.x.array)
+        self.x.grad_array += pos
+        self.x.grad_array *= self.grad_array
 
 
 class ReLU(UnaryElementWise):
     def fprop(self):
-        ca.nnet.relu(self.x.out, self.out)
+        ca.nnet.relu(self.x.array, self.array)
 
     def bprop(self):
-        ca.nnet.relu_d(self.x.out, out=self.x.out_grad)
-        self.x.out_grad *= self.out_grad
+        ca.nnet.relu_d(self.x.array, out=self.x.grad_array)
+        self.x.grad_array *= self.grad_array
 
 
 class Sigmoid(UnaryElementWise):
     def fprop(self):
-        ca.nnet.sigmoid(self.x.out, self.out)
+        ca.nnet.sigmoid(self.x.array, self.array)
 
     def bprop(self):
-        ca.nnet.sigmoid_d(self.x.out, out=self.x.out_grad)
-        self.x.out_grad *= self.out_grad
+        ca.nnet.sigmoid_d(self.x.array, out=self.x.grad_array)
+        self.x.grad_array *= self.grad_array
 
 
 class Softmax(UnaryElementWise):
     def fprop(self):
-        self.out = ca.nnet.softmax(self.x.out)
+        self.array = ca.nnet.softmax(self.x.array)
 
     def bprop(self, y_grad):
         raise NotImplementedError()
@@ -46,11 +46,11 @@ class Softmax(UnaryElementWise):
 
 class Softplus(UnaryElementWise):
     def fprop(self):
-        ca.nnet.softplus(self.x.out, self.out)
+        ca.nnet.softplus(self.x.array, self.array)
 
     def bprop(self):
-        ca.nnet.softplus_d(self.x.out, out=self.x.out_grad)
-        self.x.out_grad *= self.out_grad
+        ca.nnet.softplus_d(self.x.array, out=self.x.grad_array)
+        self.x.grad_array *= self.grad_array
 
 
 def leaky_relu(x):

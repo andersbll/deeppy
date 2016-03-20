@@ -1,20 +1,20 @@
 import numpy as np
 import cudarray as ca
-from .base import Expr, Output, SplitMixin, Unary
+from .base import Op, Output, SplitMixin, Unary
 
 
 class Flatten(Unary):
     def setup(self):
-        shape = self.x.out_shape
-        self.out_shape = (shape[0], np.prod(shape[1:]))
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        shape = self.x.shape
+        self.shape = (shape[0], np.prod(shape[1:]))
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
-        self.out = ca.reshape(self.x.out, self.out_shape)
+        self.array = ca.reshape(self.x.array, self.shape)
 
     def bprop(self):
-        self.x.out_grad = ca.reshape(self.out_grad, self.x.out_shape)
+        self.x.grad_array = ca.reshape(self.grad_array, self.x.shape)
 
 
 class Reshape(Unary):
@@ -29,21 +29,21 @@ class Reshape(Unary):
         self.newshape = newshape
 
     def setup(self):
-        size = self.x.out.size
+        size = self.x.array.size
         newshape_size = np.prod(self.newshape)
-        self.out_shape = tuple(d if d != -1 else -size//newshape_size
-                               for d in self.newshape)
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = tuple(d if d != -1 else -size//newshape_size
+                           for d in self.newshape)
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
-        self.out = ca.reshape(self.x.out, self.out_shape)
+        self.array = ca.reshape(self.x.array, self.shape)
 
     def bprop(self):
-        self.x.out_grad = ca.reshape(self.out_grad, self.x.out_shape)
+        self.x.grad_array = ca.reshape(self.grad_array, self.x.shape)
 
 
-class Slices(Expr, SplitMixin):
+class Slices(Op, SplitMixin):
     def __init__(self, splits):
         self.splits = splits
 
@@ -55,25 +55,26 @@ class Slices(Expr, SplitMixin):
         return self.outputs
 
     def setup(self):
-        splits = [0] + self.splits + [self.x.out_shape[0]]
+        splits = [0] + self.splits + [self.x.shape[0]]
         self.slices = []
         for i in range(len(splits) - 1):
             self.slices.append((splits[i], splits[i+1]))
         for i, (start, end) in enumerate(self.slices):
-            out_shape = (end-start,) + self.x.out_shape[1:]
-            self.outputs[i].out_shape = out_shape
-            self.outputs[i].out = self.x.out[start:end, :]
+            shape = (end-start,) + self.x.shape[1:]
+            self.outputs[i].shape = shape
+            self.outputs[i].array = self.x.array[start:end, :]
             self.outputs[i].bpropable = self.bpropable
             if self.bpropable:
-                self.outputs[i].out_grad = ca.zeros(out_shape)
+                self.outputs[i].grad_array = ca.zeros(shape)
 
     def fprop(self):
         for i, (start, end) in enumerate(self.slices):
-            self.outputs[i].out = self.x.out[start:end, :]
+            self.outputs[i].array = self.x.array[start:end, :]
 
     def bprop(self):
         for i, (start, end) in enumerate(self.slices):
-            ca.copyto(self.x.out_grad[start:end, :], self.outputs[i].out_grad)
+            ca.copyto(self.x.grad_array[start:end, :],
+                      self.outputs[i].grad_array)
 
 
 class Transpose(Unary):
@@ -81,28 +82,28 @@ class Transpose(Unary):
         self.contiguous = contiguous
 
     def setup(self):
-        if len(self.x.out_shape) == 1:
-            self.out_shape = (1,) + self.x.out_shape
-        elif len(self.x.out_shape) == 2:
-            self.out_shape = tuple(reversed(self.x.out_shape))
+        if len(self.x.shape) == 1:
+            self.shape = (1,) + self.x.shape
+        elif len(self.x.shape) == 2:
+            self.shape = tuple(reversed(self.x.shape))
         else:
             raise ValueError('invalid shape for transpose: %s'
                              % str(self.x.shape))
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
-        self.out = ca.transpose(self.x.out)
+        self.array = ca.transpose(self.x.array)
         if self.contiguous:
-            self.out = ca.ascontiguousarray(self.out)
+            self.array = ca.ascontiguousarray(self.array)
 
     def bprop(self):
-        self.x.out_grad = ca.transpose(self.out_grad)
+        self.x.grad_array = ca.transpose(self.grad_array)
         if self.contiguous:
-            self.out = ca.ascontiguousarray(self.x.out_grad)
+            self.array = ca.ascontiguousarray(self.x.grad_array)
 
 
-class VSplit(Expr, SplitMixin):
+class VSplit(Op, SplitMixin):
     def __init__(self, len_x):
         self.n_splits = len_x
 
@@ -114,47 +115,47 @@ class VSplit(Expr, SplitMixin):
         return self.outputs
 
     def setup(self):
-        out_shape = self.x.out_shape[1:]
+        shape = self.x.shape[1:]
         for i in range(self.n_splits):
-            self.outputs[i].out_shape = out_shape
-            self.outputs[i].out = self.x.out[i]
-            self.outputs[i].out_grad = ca.empty(out_shape)
+            self.outputs[i].shape = shape
+            self.outputs[i].array = self.x.array[i]
+            self.outputs[i].grad_array = ca.empty(shape)
 
     def fprop(self):
         for i in range(self.n_splits):
-            self.outputs[i].out = self.x.out[i]
+            self.outputs[i].array = self.x.array[i]
 
     def bprop(self):
         for i in range(self.n_splits):
-            ca.copyto(self.x.out_grad[i], self.outputs[i].out_grad)
+            ca.copyto(self.x.grad_array[i], self.outputs[i].grad_array)
 
 
-class VStack(Expr):
+class VStack(Op):
     def __call__(self, *xs):
         self.n_sources = len(xs)
         self.inputs = xs
         return self
 
     def setup(self):
-        shape = self.inputs[0].out_shape
+        shape = self.inputs[0].shape
         for expr in self.inputs:
-            if shape != expr.out_shape:
+            if shape != expr.shape:
                 raise ValueError('shape mismatch: %s and %s'
-                                 % (shape, expr.out_shape))
-        self.out_shape = (self.n_sources,) + shape
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+                                 % (shape, expr.shape))
+        self.shape = (self.n_sources,) + shape
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
         for i in range(self.n_sources):
-            ca.copyto(self.out[i], self.inputs[i].out)
+            ca.copyto(self.array[i], self.inputs[i].array)
 
     def bprop(self):
         for i in range(self.n_sources):
-            ca.copyto(self.inputs[i].out_grad, self.out_grad[i])
+            ca.copyto(self.inputs[i].grad_array, self.grad_array[i])
 
 
-class Concatenate(Expr):
+class Concatenate(Op):
     def __init__(self, axis):
         self.axis = axis
         self.a_size = -1
@@ -167,22 +168,21 @@ class Concatenate(Expr):
         return self
 
     def setup(self):
-        a_shp = self.a.out_shape
-        b_shp = self.b.out_shape
+        a_shp = self.a.shape
+        b_shp = self.b.shape
         concat_size = a_shp[self.axis] + b_shp[self.axis]
         self.a_size = a_shp[self.axis]
-        self.out_shape = (a_shp[:self.axis] + (concat_size,) +
-                          a_shp[self.axis+1:])
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = (a_shp[:self.axis] + (concat_size,) + a_shp[self.axis+1:])
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
-        ca.extra.concatenate(self.a.out, self.b.out, axis=self.axis,
-                             out=self.out)
+        ca.extra.concatenate(self.a.array, self.b.array, axis=self.axis,
+                             out=self.array)
 
     def bprop(self):
-        ca.extra.split(self.out_grad, a_size=self.a_size, axis=self.axis,
-                       out_a=self.a.out_grad, out_b=self.b.out_grad)
+        ca.extra.split(self.grad_array, a_size=self.a_size, axis=self.axis,
+                       out_a=self.a.grad_array, out_b=self.b.grad_array)
 
 
 def transpose(x):

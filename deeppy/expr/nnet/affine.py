@@ -18,24 +18,24 @@ class Affine(Unary, ParamMixin):
         return self
 
     def setup(self):
-        x_shape = self.x.out_shape
-        self.out_shape = (x_shape[0], self.n_out)
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        x_shape = self.x.shape
+        self.shape = (x_shape[0], self.n_out)
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
         self.weights.setup((x_shape[1], self.n_out))
         if self.bias is not None:
             self.bias.setup(self.n_out)
 
     def fprop(self):
-        ca.dot(self.x.out, self.weights.array, out=self.out)
+        ca.dot(self.x.array, self.weights.array, out=self.array)
         if self.bias is not None:
-            self.out += self.bias.array
+            self.array += self.bias.array
 
     def bprop(self):
-        ca.dot(self.x.out.T, self.out_grad, out=self.weights.grad_array)
-        ca.dot(self.out_grad, self.weights.array.T, out=self.x.out_grad)
+        ca.dot(self.x.array.T, self.grad_array, out=self.weights.grad_array)
+        ca.dot(self.grad_array, self.weights.array.T, out=self.x.grad_array)
         if self.bias is not None:
-            ca.sum(self.out_grad, axis=0, out=self.bias.grad_array)
+            ca.sum(self.grad_array, axis=0, out=self.bias.grad_array)
 
     @property
     def params(self):
@@ -57,8 +57,8 @@ class OneHot(Unary):
         self.n_classes = n_classes
 
     def setup(self):
-        self.out_shape = self.x.out_shape + (self.n_classes,)
-        self.out = ca.empty(self.out_shape)
+        self.shape = self.x.shape + (self.n_classes,)
+        self.array = ca.empty(self.shape)
 
     def fprop(self):
-        ca.nnet.one_hot_encode(self.x.out, self.n_classes, self.out)
+        ca.nnet.one_hot_encode(self.x.array, self.n_classes, self.array)

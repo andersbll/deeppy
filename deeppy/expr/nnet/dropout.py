@@ -16,25 +16,25 @@ class Dropout(UnaryElementWise, PhaseMixin):
 
     def setup(self):
         super(Dropout, self).setup()
-        self.mask_shape = self.out_shape
+        self.mask_shape = self.shape
         self._tmp_mask = ca.empty(self.mask_shape, dtype=ca.int_)
 
     def fprop(self):
         if self.phase == 'train':
             ca.less(self.dropout, ca.random.uniform(size=self.mask_shape),
                     self._tmp_mask)
-            ca.multiply(self.x.out, self._tmp_mask, self.out)
+            ca.multiply(self.x.array, self._tmp_mask, self.array)
         elif self.phase == 'test':
-            ca.multiply(self.x.out, 1.0-self.dropout, self.out)
+            ca.multiply(self.x.array, 1.0-self.dropout, self.array)
         else:
             raise ValueError('Invalid phase: %s' % self.phase)
 
     def bprop(self):
-        ca.multiply(self.out_grad, self._tmp_mask, self.x.out_grad)
+        ca.multiply(self.grad_array, self._tmp_mask, self.x.grad_array)
 
 
 class SpatialDropout(Dropout):
     def setup(self):
         super(SpatialDropout, self).setup()
-        self.mask_shape = self.out_shape[:2] + (1, 1)
+        self.mask_shape = self.shape[:2] + (1, 1)
         self._tmp_mask = ca.empty(self.mask_shape, dtype=ca.int_)

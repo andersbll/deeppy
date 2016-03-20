@@ -42,29 +42,30 @@ class Convolution(Unary, ParamMixin):
                      in zip(img_shape, win_shape, strides, padding))
 
     def setup(self):
-        x_shape = self.x.out_shape
+        x_shape = self.x.shape
         batch_size, n_channels = x_shape[:2]
         self.weights.setup((self.n_filters, n_channels) + self.filter_shape)
         if self.bias is not None:
             self.bias.setup((1, self.n_filters, 1, 1))
-        out_shape = self.img_out_shape(x_shape[2:], self.filter_shape,
+        img_shape = self.img_out_shape(x_shape[2:], self.filter_shape,
                                        self.strides, self.padding)
-        self.out_shape = (batch_size, self.n_filters) + out_shape
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = (batch_size, self.n_filters) + img_shape
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
-        self.conv_op.fprop(self.x.out, self.weights.array, convout=self.out)
+        self.conv_op.fprop(self.x.array, self.weights.array,
+                           convout=self.array)
         if self.bias is not None:
-            self.out += self.bias.array
+            self.array += self.bias.array
 
     def bprop(self):
         self.conv_op.bprop(
-            self.x.out, self.weights.array, self.out_grad,
-            filters_d=self.weights.grad_array, imgs_d=self.x.out_grad
+            self.x.array, self.weights.array, self.grad_array,
+            filters_d=self.weights.grad_array, imgs_d=self.x.grad_array
         )
         if self.bias is not None:
-            ca.sum(ca.sum(self.out_grad, axis=(2, 3), keepdims=True), axis=0,
+            ca.sum(ca.sum(self.grad_array, axis=(2, 3), keepdims=True), axis=0,
                    keepdims=True, out=self.bias.grad_array)
 
     @property
@@ -97,37 +98,37 @@ class BackwardConvolution(Convolution):
                      in zip(img_shape, win_shape, strides, padding))
 
     def setup(self):
-        x_shape = self.x.out_shape
+        x_shape = self.x.shape
         batch_size, n_channels = x_shape[:2]
         self.weights.setup((n_channels, self.n_filters) + self.filter_shape)
         if self.bias is not None:
             self.bias.setup((1, self.n_filters, 1, 1))
-        out_shape = self.img_out_shape(x_shape[2:], self.filter_shape,
+        img_shape = self.img_out_shape(x_shape[2:], self.filter_shape,
                                        self.strides, self.padding)
-        self.out_shape = (batch_size, self.n_filters) + out_shape
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = (batch_size, self.n_filters) + img_shape
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
         # make sure conv_op is initialized
-        self.conv_op.fprop(self.out_grad, self.weights.array,
-                           convout=self.x.out_grad)
+        self.conv_op.fprop(self.grad_array, self.weights.array,
+                           convout=self.x.grad_array)
 
     def fprop(self):
         self.conv_op.bprop(
-            None, self.weights.array, self.x.out,
-            to_filters=False, imgs_d=self.out
+            None, self.weights.array, self.x.array,
+            to_filters=False, imgs_d=self.array
         )
         if self.bias is not None:
-            self.out += self.bias.array
+            self.array += self.bias.array
 
     def bprop(self):
         self.conv_op.bprop(
-            self.out_grad, self.weights.array, self.x.out,
+            self.grad_array, self.weights.array, self.x.array,
             filters_d=self.weights.grad_array, to_imgs=False
         )
-        self.conv_op.fprop(self.out_grad, self.weights.array,
-                           convout=self.x.out_grad)
+        self.conv_op.fprop(self.grad_array, self.weights.array,
+                           convout=self.x.grad_array)
         if self.bias is not None:
-            ca.sum(ca.sum(self.out_grad, axis=(2, 3), keepdims=True), axis=0,
+            ca.sum(ca.sum(self.grad_array, axis=(2, 3), keepdims=True), axis=0,
                    keepdims=True, out=self.bias.grad_array)
 
 
@@ -139,16 +140,16 @@ class Pool(Unary):
         self.img_shape = None
 
     def setup(self):
-        self.out_shape = self.pool_op.fprop(self.x.out).shape
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = self.pool_op.fprop(self.x.array).shape
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
-        self.pool_op.fprop(self.x.out, self.out)
+        self.pool_op.fprop(self.x.array, self.array)
 
     def bprop(self):
-        self.pool_op.bprop(self.x.out_shape[2:], self.out_grad,
-                           self.x.out_grad)
+        self.pool_op.bprop(self.x.shape[2:], self.grad_array,
+                           self.x.grad_array)
 
 
 class Rescale(Unary):
@@ -157,16 +158,16 @@ class Rescale(Unary):
         self.method = method
 
     def setup(self):
-        self.out_shape = ca.nnet.rescale(self.x.out, self.factor,
-                                         self.method).shape
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = ca.nnet.rescale(self.x.array, self.factor,
+                                     self.method).shape
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
-        ca.nnet.rescale(self.x.out, self.factor, self.method, self.out)
+        ca.nnet.rescale(self.x.array, self.factor, self.method, self.array)
         if self.factor > 1.0 and self.method != 'perforated':
-            self.out *= 1.0/(self.factor*self.factor)
+            self.array *= 1.0/(self.factor*self.factor)
 
     def bprop(self):
-        ca.nnet.rescale(self.out_grad, 1./self.factor, self.method,
-                        self.x.out_grad)
+        ca.nnet.rescale(self.grad_array, 1./self.factor, self.method,
+                        self.x.grad_array)

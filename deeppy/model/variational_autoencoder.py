@@ -6,7 +6,7 @@ from ..filler import AutoFiller
 from ..input import Input
 
 
-class NormalSampler(expr.Expr, CollectionMixin):
+class NormalSampler(expr.Op, CollectionMixin):
     def __init__(self, n_hidden):
         self.weight_filler = AutoFiller()
         self.bias_filler = 0.0
@@ -31,7 +31,7 @@ class NormalSampler(expr.Expr, CollectionMixin):
         return z, z_mu, z_log_sigma
 
 
-class KLDivergence(expr.Expr):
+class KLDivergence(expr.Op):
     def __call__(self, mu, log_sigma):
         self.mu = mu
         self.log_sigma = log_sigma
@@ -39,25 +39,25 @@ class KLDivergence(expr.Expr):
         return self
 
     def setup(self):
-        self.out_shape = (1,)
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = (1,)
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
     def fprop(self):
-        tmp1 = self.mu.out**2
+        tmp1 = self.mu.array**2
         ca.negative(tmp1, tmp1)
-        tmp1 += self.log_sigma.out
+        tmp1 += self.log_sigma.array
         tmp1 += 1
-        tmp1 -= ca.exp(self.log_sigma.out)
-        self.out = ca.sum(tmp1)
-        self.out *= -0.5
+        tmp1 -= ca.exp(self.log_sigma.array)
+        self.array = ca.sum(tmp1)
+        self.array *= -0.5
 
     def bprop(self):
-        ca.multiply(self.mu.out, self.out_grad, self.mu.out_grad)
-        ca.exp(self.log_sigma.out, out=self.log_sigma.out_grad)
-        self.log_sigma.out_grad -= 1
-        self.log_sigma.out_grad *= 0.5
-        self.log_sigma.out_grad *= self.out_grad
+        ca.multiply(self.mu.array, self.grad_array, self.mu.grad_array)
+        ca.exp(self.log_sigma.array, out=self.log_sigma.grad_array)
+        self.log_sigma.grad_array -= 1
+        self.log_sigma.grad_array *= 0.5
+        self.log_sigma.grad_array *= self.grad_array
 
 
 class VariationalAutoencoder(Model, CollectionMixin):
@@ -88,14 +88,14 @@ class VariationalAutoencoder(Model, CollectionMixin):
         logpxz = self.reconstruct_error(x_tilde, self.x_src)
         lowerbound = kld + expr.sum(logpxz)
         self._lowerbound_graph = expr.ExprGraph(lowerbound)
-        self._lowerbound_graph.out_grad = ca.array(1.0)
+        self._lowerbound_graph.grad_array = ca.array(1.0)
         self._lowerbound_graph.setup()
 
     def update(self, x):
-        self.x_src.out = x
+        self.x_src.array = x
         self._lowerbound_graph.fprop()
         self._lowerbound_graph.bprop()
-        return self._lowerbound_graph.out
+        return self._lowerbound_graph.array
 
     def _batchwise(self, input, expr_fun):
         self.phase = 'test'
@@ -105,9 +105,9 @@ class VariationalAutoencoder(Model, CollectionMixin):
         graph.setup()
         z = []
         for x_batch in input.batches():
-            src.out = x_batch['x']
+            src.array = x_batch['x']
             graph.fprop()
-            z.append(np.array(graph.out))
+            z.append(np.array(graph.array))
         z = np.concatenate(z)[:input.n_samples]
         return z
 

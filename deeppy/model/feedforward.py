@@ -21,17 +21,17 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
             y_expr = self.loss(y_expr, self._y_src)
         self._graph = expr.ExprGraph(y_expr)
         self._graph.setup()
-        self._graph.out_grad = 1.0
+        self._graph.grad_array = 1.0
 
     def _fprop_expr(self, x):
         return self.expression(x)
 
     def update(self, x, y):
-        self._x_src.out = x
-        self._y_src.out = y
+        self._x_src.array = x
+        self._y_src.array = y
         self._graph.fprop()
         self._graph.bprop()
-        return self.loss.out
+        return self.loss.array
 
     def _batchwise(self, input, expr_fun):
         input = Input.from_any(input)
@@ -40,9 +40,9 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
         graph.setup()
         y = []
         for batch in input.batches():
-            src.out = batch['x']
+            src.array = batch['x']
             graph.fprop()
-            y.append(np.array(graph.out))
+            y.append(np.array(graph.array))
         y = np.concatenate(y)[:input.n_samples]
         return y
 

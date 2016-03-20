@@ -6,13 +6,13 @@ from .base import UnaryElementWise, BinaryElementWise
 
 class Absolute(UnaryElementWise):
     def fprop(self):
-        ca.fabs(self.x.out, out=self.out)
+        ca.fabs(self.x.array, out=self.array)
 
     def bprop(self):
-        ca.nnet.relu_d(self.x.out, self.x.out_grad)
-        self.x.out_grad *= 2.0
-        self.x.out_grad -= 1.0
-        ca.multiply(self.x.out_grad, self.out_grad, out=self.x.out_grad)
+        ca.nnet.relu_d(self.x.array, self.x.grad_array)
+        self.x.grad_array *= 2.0
+        self.x.grad_array -= 1.0
+        ca.multiply(self.x.grad_array, self.grad_array, out=self.x.grad_array)
 
 
 class Clip(UnaryElementWise):
@@ -22,50 +22,50 @@ class Clip(UnaryElementWise):
         self.keepgrads = keepgrads
 
     def fprop(self):
-        ca.clip(self.x.out, self.a_min, self.a_max, out=self.out)
+        ca.clip(self.x.array, self.a_min, self.a_max, out=self.array)
 
     def bprop(self):
         if self.keepgrads:
-            self.x.out_grad = self.out_grad
+            self.x.grad_array = self.grad_array
         else:
-            ca.multiply(self.out_grad, self.x.out > self.a_min,
-                        self.x.out_grad)
-            self.x.out_grad *= self.x.out < self.a_max
+            ca.multiply(self.grad_array, self.x.array > self.a_min,
+                        self.x.grad_array)
+            self.x.grad_array *= self.x.array < self.a_max
 
 
 class Negative(UnaryElementWise):
     def fprop(self):
-        ca.negative(self.x.out, out=self.out)
+        ca.negative(self.x.array, out=self.array)
 
     def bprop(self):
-        ca.negative(self.out_grad, out=self.x.out_grad)
+        ca.negative(self.grad_array, out=self.x.grad_array)
 
 
 class Log(UnaryElementWise):
     def fprop(self):
-        ca.log(self.x.out, out=self.out)
+        ca.log(self.x.array, out=self.array)
 
     def bprop(self):
-        ca.divide(1.0, self.x.out, out=self.x.out_grad)
-        self.x.out_grad *= self.out_grad
+        ca.divide(1.0, self.x.array, out=self.x.grad_array)
+        self.x.grad_array *= self.grad_array
 
 
 class Exp(UnaryElementWise):
     def fprop(self):
-        ca.exp(self.x.out, out=self.out)
+        ca.exp(self.x.array, out=self.array)
 
     def bprop(self):
-        ca.exp(self.x.out, out=self.x.out_grad)
-        self.x.out_grad *= self.out_grad
+        ca.exp(self.x.array, out=self.x.grad_array)
+        self.x.grad_array *= self.grad_array
 
 
 class Tanh(UnaryElementWise):
     def fprop(self):
-        ca.tanh(self.x.out, self.out)
+        ca.tanh(self.x.array, self.array)
 
     def bprop(self):
-        ca.nnet.tanh_d(self.x.out, out=self.x.out_grad)
-        self.x.out_grad *= self.out_grad
+        ca.nnet.tanh_d(self.x.array, out=self.x.grad_array)
+        self.x.grad_array *= self.grad_array
 
 
 class Add(BinaryElementWise):
@@ -79,13 +79,13 @@ class Add(BinaryElementWise):
         return super(Add, self).__call__(lhs, rhs)
 
     def fprop(self):
-        ca.add(self.lhs.out, self.rhs.out, out=self.out)
+        ca.add(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
         if self.lhs_bprop:
-            self.lhs.out_grad = self.out_grad
+            self.lhs.grad_array = self.grad_array
         if self.rhs_bprop:
-            self.rhs.out_grad = self.out_grad
+            self.rhs.grad_array = self.grad_array
 
 
 class Subtract(BinaryElementWise):
@@ -99,13 +99,13 @@ class Subtract(BinaryElementWise):
         return super(Subtract, self).__call__(lhs, rhs)
 
     def fprop(self):
-        ca.subtract(self.lhs.out, self.rhs.out, out=self.out)
+        ca.subtract(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
         if self.lhs_bprop:
-            self.lhs.out_grad = self.out_grad
+            self.lhs.grad_array = self.grad_array
         if self.rhs_bprop:
-            ca.negative(self.out_grad, out=self.rhs.out_grad)
+            ca.negative(self.grad_array, out=self.rhs.grad_array)
 
 
 class Multiply(BinaryElementWise):
@@ -119,13 +119,13 @@ class Multiply(BinaryElementWise):
         return super(Multiply, self).__call__(lhs, rhs)
 
     def fprop(self):
-        ca.multiply(self.lhs.out, self.rhs.out, out=self.out)
+        ca.multiply(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
         if self.lhs_bprop:
-            ca.multiply(self.out_grad, self.rhs.out, out=self.lhs.out_grad)
+            ca.multiply(self.grad_array, self.rhs.array, self.lhs.grad_array)
         if self.rhs_bprop:
-            ca.multiply(self.out_grad, self.lhs.out, out=self.rhs.out_grad)
+            ca.multiply(self.grad_array, self.lhs.array, self.rhs.grad_array)
 
 
 class Divide(BinaryElementWise):
@@ -137,15 +137,15 @@ class Divide(BinaryElementWise):
         return super(Divide, self).__call__(lhs, rhs)
 
     def fprop(self):
-        ca.divide(self.lhs.out, self.rhs.out, out=self.out)
+        ca.divide(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
         if self.lhs_bprop:
-            ca.divide(self.out_grad, self.rhs.out, out=self.lhs.out_grad)
+            ca.divide(self.grad_array, self.rhs.array, out=self.lhs.grad_array)
         if self.rhs_bprop:
-            ca.multiply(self.out_grad, self.out, out=self.rhs.out_grad)
-            self.rhs.out_grad /= self.rhs.out
-            ca.negative(self.rhs.out_grad, out=self.rhs.out_grad)
+            ca.multiply(self.grad_array, self.array, out=self.rhs.grad_array)
+            self.rhs.grad_array /= self.rhs.array
+            ca.negative(self.rhs.grad_array, out=self.rhs.grad_array)
 
 
 class Power(BinaryElementWise):
@@ -155,18 +155,18 @@ class Power(BinaryElementWise):
         return super(Power, self).__call__(lhs, rhs)
 
     def fprop(self):
-        ca.power(self.lhs.out, self.rhs.out, out=self.out)
+        ca.power(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
         if self.lhs_bprop:
-            tmp = self.rhs.out - 1
-            ca.power(self.lhs.out, tmp, out=self.lhs.out_grad)
-            self.lhs.out_grad *= self.rhs.out
-            self.lhs.out_grad *= self.out_grad
+            tmp = self.rhs.array - 1
+            ca.power(self.lhs.array, tmp, out=self.lhs.grad_array)
+            self.lhs.grad_array *= self.rhs.array
+            self.lhs.grad_array *= self.grad_array
         if self.rhs_bprop:
-            ca.log(self.lhs.out, out=self.rhs.out_grad)
-            self.rhs.out_grad *= self.out
-            self.rhs.out_grad *= self.out_grad
+            ca.log(self.lhs.array, out=self.rhs.grad_array)
+            self.rhs.grad_array *= self.array
+            self.rhs.grad_array *= self.grad_array
 
 
 class Maximum(BinaryElementWise):
@@ -176,21 +176,21 @@ class Maximum(BinaryElementWise):
         return super(Maximum, self).__call__(lhs, rhs)
 
     def fprop(self):
-        ca.maximum(self.lhs.out, self.rhs.out, out=self.out)
+        ca.maximum(self.lhs.array, self.rhs.array, out=self.array)
 
     def bprop(self):
         if self.lhs_bprop:
-            tmp = ca.equal(self.lhs.out, self.out)
-            ca.multiply(self.out_grad, tmp, self.lhs.out_grad)
+            tmp = ca.equal(self.lhs.array, self.array)
+            ca.multiply(self.grad_array, tmp, self.lhs.grad_array)
         if self.rhs_bprop:
-            ca.equal(self.rhs.out, self.out, self.rhs.out_grad)
-            self.rhs.out_grad *= self.out_grad
+            ca.equal(self.rhs.array, self.array, self.rhs.grad_array)
+            self.rhs.grad_array *= self.grad_array
 
 
 class Minimum(Maximum):
     # Inherits bprop from Maximum
     def fprop(self):
-        ca.minimum(self.lhs.out, self.rhs.out, out=self.out)
+        ca.minimum(self.lhs.array, self.rhs.array, out=self.array)
 
 
 def clip(a, a_min, a_max):

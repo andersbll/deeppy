@@ -2,12 +2,12 @@ import cudarray as ca
 from ..base import CollectionMixin
 from . import digraph
 from .base import (
-    Expr, Constant, NoBPropMixin, NoFPropMixin, SplitMixin, Output
+    Op, Constant, NoBPropMixin, NoFPropMixin, SplitMixin, Output
 )
 
 
 # TODO: find better name (Split is too similar to numpy.vsplit)
-class Split(Expr, SplitMixin):
+class Split(Op, SplitMixin):
     def __init__(self, n_splits):
         if n_splits <= 1:
             raise ValueError('n_splits should be >1')
@@ -21,22 +21,22 @@ class Split(Expr, SplitMixin):
         return self.outputs
 
     def setup(self):
-        out_shape = self.x.out_shape
+        self.shape = self.x.shape
         for i in range(self.n_splits):
-            self.outputs[i].out_shape = out_shape
-            self.outputs[i].out = self.x.out
+            self.outputs[i].shape = self.shape
+            self.outputs[i].array = self.x.array
             self.outputs[i].bpropable = self.bpropable
             if self.bpropable:
-                self.outputs[i].out_grad = ca.zeros(out_shape)
+                self.outputs[i].grad_array = ca.zeros(self.shape)
 
     def fprop(self):
         for i in range(self.n_splits):
-            self.outputs[i].out = self.x.out
+            self.outputs[i].array = self.x.array
 
     def bprop(self):
-        ca.copyto(self.x.out_grad, self.outputs[0].out_grad)
+        ca.copyto(self.x.grad_array, self.outputs[0].grad_array)
         for i in range(1, self.n_splits):
-            self.x.out_grad += self.outputs[i].out_grad
+            self.x.grad_array += self.outputs[i].grad_array
 
 
 def expr_graph(expr):
@@ -94,7 +94,7 @@ class ExprGraph(CollectionMixin):
                     msg += ' with inputs:'
                     for n in node.inputs:
                         msg += '\n    %s, shape: %s' % (n.__class__.__name__,
-                                                        n.out_shape)
+                                                        n.shape)
                 raise type(e)(e.message + '\n\n' + msg)
 
         # We need to rebuild graph because setup() may change the graph to
@@ -113,7 +113,7 @@ class ExprGraph(CollectionMixin):
         self.graph = graph
         self._fprop_top = fprop_top
         self._bprop_top = bprop_top
-        self.out_shape = self._fprop_top[-1].out_shape
+        self.shape = self._fprop_top[-1].shape
         self._initialized = True
 
     @property
@@ -123,9 +123,9 @@ class ExprGraph(CollectionMixin):
     def fprop(self):
         for node in self._fprop_top:
             node.fprop()
-        self.out = self._fprop_top[-1].out
+        self.array = self._fprop_top[-1].array
 
     def bprop(self):
-        self._bprop_top[0].out_grad = self.out_grad
+        self._bprop_top[0].grad_array = self.grad_array
         for node in self._bprop_top:
             node.bprop()

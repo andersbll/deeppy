@@ -8,10 +8,10 @@ from .. import expr
 
 class NegativeGradient(UnaryElementWise):
     def fprop(self):
-        self.out = self.x.out
+        self.array = self.x.array
 
     def bprop(self):
-        ca.negative(self.out_grad, self.x.out_grad)
+        ca.negative(self.grad_array, self.x.grad_array)
 
 
 class AdversarialNet(Model, CollectionMixin):
@@ -37,7 +37,7 @@ class AdversarialNet(Model, CollectionMixin):
         offset[batch_size:] = 1.0
         self._loss = expr.log(d*sign + offset)
         self._graph = expr.ExprGraph(-expr.sum(self._loss))
-        self._graph.out_grad = ca.array(1.0)
+        self._graph.grad_array = ca.array(1.0)
         self._graph.setup()
 
     @property
@@ -45,10 +45,10 @@ class AdversarialNet(Model, CollectionMixin):
         return self.generator.params, self.discriminator.params
 
     def update(self, x):
-        self.x_src.out = x
+        self.x_src.array = x
         self._graph.fprop()
         self._graph.bprop()
-        gan_loss = -np.array(self._loss.out)
+        gan_loss = -np.array(self._loss.array)
         batch_size = x.shape[0]
         d_x_loss = np.mean(gan_loss[:batch_size])
         d_z_loss = np.mean(gan_loss[batch_size:])
@@ -63,8 +63,8 @@ class AdversarialNet(Model, CollectionMixin):
         graph.setup()
         x_tilde = []
         for z_batch in input.batches():
-            z_src.out = z_batch['x']
+            z_src.array = z_batch['x']
             graph.fprop()
-            x_tilde.append(np.array(graph.out))
+            x_tilde.append(np.array(graph.array))
         x_tilde = np.concatenate(x_tilde)[:input.n_samples]
         return x_tilde

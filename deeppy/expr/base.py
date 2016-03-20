@@ -6,7 +6,7 @@ from ..base import PickleMixin
 
 
 def _require_expr(x):
-    if isinstance(x, Expr):
+    if isinstance(x, Op):
         return x
     elif isinstance(x, ca.ndarray):
         return Constant(ca.array(x))
@@ -14,13 +14,13 @@ def _require_expr(x):
         return Constant(x)
 
 
-class Expr(PickleMixin):
-    _pickle_ignore = ['_tmp_', 'out', 'out_grad']
-    out_shape = None
-    out = None
-    out_grad = None
-    bpropable = True
+class Op(PickleMixin):
+    _pickle_ignore = ['_tmp_', 'array', 'grad_array']
     inputs = []
+    bpropable = True
+    shape = None
+    array = None
+    grad_array = None
 
     def setup(self):
         pass
@@ -107,7 +107,7 @@ class SplitMixin(object):
     pass
 
 
-class Identity(Expr):
+class Identity(Op):
     def __call__(self, x):
         self.x = x
         self.inputs = [x]
@@ -115,33 +115,33 @@ class Identity(Expr):
         return self
 
     def setup(self):
-        self.out_shape = self.x.out_shape
-        self.out = self.x.out
+        self._shape = self.x.shape
+        self.array = self.x.array
         if self.bpropable:
-            self.out_grad = self.x.out_grad
+            self.grad_array = self.x.grad_array
 
     def fprop(self):
-        self.out = self.x.out
+        self.array = self.x.array
 
     def bprop(self):
-        self.x.out_grad = self.out_grad
+        self.x.grad_array = self.grad_array
 
 
-class Constant(Expr, NoBPropMixin, NoFPropMixin):
+class Constant(Op, NoBPropMixin, NoFPropMixin):
     bpropable = False
 
     def __init__(self, value):
         if isinstance(value, np.ndarray):
             value = ca.array(value)
         self.value = value
-        self.out = value
+        self.array = value
         if isinstance(value, (float, int)):
-            self.out_shape = (1,)
+            self.shape = (1,)
         else:
-            self.out_shape = self.out.shape
+            self.shape = self.array.shape
 
 
-class Output(Expr, NoBPropMixin, NoFPropMixin):
+class Output(Op, NoBPropMixin, NoFPropMixin):
     def __call__(self, x):
         self.inputs = [x]
         return self
@@ -150,7 +150,7 @@ class Output(Expr, NoBPropMixin, NoFPropMixin):
         pass
 
 
-class Unary(Expr):
+class Unary(Op):
     x = None
 
     def __call__(self, x):
@@ -160,7 +160,7 @@ class Unary(Expr):
             # Propagate constant.
             self.setup()
             self.fprop()
-            return Constant(self.out)
+            return Constant(self.array)
         self.bpropable = x.bpropable
         self.inputs = [x]
         return self
@@ -168,12 +168,12 @@ class Unary(Expr):
 
 class UnaryElementWise(Unary):
     def setup(self):
-        self.out_shape = self.x.out_shape
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = self.x.shape
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
 
-class Binary(Expr):
+class Binary(Op):
     lhs = None
     rhs = None
     lhs_bprop = True
@@ -188,7 +188,7 @@ class Binary(Expr):
             # Propagate constant
             self.setup()
             self.fprop()
-            return Constant(self.out)
+            return Constant(self.array)
         self.lhs_bprop = lhs.bpropable
         self.rhs_bprop = rhs.bpropable
         self.inputs = [lhs, rhs]
@@ -197,7 +197,7 @@ class Binary(Expr):
 
 class Broadcast(Unary):
     def __init__(self, shape, broadcast_shape):
-        self.out_shape = shape
+        self.shape = shape
         self.broadcast_shape = broadcast_shape
         # XXX: axis and keepdims are not determined correctly
         self.axis = []
@@ -208,68 +208,67 @@ class Broadcast(Unary):
         self.keepdims = True
 
     def setup(self):
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.broadcast_shape)
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.broadcast_shape)
 
     def fprop(self):
-        self.out = self.x.out
+        self.array = self.x.array
 
     def bprop(self):
-        ca.sum(self.out_grad, axis=self.axis, keepdims=self.keepdims,
-               out=self.x.out_grad)
+        ca.sum(self.grad_array, axis=self.axis, keepdims=self.keepdims,
+               out=self.x.grad_array)
 
 
 class BinaryElementWise(Binary):
     def setup(self):
         try:
-            self.out_shape = np.add(np.zeros_like(self.lhs.out),
-                                    np.zeros_like(self.rhs.out)).shape
-            if self.lhs_bprop and np.prod(self.out_shape) > self.lhs.out.size:
-                self.lhs = Broadcast(self.lhs.out_shape,
-                                     self.out_shape)(self.lhs)
+            self.shape = np.add(np.zeros_like(self.lhs.array),
+                                np.zeros_like(self.rhs.array)).shape
+            if self.lhs_bprop and np.prod(self.shape) > self.lhs.array.size:
+                self.lhs = Broadcast(self.lhs.shape, self.shape)(self.lhs)
                 self.inputs = [self.lhs, self.rhs]
                 self.lhs.setup()
-            if self.rhs_bprop and np.prod(self.out_shape) > self.rhs.out.size:
-                self.rhs = Broadcast(self.rhs.out_shape,
-                                     self.out_shape)(self.rhs)
+            if self.rhs_bprop and np.prod(self.shape) > self.rhs.array.size:
+                self.rhs = Broadcast(self.rhs.shape,
+                                     self.shape)(self.rhs)
                 self.rhs_broadcast = True
                 self.inputs = [self.lhs, self.rhs]
                 self.rhs.setup()
         except ValueError:
             raise
             raise ValueError('Shape mismatch: %s and %s for %s. LHS: %s RHS: '
-                             '%s.' % (self.lhs.out.shape, self.rhs.out.shape,
+                             '%s.' % (self.lhs.shape, self.rhs.shape,
                                       self, self.lhs, self.rhs))
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.array = ca.empty(self.shape)
+        self.grad_array = ca.empty(self.shape)
 
 
-class Source(Expr, NoBPropMixin, NoFPropMixin):
+class Source(Op, NoBPropMixin, NoFPropMixin):
     bpropable = False
 
     def __init__(self, shape):
-        self.out_shape = shape
+        self.shape = shape
 
     def setup(self):
-        if not (isinstance(self.out, ca.ndarray)
-                and self.out.shape == self.out_shape):
-            self.out = ca.empty(self.out_shape)
-        if not (isinstance(self.out_grad, ca.ndarray)
-                and self.out_grad.shape == self.out_shape):
-            self.out_grad = ca.empty(self.out_shape)
+        if not (isinstance(self.array, ca.ndarray)
+                and self.array.shape == self.shape):
+            self.array = ca.empty(self.shape)
+        if not (isinstance(self.grad_array, ca.ndarray)
+                and self.grad_array.shape == self.shape):
+            self.grad_array = ca.empty(self.shape)
 
 
-class Variable(Expr):
+class Variable(Op):
     def __init__(self, parameter):
         self.parameter = parameter
 
     def setup(self):
-        self.out_shape = self.parameter.array.shape
-        self.out = self.parameter.array
-        self.out_grad = self.parameter.grad_array
+        self.shape = self.parameter.array.shape
+        self.array = self.parameter.array
+        self.grad_array = self.parameter.grad_array
 
     def fprop(self):
-        self.out = self.parameter.array
+        self.array = self.parameter.array
 
     def bprop(self):
-        ca.copyto(self.parameter.grad_array, self.out_grad)
+        ca.copyto(self.parameter.grad_array, self.grad_array)

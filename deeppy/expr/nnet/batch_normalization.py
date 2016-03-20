@@ -7,7 +7,6 @@ This implementation is heavily inspired by code from http://github.com/torch/nn
 import cudarray as ca
 from ...base import ParamMixin, PhaseMixin
 from ...parameter import Parameter
-from ...filler import UniformFiller
 from ..base import UnaryElementWise
 
 
@@ -25,7 +24,7 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
 
     def setup(self):
         super(BatchNormalization, self).setup()
-        reduced_shape = (1,) + self.out_shape[1:]
+        reduced_shape = (1,) + self.shape[1:]
         if self.running_mean is None:
             self.running_mean = ca.zeros(reduced_shape)
             self.running_std = ca.ones(reduced_shape)
@@ -36,7 +35,7 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
             if self.running_mean.shape != reduced_shape:
                 raise ValueError('New input shape is not compatible')
         self._tmp_batch_inv_std = ca.zeros(reduced_shape)
-        self._tmp_batch_centered = ca.zeros(self.out_shape)
+        self._tmp_batch_centered = ca.zeros(self.shape)
 
     @property
     def params(self):
@@ -53,16 +52,16 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
     def fprop(self):
         if self.phase == 'train':
             # Calculate batch mean
-            tmp = ca.mean(self.x.out, axis=0, keepdims=True)
+            tmp = ca.mean(self.x.array, axis=0, keepdims=True)
             # Center input
-            ca.subtract(self.x.out, tmp, self._tmp_batch_centered)
+            ca.subtract(self.x.array, tmp, self._tmp_batch_centered)
             # Update running mean
             tmp *= 1 - self.momentum
             self.running_mean *= self.momentum
             self.running_mean += tmp
             # Calculate batch variance
-            ca.power(self._tmp_batch_centered, 2, self.out)
-            ca.mean(self.out, axis=0, keepdims=True,
+            ca.power(self._tmp_batch_centered, 2, self.array)
+            ca.mean(self.array, axis=0, keepdims=True,
                     out=self._tmp_batch_inv_std)
             # Calculate 1 / E([x - E(x)]^2)
             self._tmp_batch_inv_std += self.eps
@@ -70,7 +69,7 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
             ca.power(self._tmp_batch_inv_std, -1, self._tmp_batch_inv_std)
             # Normalize input
             ca.multiply(self._tmp_batch_centered, self._tmp_batch_inv_std,
-                        self.out)
+                        self.array)
             # Update running std
             self.running_std *= self.momentum
             ca.multiply(self._tmp_batch_inv_std, 1-self.momentum, tmp)
@@ -78,38 +77,39 @@ class BatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
 
             if self.noise_std > 0.0:
                 noise = ca.random.normal(scale=self.noise_std,
-                                         size=self.out_shape)
-                ca.add(self.out, noise, self.out)
+                                         size=self.shape)
+                ca.add(self.array, noise, self.array)
         elif self.phase == 'test':
-            ca.subtract(self.x.out, self.running_mean, self.out)
-            self.out *= self.running_std
+            ca.subtract(self.x.array, self.running_mean, self.array)
+            self.array *= self.running_std
         else:
             raise ValueError('Invalid phase: %s' % self.phase)
         if self.affine:
-            self.out *= self.gamma.array
-            self.out += self.beta.array
+            self.array *= self.gamma.array
+            self.array += self.beta.array
 
     def bprop(self):
-        ca.multiply(self._tmp_batch_centered, self.out_grad, self.x.out_grad)
-        tmp = ca.mean(self.x.out_grad, axis=0, keepdims=True)
-        ca.multiply(self._tmp_batch_centered, tmp, self.x.out_grad)
-        self.x.out_grad *= -1
-        self.x.out_grad *= self._tmp_batch_inv_std
-        self.x.out_grad *= self._tmp_batch_inv_std
+        ca.multiply(self._tmp_batch_centered, self.grad_array,
+                    self.x.grad_array)
+        tmp = ca.mean(self.x.grad_array, axis=0, keepdims=True)
+        ca.multiply(self._tmp_batch_centered, tmp, self.x.grad_array)
+        self.x.grad_array *= -1
+        self.x.grad_array *= self._tmp_batch_inv_std
+        self.x.grad_array *= self._tmp_batch_inv_std
 
-        ca.mean(self.out_grad, axis=0, keepdims=True, out=tmp)
-        self.x.out_grad += self.out_grad
-        self.x.out_grad -= tmp
-        self.x.out_grad *= self._tmp_batch_inv_std
+        ca.mean(self.grad_array, axis=0, keepdims=True, out=tmp)
+        self.x.grad_array += self.grad_array
+        self.x.grad_array -= tmp
+        self.x.grad_array *= self._tmp_batch_inv_std
 
         if self.affine:
-            self.x.out_grad *= self.gamma.array
+            self.x.grad_array *= self.gamma.array
             # Normalized input
             self._tmp_batch_centered *= self._tmp_batch_inv_std
-            self._tmp_batch_centered *= self.out_grad
+            self._tmp_batch_centered *= self.grad_array
             ca.sum(self._tmp_batch_centered, axis=0, keepdims=True,
                    out=self.gamma.grad_array)
-            ca.sum(self.out_grad, axis=0, keepdims=True,
+            ca.sum(self.grad_array, axis=0, keepdims=True,
                    out=self.beta.grad_array)
 
 
@@ -127,9 +127,9 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
 
     def setup(self):
         super(SpatialBatchNormalization, self).setup()
-        if len(self.out_shape) != 4:
+        if len(self.shape) != 4:
             raise ValueError('Only 4D data supported')
-        reduced_shape = 1, self.out_shape[1], 1, 1
+        reduced_shape = 1, self.shape[1], 1, 1
         if self.running_mean is None:
             self.running_mean = ca.zeros(reduced_shape)
             self.running_std = ca.ones(reduced_shape)
@@ -140,7 +140,7 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
             if self.running_mean.shape != reduced_shape:
                 raise ValueError('New input shape is not compatible')
         self._tmp_batch_inv_std = ca.zeros(reduced_shape)
-        self._tmp_batch_centered = ca.zeros(self.out_shape)
+        self._tmp_batch_centered = ca.zeros(self.shape)
 
     @property
     def params(self):
@@ -157,17 +157,17 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
     def fprop(self):
         if self.phase == 'train':
             # Calculate batch mean
-            tmp = ca.mean(ca.mean(self.x.out, axis=0, keepdims=True),
+            tmp = ca.mean(ca.mean(self.x.array, axis=0, keepdims=True),
                           axis=(2, 3), keepdims=True)
             # Center input
-            ca.subtract(self.x.out, tmp, self._tmp_batch_centered)
+            ca.subtract(self.x.array, tmp, self._tmp_batch_centered)
             # Update running mean
             tmp *= 1 - self.momentum
             self.running_mean *= self.momentum
             self.running_mean += tmp
             # Calculate batch variance
-            ca.power(self._tmp_batch_centered, 2, self.out)
-            ca.mean(ca.mean(self.out, axis=0, keepdims=True), axis=(2, 3),
+            ca.power(self._tmp_batch_centered, 2, self.array)
+            ca.mean(ca.mean(self.array, axis=0, keepdims=True), axis=(2, 3),
                     keepdims=True, out=self._tmp_batch_inv_std)
             # Calculate 1 / E([x - E(x)]^2)
             self._tmp_batch_inv_std += self.eps
@@ -175,7 +175,7 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
             ca.power(self._tmp_batch_inv_std, -1, self._tmp_batch_inv_std)
             # Normalize input
             ca.multiply(self._tmp_batch_centered, self._tmp_batch_inv_std,
-                        self.out)
+                        self.array)
             # Update running std
             self.running_std *= self.momentum
             ca.multiply(self._tmp_batch_inv_std, 1-self.momentum, tmp)
@@ -183,40 +183,41 @@ class SpatialBatchNormalization(UnaryElementWise, ParamMixin, PhaseMixin):
 
             if self.noise_std > 0.0:
                 noise = ca.random.normal(scale=self.noise_std,
-                                         size=self.out_shape)
-                ca.add(self.out, noise, self.out)
+                                         size=self.shape)
+                ca.add(self.array, noise, self.array)
 
         elif self.phase == 'test':
-            ca.subtract(self.x.out, self.running_mean, self.out)
-            self.out *= self.running_std
+            ca.subtract(self.x.array, self.running_mean, self.array)
+            self.array *= self.running_std
         else:
             raise ValueError('Invalid phase: %s' % self.phase)
         if self.affine:
-            self.out *= self.gamma.array
-            self.out += self.beta.array
+            self.array *= self.gamma.array
+            self.array += self.beta.array
 
     def bprop(self):
-        ca.multiply(self._tmp_batch_centered, self.out_grad, self.x.out_grad)
-        tmp = ca.mean(ca.mean(self.x.out_grad, axis=0, keepdims=True),
+        ca.multiply(self._tmp_batch_centered, self.grad_array,
+                    self.x.grad_array)
+        tmp = ca.mean(ca.mean(self.x.grad_array, axis=0, keepdims=True),
                       axis=(2, 3), keepdims=True)
-        ca.multiply(self._tmp_batch_centered, tmp, self.x.out_grad)
-        self.x.out_grad *= -1
-        self.x.out_grad *= self._tmp_batch_inv_std
-        self.x.out_grad *= self._tmp_batch_inv_std
+        ca.multiply(self._tmp_batch_centered, tmp, self.x.grad_array)
+        self.x.grad_array *= -1
+        self.x.grad_array *= self._tmp_batch_inv_std
+        self.x.grad_array *= self._tmp_batch_inv_std
 
-        tmp = ca.mean(ca.mean(self.out_grad, axis=0, keepdims=True),
+        tmp = ca.mean(ca.mean(self.grad_array, axis=0, keepdims=True),
                       axis=(2, 3), keepdims=True)
-        self.x.out_grad += self.out_grad
-        self.x.out_grad -= tmp
-        self.x.out_grad *= self._tmp_batch_inv_std
+        self.x.grad_array += self.grad_array
+        self.x.grad_array -= tmp
+        self.x.grad_array *= self._tmp_batch_inv_std
 
         if self.affine:
-            self.x.out_grad *= self.gamma.array
+            self.x.grad_array *= self.gamma.array
             # Normalized input
             self._tmp_batch_centered *= self._tmp_batch_inv_std
-            self._tmp_batch_centered *= self.out_grad
+            self._tmp_batch_centered *= self.grad_array
             ca.sum(ca.sum(self._tmp_batch_centered, axis=(2, 3),
                           keepdims=True), axis=0, keepdims=True,
                    out=self.gamma.grad_array)
-            ca.sum(ca.sum(self.out_grad, axis=(2, 3), keepdims=True), axis=0,
+            ca.sum(ca.sum(self.grad_array, axis=(2, 3), keepdims=True), axis=0,
                    keepdims=True, out=self.beta.grad_array)

@@ -9,34 +9,34 @@ class Reduce(Unary):
         self.keepdims = keepdims
 
     def setup(self):
-        self.out = ca.sum(self.x.out, axis=self.axis, keepdims=self.keepdims)
-        self.out_shape = self.out.shape
-        self.out = ca.empty(self.out_shape)
-        self.out_grad = ca.empty(self.out_shape)
+        self.shape = ca.sum(self.x.array, axis=self.axis,
+                            keepdims=self.keepdims).shape
+        self.array = ca.zeros(self.shape)
+        self.grad_array = ca.zeros(self.shape)
 
 
 class Mean(Reduce):
     def setup(self):
         super(Mean, self).setup()
-        self.n = np.prod(self.x.out_shape)
+        self.n = np.prod(self.x.shape)
 
     def fprop(self):
-        ca.mean(self.x.out, axis=self.axis, out=self.out,
+        ca.mean(self.x.array, axis=self.axis, out=self.array,
                 keepdims=self.keepdims)
 
     def bprop(self):
-        self.x.out_grad.fill(1.0/self.n)
-        self.x.out_grad *= self.out_grad
+        self.x.grad_array.fill(1.0/self.n)
+        self.x.grad_array *= self.grad_array
 
 
 class Sum(Reduce):
     def fprop(self):
-        ca.sum(self.x.out, axis=self.axis, out=self.out,
+        ca.sum(self.x.array, axis=self.axis, out=self.array,
                keepdims=self.keepdims)
 
     def bprop(self):
-        self.x.out_grad.fill(1.0)
-        self.x.out_grad *= self.out_grad
+        self.x.grad_array.fill(1.0)
+        self.x.grad_array *= self.grad_array
 
 
 def mean(x, axis=None, keepdims=False):
