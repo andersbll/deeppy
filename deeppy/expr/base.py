@@ -127,13 +127,28 @@ class Identity(Op):
         self.x.grad_array = self.grad_array
 
 
+class Source(Op, NoBPropMixin, NoFPropMixin):
+    bpropable = False
+
+    def __init__(self, shape):
+        self.shape = shape
+        self.array = ca.zeros(shape)
+
+    @classmethod
+    def from_array(cls, array):
+        if isinstance(array, np.ndarray):
+            array = ca.array(array)
+        obj = cls(array.shape)
+        obj.array = array
+        return obj
+
+
 class Constant(Op, NoBPropMixin, NoFPropMixin):
     bpropable = False
 
     def __init__(self, value):
         if isinstance(value, np.ndarray):
             value = ca.array(value)
-        self.value = value
         self.array = value
         if isinstance(value, (float, int)):
             self.shape = (1,)
@@ -232,27 +247,11 @@ class BinaryElementWise(Binary):
                 self.inputs = [self.lhs, self.rhs]
                 self.rhs.setup()
         except ValueError:
-            raise
             raise ValueError('Shape mismatch: %s and %s for %s. LHS: %s RHS: '
                              '%s.' % (self.lhs.shape, self.rhs.shape,
                                       self, self.lhs, self.rhs))
         self.array = ca.zeros(self.shape)
         self.grad_array = ca.zeros(self.shape)
-
-
-class Source(Op, NoBPropMixin, NoFPropMixin):
-    bpropable = False
-
-    def __init__(self, shape):
-        self.shape = shape
-
-    def setup(self):
-        if not (isinstance(self.array, ca.ndarray)
-                and self.array.shape == self.shape):
-            self.array = ca.zeros(self.shape)
-        if not (isinstance(self.grad_array, ca.ndarray)
-                and self.grad_array.shape == self.shape):
-            self.grad_array = ca.zeros(self.shape)
 
 
 class Variable(Op):
