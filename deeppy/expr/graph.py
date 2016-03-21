@@ -1,8 +1,10 @@
+import sys
+import traceback
 import cudarray as ca
 from ..base import CollectionMixin
 from . import digraph
 from .base import (
-    Op, Constant, NoBPropMixin, NoFPropMixin, SplitMixin, Output
+    Op, NoBPropMixin, NoFPropMixin, SplitMixin, Output
 )
 
 
@@ -39,15 +41,43 @@ class Split(Op, SplitMixin):
             self.x.grad_array += self.outputs[i].grad_array
 
 
-def expr_graph(expr):
+def _require_list(obj):
+    if isinstance(obj, list):
+        return obj
+    elif hasattr(obj, '__iter__'):
+        return list(obj)
+    else:
+        return [obj]
+
+
+def node_exception_msg(node):
+    msg = 'Exception occurs in node %s' % node.__class__.__name__
+    if node.inputs:
+        msg += ' with inputs:'
+        for n in node.inputs:
+            shape = n.shape
+            if isinstance(n, Output):
+                n = n.inputs[0]
+                if isinstance(n, Split):
+                    n = n.inputs[0]
+            name = n.__class__.__name__
+            msg += '\n    %s, shape: %s' % (name, shape)
+    return msg
+
+
+def traceback_str():
+    exc_info = sys.exc_info()
+    trace = traceback.format_exception(*exc_info)
+    return ''.join(trace)
+
+
+def build_graph(sinks):
     graph = digraph.DiGraph()
-    nodes = set([expr])
+    nodes = set(sinks)
     seen = set(nodes)
     while nodes:
         node = nodes.pop()
         for neighbor in node.inputs:
-            if isinstance(neighbor, (Constant)):
-                continue
             graph.add_edge(neighbor, node)
             if neighbor not in seen:
                 nodes.add(neighbor)
@@ -56,16 +86,23 @@ def expr_graph(expr):
 
 
 class ExprGraph(CollectionMixin):
-    def __init__(self, expr):
-        self.expr = expr
+    def __init__(self, sinks):
+        self.sinks = _require_list(sinks)
         self._initialized = False
         self._fprop_top = None
         self._bprop_top = None
         self.graph = None
 
+    def _setup_nodes(self, nodes):
+        for node in nodes:
+            try:
+                node.setup()
+            except:
+                raise Exception('\n' + traceback_str() + '\n\n' +
+                                node_exception_msg(node))
+
     def setup(self):
-        # Build graph
-        graph = expr_graph(self.expr)
+        graph = build_graph(self.sinks)
 
         # Insert Split nodes
         for node, out_degree in graph.out_degree():
@@ -85,24 +122,13 @@ class ExprGraph(CollectionMixin):
 
         # Prepare fprop and bprop orderings
         fprop_top = digraph.topsort(graph)
-        for node in fprop_top:
-            try:
-                node.setup()
-            except Exception as e:
-                msg = 'Exception occurs in node %s' % node.__class__.__name__
-                if node.inputs:
-                    msg += ' with inputs:'
-                    for n in node.inputs:
-                        msg += '\n    %s, shape: %s' % (n.__class__.__name__,
-                                                        n.shape)
-                raise type(e)(e.message + '\n\n' + msg)
+        self._setup_nodes(fprop_top)
 
         # We need to rebuild graph because setup() may change the graph to
         # facilitate broadcasting operations
         # TODO: figure out if this should be disallowed
-        graph = expr_graph(self.expr)
+        graph = build_graph(self.sinks)
         fprop_top = digraph.topsort(graph)
-
         fprop_top = [n for n in fprop_top if not isinstance(n, NoFPropMixin)]
 
         graph_rev = digraph.reverse(graph)
