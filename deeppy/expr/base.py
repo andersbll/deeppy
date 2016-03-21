@@ -231,25 +231,26 @@ class Broadcast(Unary):
 
 
 class BinaryElementWise(Binary):
+    def __call__(self, lhs, rhs):
+        super(BinaryElementWise, self).__call__(lhs, rhs)
+        self.lhs_orig = self.lhs
+        self.rhs_orig = self.rhs
+        return self
+
     def setup(self):
-        try:
-            self.shape = np.add(np.zeros_like(self.lhs.array),
-                                np.zeros_like(self.rhs.array)).shape
-            size = np.prod(self.shape)
-            if self.lhs.bpropable and size > self.lhs.array.size:
-                self.lhs = Broadcast(self.lhs.shape, self.shape)(self.lhs)
-                self.inputs = [self.lhs, self.rhs]
-                self.lhs.setup()
-            if self.rhs.bpropable and size > self.rhs.array.size:
-                self.rhs = Broadcast(self.rhs.shape,
-                                     self.shape)(self.rhs)
-                self.rhs_broadcast = True
-                self.inputs = [self.lhs, self.rhs]
-                self.rhs.setup()
-        except ValueError:
-            raise ValueError('Shape mismatch: %s and %s for %s. LHS: %s RHS: '
-                             '%s.' % (self.lhs.shape, self.rhs.shape, self,
-                                      self.lhs, self.rhs))
+        self.shape = np.add(np.zeros(self.lhs.shape),
+                            np.zeros(self.rhs.shape)).shape
+        size = np.prod(self.shape)
+        if self.lhs_orig.bpropable and size > self.lhs_orig.array.size:
+            self.lhs = Broadcast(self.lhs_orig.shape,
+                                 self.shape)(self.lhs_orig)
+            self.inputs[0] = self.lhs
+            self.lhs.setup()
+        if self.rhs_orig.bpropable and size > self.rhs_orig.array.size:
+            self.rhs = Broadcast(self.rhs_orig.shape,
+                                 self.shape)(self.rhs_orig)
+            self.inputs[1] = self.rhs
+            self.rhs.setup()
         self.array = ca.zeros(self.shape)
         self.grad_array = ca.zeros(self.shape)
 
