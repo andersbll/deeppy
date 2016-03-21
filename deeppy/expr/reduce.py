@@ -19,13 +19,14 @@ class Mean(Reduce):
     def setup(self):
         super(Mean, self).setup()
         self.n = np.prod(self.x.shape)
+        self.scale = 1.0/np.prod(self.x.shape[self.axis])
 
     def fprop(self):
         ca.mean(self.x.array, axis=self.axis, out=self.array,
                 keepdims=self.keepdims)
 
     def bprop(self):
-        self.x.grad_array.fill(1.0/self.n)
+        self.x.grad_array.fill(self.scale)
         self.x.grad_array *= self.grad_array
 
 
