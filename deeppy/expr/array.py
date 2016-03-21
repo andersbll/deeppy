@@ -46,12 +46,14 @@ class Reshape(Unary):
 class Slices(Op, SplitMixin):
     def __init__(self, splits):
         self.splits = splits
+        self.outputs = [Output()(self) for _ in range(len(self.splits)+1)]
 
     def __call__(self, x):
         self.x = x
         self.inputs = [x]
-        self.outputs = [Output()(self) for _ in range(len(self.splits)+1)]
         self.bpropable = x.bpropable
+        for output in self.outputs:
+            output.bpropable = self.bpropable
         return self.outputs
 
     def setup(self):
@@ -62,19 +64,17 @@ class Slices(Op, SplitMixin):
         for i, (start, end) in enumerate(self.slices):
             shape = (end-start,) + self.x.shape[1:]
             self.outputs[i].shape = shape
-            self.outputs[i].array = self.x.array[start:end, :]
-            self.outputs[i].bpropable = self.bpropable
+            self.outputs[i].array = self.x.array[start:end]
             if self.bpropable:
                 self.outputs[i].grad_array = ca.zeros(shape)
 
     def fprop(self):
         for i, (start, end) in enumerate(self.slices):
-            self.outputs[i].array = self.x.array[start:end, :]
+            self.outputs[i].array = self.x.array[start:end]
 
     def bprop(self):
         for i, (start, end) in enumerate(self.slices):
-            ca.copyto(self.x.grad_array[start:end, :],
-                      self.outputs[i].grad_array)
+            ca.copyto(self.x.grad_array[start:end], self.outputs[i].grad_array)
 
 
 class Transpose(Unary):
