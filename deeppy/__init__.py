@@ -1,3 +1,11 @@
+__version__ = '0.1.dev'
+
+import os
+import logging
+
+debug_mode = os.getenv('DEEPPY_DEBUG', '')
+debug_mode = None if debug_mode == '' else debug_mode.lower()
+
 from . import dataset
 from . import expr
 from . import misc
@@ -30,4 +38,7 @@ from .train.annealers import ZeroAnnealer, DecayAnnealer, GammaAnnealer
 from .train.learn_rules import Adam, Momentum, RMSProp
 from .train.gradient_descent import GradientDescent
 
-__version__ = '0.1.dev'
+
+log = logging.getLogger(__name__)
+if debug_mode is not None:
+    log.info('DeepPy in debug mode: %s' % debug_mode)
