@@ -38,10 +38,21 @@ class Sigmoid(UnaryElementWise):
 
 class Softmax(UnaryElementWise):
     def fprop(self):
-        self.array = ca.nnet.softmax(self.x.array)
+        # e_i = exp(x_i - max(x))
+        # y = e_i / sum(e)
+        tmp1 = ca.amax(self.x.array, axis=1, keepdims=True)
+        ca.subtract(self.x.array, tmp1, self.array)
+        ca.exp(self.array, self.array)
+        ca.sum(self.array, axis=1, keepdims=True, out=tmp1)
+        self.array /= tmp1
 
-    def bprop(self, y_grad):
-        raise NotImplementedError()
+    def bprop(self):
+        # y_i * (y_grad_i - sum(y_grad * y))
+        ca.nnet.softmax_d(self.array, self.grad_array, out=self.x.grad_array)
+        ca.multiply(self.array, self.grad_array, self.x.grad_array)
+        tmp1 = ca.sum(self.x.grad_array, axis=1, keepdims=True)
+        ca.subtract(self.grad_array, tmp1, self.x.grad_array)
+        self.x.grad_array *= self.array
 
 
 class Softplus(UnaryElementWise):
