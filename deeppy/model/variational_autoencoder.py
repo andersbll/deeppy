@@ -87,7 +87,7 @@ class VariationalAutoencoder(Model, CollectionMixin):
         x_tilde = self.decoder(z)
         logpxz = self.reconstruct_error(x_tilde, self.x_src)
         self.lowerbound = kld + expr.sum(logpxz)
-        self._graph = expr.ExprGraph(self.lowerbound)
+        self._graph = expr.graph.ExprGraph(self.lowerbound)
         self._graph.setup()
         self.lowerbound.grad_array = ca.array(1.0)
 
@@ -102,7 +102,7 @@ class VariationalAutoencoder(Model, CollectionMixin):
         input = Input.from_any(input)
         src = expr.Source(input.x_shape)
         sink = expr_fun(src)
-        graph = expr.ExprGraph(sink)
+        graph = expr.graph.ExprGraph(sink)
         graph.setup()
         z = []
         for x_batch in input.batches():

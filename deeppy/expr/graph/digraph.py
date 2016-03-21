@@ -4,13 +4,11 @@ Directed graph.
 Implementation heavily based on code from the NetworkX package.
 """
 
-from collections import OrderedDict
-
 
 class DiGraph(object):
     def __init__(self):
-        self._pred = OrderedDict()
-        self._succ = OrderedDict()
+        self._pred = {}
+        self._succ = {}
 
     def nodes(self):
         return self._succ.keys()

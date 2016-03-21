@@ -21,7 +21,7 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
             self._y_src = ex.Source(y_shape)
             y_expr = self.loss(y_expr, self._y_src)
             y_expr.grad_array = ca.array(1.0)
-        self._graph = ex.ExprGraph(y_expr)
+        self._graph = ex.graph.ExprGraph(y_expr)
         self._graph.setup()
 
     def _fprop_expr(self, x):
@@ -38,7 +38,7 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
         input = Input.from_any(input)
         src = ex.Source(input.x_shape)
         sink = expr_fun(src)
-        graph = ex.ExprGraph(sink)
+        graph = ex.graph.ExprGraph(sink)
         graph.setup()
         y = []
         for batch in input.batches():

@@ -12,8 +12,8 @@ from .elementwise import (
     negative, Power, power, Subtract, subtract, Tanh, tanh,
 )
 from .linalg import Dot, dot
-from .graph import ExprGraph
 from .reduce import Mean, Sum, mean, sum
 from .util import Print
+from . import graph
 from . import nnet
 from . import random

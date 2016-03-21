@@ -37,7 +37,7 @@ class AdversarialNet(Model, CollectionMixin):
         offset[batch_size:] = 1.0
         self.gan_prob = expr.log(d*sign + offset)
         self.loss = expr.sum(self.gan_prob)
-        self._graph = expr.ExprGraph(self.loss)
+        self._graph = expr.graph.ExprGraph(self.loss)
         self._graph.setup()
         self.loss.grad_array = ca.array(-1.0)
 
@@ -61,7 +61,7 @@ class AdversarialNet(Model, CollectionMixin):
         input = Input.from_any(hidden)
         z_src = expr.Source(input.x_shape)
         sink = self.generator(z_src)
-        graph = expr.ExprGraph(sink)
+        graph = expr.graph.ExprGraph(sink)
         graph.setup()
         x_tilde = []
         for z_batch in input.batches():

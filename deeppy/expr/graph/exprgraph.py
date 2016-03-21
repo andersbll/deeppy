@@ -1,15 +1,14 @@
 import sys
 import traceback
 import cudarray as ca
-from ..base import CollectionMixin
+from ...base import CollectionMixin
 from . import digraph
-from .base import (
+from ..base import (
     Op, NoBPropMixin, NoFPropMixin, SplitMixin, Output
 )
 
 
-# TODO: find better name (Split is too similar to numpy.vsplit)
-class Split(Op, SplitMixin):
+class ExprSplit(Op, SplitMixin):
     def __init__(self, n_splits):
         if n_splits <= 1:
             raise ValueError('n_splits should be >1')
@@ -58,7 +57,7 @@ def node_exception_msg(node):
             shape = n.shape
             if isinstance(n, Output):
                 n = n.inputs[0]
-                if isinstance(n, Split):
+                if isinstance(n, ExprSplit):
                     n = n.inputs[0]
             name = n.__class__.__name__
             msg += '\n    %s, shape: %s' % (name, shape)
@@ -104,12 +103,12 @@ class ExprGraph(CollectionMixin):
     def setup(self):
         graph = build_graph(self.sinks)
 
-        # Insert Split nodes
+        # Insert ExprSplit nodes
         for node, out_degree in graph.out_degree():
             if out_degree <= 1 or out_degree - len(node.inputs) == 0 or \
                not node.bpropable or isinstance(node, SplitMixin):
                 continue
-            split = Split(out_degree)
+            split = ExprSplit(out_degree)
             split_exprs = split(node)
             for i, (_, in_node) in enumerate(list(graph.edges([node]))):
                 graph.remove_edge(node, in_node)
