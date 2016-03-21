@@ -1,5 +1,5 @@
 import numpy as np
-from .base import Identity
+from .base import Op, _require_op
 
 
 _measures = {
@@ -10,7 +10,7 @@ _measures = {
 }
 
 
-class Print(Identity):
+class Print(Op):
     def __init__(self, rate=1, label=None, fprop=True, bprop=False,
                  measures={}):
         self.i = 0
@@ -20,8 +20,18 @@ class Print(Identity):
         self.print_bprop = bprop
         self.measures = measures
 
+    def __call__(self, x):
+        x = _require_op(x)
+        self.x = x
+        self.inputs = [x]
+        self.bpropable = x.bpropable or self.print_bprop
+        return self
+
     def setup(self):
-        super(Print, self).setup()
+        self.shape = self.x.shape
+        self.array = self.x.array
+        if self.bpropable:
+            self.grad_array = self.x.grad_array
         if self.label is None:
             self.label = self.x.__class__.__name__
 
@@ -32,7 +42,7 @@ class Print(Identity):
         return msg
 
     def fprop(self):
-        super(Print, self).fprop()
+        self.array = self.x.array
         self.i += 1
         if self.print_fprop and (self.i-1) % self.rate == 0:
             print(self._message(np.array(self.array)))
@@ -40,4 +50,5 @@ class Print(Identity):
     def bprop(self):
         if self.print_bprop and (self.i-1) % self.rate == 0:
             print(self._message(np.array(self.grad_array)))
-        super(Print, self).bprop()
+        if self.x.bpropable:
+            self.x.grad_array = self.grad_array

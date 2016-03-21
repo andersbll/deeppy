@@ -107,26 +107,6 @@ class SplitMixin(object):
     pass
 
 
-class Identity(Op):
-    def __call__(self, x):
-        self.x = x
-        self.inputs = [x]
-        self.bpropable = x.bpropable
-        return self
-
-    def setup(self):
-        self._shape = self.x.shape
-        self.array = self.x.array
-        if self.bpropable:
-            self.grad_array = self.x.grad_array
-
-    def fprop(self):
-        self.array = self.x.array
-
-    def bprop(self):
-        self.x.grad_array = self.grad_array
-
-
 class Source(Op, NoBPropMixin, NoFPropMixin):
     bpropable = False
 
