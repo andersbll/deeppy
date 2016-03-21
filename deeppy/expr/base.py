@@ -5,13 +5,13 @@ import deeppy
 from ..base import PickleMixin
 
 
-def _require_expr(x):
+def _require_op(x):
     if isinstance(x, Op):
         return x
-    elif isinstance(x, ca.ndarray):
-        return Constant(ca.array(x))
-    else:
+    if isinstance(x, (np.ndarray, ca.ndarray, int, float)):
         return Constant(x)
+    else:
+        raise ValueError('Cannot process %s' % str(x))
 
 
 class Op(PickleMixin):
@@ -169,7 +169,7 @@ class Unary(Op):
     x = None
 
     def __call__(self, x):
-        x = _require_expr(x)
+        x = _require_op(x)
         self.x = x
         if isinstance(x, Constant):
             # Propagate constant.
@@ -193,8 +193,8 @@ class Binary(Op):
     rhs = None
 
     def __call__(self, lhs, rhs):
-        lhs = _require_expr(lhs)
-        rhs = _require_expr(rhs)
+        lhs = _require_op(lhs)
+        rhs = _require_op(rhs)
         self.lhs = lhs
         self.rhs = rhs
         if isinstance(lhs, Constant) and isinstance(rhs, Constant):
@@ -248,8 +248,8 @@ class BinaryElementWise(Binary):
                 self.rhs.setup()
         except ValueError:
             raise ValueError('Shape mismatch: %s and %s for %s. LHS: %s RHS: '
-                             '%s.' % (self.lhs.shape, self.rhs.shape,
-                                      self, self.lhs, self.rhs))
+                             '%s.' % (self.lhs.shape, self.rhs.shape, self,
+                                      self.lhs, self.rhs))
         self.array = ca.zeros(self.shape)
         self.grad_array = ca.zeros(self.shape)
 
