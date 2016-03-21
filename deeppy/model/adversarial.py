@@ -35,10 +35,11 @@ class AdversarialNet(Model, CollectionMixin):
         sign[batch_size:] = -1.0
         offset = np.zeros_like(sign)
         offset[batch_size:] = 1.0
-        self._loss = expr.log(d*sign + offset)
-        self._graph = expr.ExprGraph(-expr.sum(self._loss))
-        self._graph.grad_array = ca.array(1.0)
+        self.gan_prob = expr.log(d*sign + offset)
+        self.loss = expr.sum(self.gan_prob)
+        self._graph = expr.ExprGraph(self.loss)
         self._graph.setup()
+        self.loss.grad_array = ca.array(-1.0)
 
     @property
     def params(self):
@@ -48,7 +49,7 @@ class AdversarialNet(Model, CollectionMixin):
         self.x_src.array = x
         self._graph.fprop()
         self._graph.bprop()
-        gan_loss = -np.array(self._loss.array)
+        gan_loss = -np.array(self.gan_prob.array)
         batch_size = x.shape[0]
         d_x_loss = np.mean(gan_loss[:batch_size])
         d_z_loss = np.mean(gan_loss[batch_size:])
@@ -59,12 +60,13 @@ class AdversarialNet(Model, CollectionMixin):
         self.phase = 'test'
         input = Input.from_any(hidden)
         z_src = expr.Source(input.x_shape)
-        graph = expr.ExprGraph(self.generator(z_src))
+        sink = self.generator(z_src)
+        graph = expr.ExprGraph(sink)
         graph.setup()
         x_tilde = []
         for z_batch in input.batches():
             z_src.array = z_batch['x']
             graph.fprop()
-            x_tilde.append(np.array(graph.array))
+            x_tilde.append(np.array(sink.array))
         x_tilde = np.concatenate(x_tilde)[:input.n_samples]
         return x_tilde

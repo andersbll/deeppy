@@ -86,28 +86,29 @@ class VariationalAutoencoder(Model, CollectionMixin):
         kld = KLDivergence()(z_mu, z_log_sigma)
         x_tilde = self.decoder(z)
         logpxz = self.reconstruct_error(x_tilde, self.x_src)
-        lowerbound = kld + expr.sum(logpxz)
-        self._lowerbound_graph = expr.ExprGraph(lowerbound)
-        self._lowerbound_graph.grad_array = ca.array(1.0)
-        self._lowerbound_graph.setup()
+        self.lowerbound = kld + expr.sum(logpxz)
+        self._graph = expr.ExprGraph(self.lowerbound)
+        self._graph.setup()
+        self.lowerbound.grad_array = ca.array(1.0)
 
     def update(self, x):
         self.x_src.array = x
-        self._lowerbound_graph.fprop()
-        self._lowerbound_graph.bprop()
-        return self._lowerbound_graph.array
+        self._graph.fprop()
+        self._graph.bprop()
+        return self.lowerbound.array
 
     def _batchwise(self, input, expr_fun):
         self.phase = 'test'
         input = Input.from_any(input)
         src = expr.Source(input.x_shape)
-        graph = expr.ExprGraph(expr_fun(src))
+        sink = expr_fun(src)
+        graph = expr.ExprGraph(sink)
         graph.setup()
         z = []
         for x_batch in input.batches():
             src.array = x_batch['x']
             graph.fprop()
-            z.append(np.array(graph.array))
+            z.append(np.array(sink.array))
         z = np.concatenate(z)[:input.n_samples]
         return z
 

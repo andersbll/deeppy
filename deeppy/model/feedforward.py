@@ -1,7 +1,8 @@
 import numpy as np
+import cudarray as ca
 from ..base import Model, CollectionMixin, PickleMixin
 from ..input import Input
-from .. import expr
+from .. import expr as ex
 
 
 class FeedForwardNet(Model, CollectionMixin, PickleMixin):
@@ -14,14 +15,14 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
         self.collection = [expression]
 
     def setup(self, x_shape, y_shape=None):
-        self._x_src = expr.Source(x_shape)
+        self._x_src = ex.Source(x_shape)
         y_expr = self._fprop_expr(self._x_src)
         if y_shape is not None:
-            self._y_src = expr.Source(y_shape)
+            self._y_src = ex.Source(y_shape)
             y_expr = self.loss(y_expr, self._y_src)
-        self._graph = expr.ExprGraph(y_expr)
+            y_expr.grad_array = ca.array(1.0)
+        self._graph = ex.ExprGraph(y_expr)
         self._graph.setup()
-        self._graph.grad_array = 1.0
 
     def _fprop_expr(self, x):
         return self.expression(x)
@@ -35,14 +36,15 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
 
     def _batchwise(self, input, expr_fun):
         input = Input.from_any(input)
-        src = expr.Source(input.x_shape)
-        graph = expr.ExprGraph(expr_fun(src))
+        src = ex.Source(input.x_shape)
+        sink = expr_fun(src)
+        graph = ex.ExprGraph(sink)
         graph.setup()
         y = []
         for batch in input.batches():
             src.array = batch['x']
             graph.fprop()
-            y.append(np.array(graph.array))
+            y.append(np.array(sink.array))
         y = np.concatenate(y)[:input.n_samples]
         return y
 
@@ -54,14 +56,14 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
 class ClassifierNet(FeedForwardNet):
     def _fprop_expr(self, x):
         y_expr = super(ClassifierNet, self)._fprop_expr(x)
-        if isinstance(self.loss, expr.nnet.SoftmaxCrossEntropy):
-            softmax = expr.nnet.SoftmaxCrossEntropy.SoftmaxIdentityBProp()
-            y_expr = softmax(y_expr)
+        if isinstance(self.loss, ex.nnet.SoftmaxCrossEntropy) and \
+           not isinstance(y_expr, ex.nnet.Softmax):
+            y_expr = ex.nnet.Softmax()(y_expr)
         return y_expr
 
     def _predict_expr(self, x):
         y_expr = self._fprop_expr(x)
-        y_expr = expr.nnet.one_hot.OneHotDecode()(y_expr)
+        y_expr = ex.nnet.one_hot.OneHotDecode()(y_expr)
         return y_expr
 
     def predict(self, input):

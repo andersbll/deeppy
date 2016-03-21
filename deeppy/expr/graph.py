@@ -113,7 +113,6 @@ class ExprGraph(CollectionMixin):
         self.graph = graph
         self._fprop_top = fprop_top
         self._bprop_top = bprop_top
-        self.shape = self._fprop_top[-1].shape
         self._initialized = True
 
     @property
@@ -123,9 +122,7 @@ class ExprGraph(CollectionMixin):
     def fprop(self):
         for node in self._fprop_top:
             node.fprop()
-        self.array = self._fprop_top[-1].array
 
     def bprop(self):
-        self._bprop_top[0].grad_array = self.grad_array
         for node in self._bprop_top:
             node.bprop()
