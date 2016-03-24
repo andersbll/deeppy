@@ -40,7 +40,8 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import subprocess
-        subprocess.call(['py.test'] + self.pytest_args + ['test'])
+        errno = subprocess.call(['py.test'] + self.pytest_args + ['test'])
+        raise SystemExit(errno)
 
 
 class Coverage(Command):
