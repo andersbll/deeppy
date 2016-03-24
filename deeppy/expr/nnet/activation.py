@@ -48,7 +48,6 @@ class Softmax(UnaryElementWise):
 
     def bprop(self):
         # y_i * (y_grad_i - sum(y_grad * y))
-        ca.nnet.softmax_d(self.array, self.grad_array, out=self.x.grad_array)
         ca.multiply(self.array, self.grad_array, self.x.grad_array)
         tmp1 = ca.sum(self.x.grad_array, axis=1, keepdims=True)
         ca.subtract(self.grad_array, tmp1, self.x.grad_array)
