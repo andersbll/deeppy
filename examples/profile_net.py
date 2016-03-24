@@ -20,10 +20,10 @@ def avg_running_time(fun, reps):
 
 def profile(net, feed, reps=50):
     feed = dp.Feed.from_any(feed)
-    net.setup(**feed.shapes)
+    net.setup(*feed.shapes)
     net.phase = 'train'
     batch = next(feed.batches())
-    x = batch['x']
+    x, y = batch
     total_duration = 0
     for layer_idx, layer in enumerate(net.layers[:-1]):
         def fprop():
@@ -42,7 +42,7 @@ def profile(net, feed, reps=50):
     print('total_duration: %.6f s' % total_duration)
 
     def nn_bprop():
-        net.update(**batch)
+        net.update(*batch)
     nn_bprop_duration = avg_running_time(nn_bprop, reps)
     print('net.bprop(): %.6f s' % nn_bprop_duration)
 

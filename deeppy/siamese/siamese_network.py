@@ -21,15 +21,15 @@ class SiameseNetwork(Model, CollectionMixin):
         self.collection = self.layers + self.layers2
         self._initialized = False
 
-    def setup(self, x_shape, y_shape=None):
+    def setup(self, x1_shape, x2_shape, y_shape=None):
         # Setup layers sequentially
         if self._initialized:
             return
-        next_shape = x_shape
+        next_shape = x1_shape
         for layer in self.layers:
             layer.setup(next_shape)
             next_shape = layer.y_shape(next_shape)
-        next_shape = x_shape
+        next_shape = x2_shape
         for layer in self.layers2:
             layer.setup(next_shape)
             next_shape = layer.y_shape(next_shape)
@@ -66,12 +66,10 @@ class SiameseNetwork(Model, CollectionMixin):
         for layer in self.layers:
             next_shape = layer.y_shape(next_shape)
         feats = []
-        for batch in feed.batches():
-            x_batch = batch['x']
-            x_next = x_batch
+        for x, in feed.batches():
             for layer in self.layers:
-                x_next = layer.fprop(x_next)
-            feats.append(np.array(x_next))
+                x = layer.fprop(x)
+            feats.append(np.array(x))
         feats = np.concatenate(feats)[:feed.n_samples]
         return feats
 
@@ -79,8 +77,7 @@ class SiameseNetwork(Model, CollectionMixin):
         self.phase = 'test'
         feed = Feed.from_any(feed)
         dists = []
-        for batch in feed.batches():
-            x1, x2 = batch
+        for x1, x2 in feed.batches():
             for layer in self.layers:
                 x1 = layer.fprop(x1)
             for layer in self.layers2:

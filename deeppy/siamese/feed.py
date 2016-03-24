@@ -22,13 +22,13 @@ class SiameseFeed(Feed):
                 x2_np = np.concatenate((self.x[start:], self.x[:stop]))
             ca.copyto(x1, x1_np)
             ca.copyto(x2, x2_np)
-            yield {'x1': x1, 'x2': x2}
+            yield x1, x2
 
 
 class SupervisedSiameseFeed(SiameseFeed):
     def __init__(self, x1, x2, y, batch_size=None, epoch_size=None):
         super(SupervisedSiameseFeed, self).__init__(x1, x2, batch_size,
-                                                     epoch_size)
+                                                    epoch_size)
         if x1.shape[0] != y.shape[0]:
             raise ValueError('shape mismatch between x and y')
         self.y = y
@@ -49,8 +49,12 @@ class SupervisedSiameseFeed(SiameseFeed):
             ca.copyto(x1, x1_np)
             ca.copyto(x2, x2_np)
             ca.copyto(y, y_np)
-            yield {'x1': x1, 'x2': x2, 'y': y}
+            yield x1, x2, y
 
     @property
     def y_shape(self):
         return (self.batch_size,) + self.y.shape[1:]
+
+    @property
+    def shapes(self):
+        return self.x_shape, self.x_shape, self.y_shape

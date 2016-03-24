@@ -56,8 +56,7 @@ class NeuralNetwork(Model, CollectionMixin):
             self.layers += [self.loss]
 
         y = []
-        for batch in feed.batches():
-            x_batch = batch['x']
+        for x_batch, in feed.batches():
             y.append(np.array(self.fprop(x_batch)))
         y = np.concatenate(y)[:feed.n_samples]
 

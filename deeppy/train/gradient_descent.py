@@ -19,7 +19,7 @@ class GradientDescent(object):
 
     def reset(self):
         self.feed.reset()
-        self.model.setup(**self.feed.shapes)
+        self.model.setup(*self.feed.shapes)
         self.params = [p for p in self.model.params
                        if not isinstance(p, SharedParameter)]
         self.learn_rule_states = [self.learn_rule.init_state(p)
@@ -31,7 +31,7 @@ class GradientDescent(object):
     def train_epoch(self):
         batch_losses = []
         for batch in self.feed.batches():
-            loss = np.array(ca.mean(self.model.update(**batch)))
+            loss = np.array(ca.mean(self.model.update(*batch)))
             for param, state in zip(self.params, self.learn_rule_states):
                 self.learn_rule.step(param, state)
             batch_losses.append(loss)

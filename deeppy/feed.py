@@ -44,7 +44,7 @@ class Feed(object):
             else:
                 x_np = np.concatenate((self.x[start:], self.x[:stop]))
             ca.copyto(x, x_np)
-            yield {'x': x}
+            yield x,
 
     @property
     def x_shape(self):
@@ -52,7 +52,7 @@ class Feed(object):
 
     @property
     def shapes(self):
-        return {'x_shape': self.x_shape}
+        return self.x_shape,
 
 
 class SupervisedFeed(Feed):
@@ -74,7 +74,7 @@ class SupervisedFeed(Feed):
                 y_np = np.concatenate((self.y[start:], self.y[:stop]))
             ca.copyto(x, x_np)
             ca.copyto(y, y_np)
-            yield {'x': x, 'y': y}
+            yield x, y
 
     @property
     def y_shape(self):
@@ -82,4 +82,4 @@ class SupervisedFeed(Feed):
 
     @property
     def shapes(self):
-        return {'x_shape': self.x_shape, 'y_shape': self.y_shape}
+        return self.x_shape, self.y_shape

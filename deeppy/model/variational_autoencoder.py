@@ -105,8 +105,8 @@ class VariationalAutoencoder(Model, CollectionMixin):
         graph = expr.graph.ExprGraph(sink)
         graph.setup()
         z = []
-        for x_batch in feed.batches():
-            src.array = x_batch['x']
+        for x, in feed.batches():
+            src.array = x
             graph.fprop()
             z.append(np.array(sink.array))
         z = np.concatenate(z)[:feed.n_samples]

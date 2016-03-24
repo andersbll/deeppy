@@ -41,8 +41,8 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
         graph = ex.graph.ExprGraph(sink)
         graph.setup()
         y = []
-        for batch in feed.batches():
-            src.array = batch['x']
+        for x, in feed.batches():
+            src.array = x
             graph.fprop()
             y.append(np.array(sink.array))
         y = np.concatenate(y)[:feed.n_samples]

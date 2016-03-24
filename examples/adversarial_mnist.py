@@ -79,7 +79,7 @@ equilibrium = 0.6931
 learn_rate = 0.075
 learn_rule_g = dp.RMSProp(learn_rate=learn_rate)
 learn_rule_d = dp.RMSProp(learn_rate=learn_rate)
-model.setup(**train_feed.shapes)
+model.setup(*train_feed.shapes)
 g_params, d_params = model.params
 learn_rule_g.learn_rate /= batch_size
 learn_rule_d.learn_rate /= batch_size*2
@@ -87,8 +87,8 @@ g_states = [learn_rule_g.init_state(p) for p in g_params]
 d_states = [learn_rule_d.init_state(p) for p in d_params]
 for epoch in range(n_epochs):
     batch_costs = []
-    for batch in train_feed.batches():
-        real_cost, gen_cost = model.update(**batch)
+    for x, in train_feed.batches():
+        real_cost, gen_cost = model.update(x)
         batch_costs.append((real_cost, gen_cost))
         update_g = True
         update_d = True

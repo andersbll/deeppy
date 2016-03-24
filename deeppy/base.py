@@ -70,10 +70,10 @@ class CollectionMixin(ParamMixin, PhaseMixin):
 
 
 class Model(ParamMixin):
-    def setup(self, **array_shapes):
+    def setup(self, *array_shapes):
         pass
 
-    def update(self, **arrays):
+    def update(self, *arrays):
         raise NotImplementedError()
 
 

@@ -63,8 +63,8 @@ class AdversarialNet(Model, CollectionMixin):
         graph = expr.graph.ExprGraph(sink)
         graph.setup()
         x_tilde = []
-        for z_batch in feed.batches():
-            z_src.array = z_batch['x']
+        for z, in feed.batches():
+            z_src.array = z
             graph.fprop()
             x_tilde.append(np.array(sink.array))
         x_tilde = np.concatenate(x_tilde)[:feed.n_samples]
