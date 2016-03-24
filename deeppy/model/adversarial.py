@@ -2,7 +2,7 @@ import numpy as np
 import cudarray as ca
 from ..base import Model, CollectionMixin
 from ..expr.base import UnaryElementWise
-from ..input import Input
+from ..feed import Feed
 from .. import expr
 
 
@@ -56,17 +56,16 @@ class AdversarialNet(Model, CollectionMixin):
         return float(d_x_loss), float(d_z_loss)
 
     def generate(self, hidden):
-        """ Hidden to input. """
         self.phase = 'test'
-        input = Input.from_any(hidden)
-        z_src = expr.Source(input.x_shape)
+        feed = Feed.from_any(hidden)
+        z_src = expr.Source(feed.x_shape)
         sink = self.generator(z_src)
         graph = expr.graph.ExprGraph(sink)
         graph.setup()
         x_tilde = []
-        for z_batch in input.batches():
+        for z_batch in feed.batches():
             z_src.array = z_batch['x']
             graph.fprop()
             x_tilde.append(np.array(sink.array))
-        x_tilde = np.concatenate(x_tilde)[:input.n_samples]
+        x_tilde = np.concatenate(x_tilde)[:feed.n_samples]
         return x_tilde

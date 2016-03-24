@@ -2,7 +2,7 @@ import numpy as np
 import cudarray as ca
 
 
-class Input(object):
+class Feed(object):
     def __init__(self, x, batch_size=None, epoch_size=None):
         self.x = x
         self.n_samples = x.shape[0]
@@ -16,14 +16,14 @@ class Input(object):
 
     @classmethod
     def from_any(cls, arg):
-        if isinstance(arg, Input):
+        if isinstance(arg, Feed):
             arg.reset()
             return arg
         elif isinstance(arg, np.ndarray):
             return cls(arg)
         elif isinstance(arg, tuple):
-            return SupervisedInput(arg[0], arg[1])
-        raise ValueError('Invalid input arguments')
+            return SupervisedFeed(arg[0], arg[1])
+        raise ValueError('Invalid arguments.')
 
     def reset(self):
         self.epoch_idx = 0
@@ -55,9 +55,9 @@ class Input(object):
         return {'x_shape': self.x_shape}
 
 
-class SupervisedInput(Input):
+class SupervisedFeed(Feed):
     def __init__(self, x, y, batch_size=None, epoch_size=None):
-        super(SupervisedInput, self).__init__(x, batch_size, epoch_size)
+        super(SupervisedFeed, self).__init__(x, batch_size, epoch_size)
         if x.shape[0] != y.shape[0]:
             raise ValueError('shape mismatch between x and y')
         self.y = y

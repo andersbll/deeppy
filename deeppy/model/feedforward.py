@@ -1,7 +1,7 @@
 import numpy as np
 import cudarray as ca
 from ..base import Model, CollectionMixin, PickleMixin
-from ..input import Input
+from ..feed import Feed
 from .. import expr as ex
 
 
@@ -34,23 +34,23 @@ class FeedForwardNet(Model, CollectionMixin, PickleMixin):
         self._graph.bprop()
         return self.loss.array
 
-    def _batchwise(self, input, expr_fun):
-        input = Input.from_any(input)
-        src = ex.Source(input.x_shape)
+    def _batchwise(self, feed, expr_fun):
+        feed = Feed.from_any(feed)
+        src = ex.Source(feed.x_shape)
         sink = expr_fun(src)
         graph = ex.graph.ExprGraph(sink)
         graph.setup()
         y = []
-        for batch in input.batches():
+        for batch in feed.batches():
             src.array = batch['x']
             graph.fprop()
             y.append(np.array(sink.array))
-        y = np.concatenate(y)[:input.n_samples]
+        y = np.concatenate(y)[:feed.n_samples]
         return y
 
-    def predict(self, input):
+    def predict(self, feed):
         """ Calculate the output for the given input. """
-        return self._batchwise(input, self._fprop_expr)
+        return self._batchwise(feed, self._fprop_expr)
 
 
 class ClassifierNet(FeedForwardNet):
@@ -66,16 +66,16 @@ class ClassifierNet(FeedForwardNet):
         y_expr = ex.nnet.one_hot.OneHotDecode()(y_expr)
         return y_expr
 
-    def predict(self, input):
+    def predict(self, feed):
         """ Calculate the output for the given input. """
-        return self._batchwise(input, self._predict_expr)
+        return self._batchwise(feed, self._predict_expr)
 
-    def predict_proba(self, input):
+    def predict_proba(self, feed):
         """ Calculate the output probabilities for the given input. """
-        return self._batchwise(input, self._fprop_expr)
+        return self._batchwise(feed, self._fprop_expr)
 
 
 class RegressorNet(FeedForwardNet):
-    def predict(self, input):
+    def predict(self, feed):
         """ Calculate the output for the given input. """
-        return self._batchwise(input, self._fprop_expr)
+        return self._batchwise(feed, self._fprop_expr)

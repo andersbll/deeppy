@@ -4,7 +4,7 @@ from ..feedforward.activation_layers import Activation
 from ..feedforward.layers import Affine
 from ..loss import Loss
 from ..base import Model, PickleMixin
-from ..input import Input
+from ..feed import Feed
 from ..parameter import Parameter
 
 
@@ -40,8 +40,8 @@ class Autoencoder(Model, PickleMixin):
     def params(self, params):
         self.weights, self.bias, self.bias_prime = params
 
-    def output_shape(self, input_shape):
-        return (input_shape[0], self.n_out)
+    def output_shape(self, feed_shape):
+        return (feed_shape[0], self.n_out)
 
     def encode(self, x):
         self._tmp_x = x
@@ -80,12 +80,12 @@ class Autoencoder(Model, PickleMixin):
         y = self.encode(x)
         return self.decode(y)
 
-    def reconstruct(self, input):
+    def reconstruct(self, feed):
         """ Returns the reconstructed input. """
-        input = Input.from_any(input)
-        x_prime = np.empty(input.x.shape)
+        feed = Feed.from_any(feed)
+        x_prime = np.empty(feed.x.shape)
         offset = 0
-        for x_batch in input.batches():
+        for x_batch in feed.batches():
             x_prime_batch = np.array(self._reconstruct_batch(x_batch))
             batch_size = x_prime_batch.shape[0]
             x_prime[offset:offset+batch_size, ...] = x_prime_batch
@@ -95,12 +95,12 @@ class Autoencoder(Model, PickleMixin):
     def _embed_batch(self, x):
         return self.encode(x)
 
-    def embed(self, input):
+    def embed(self, feed):
         """ Returns the embedding of the input. """
-        input = Input.from_any(input)
-        y = np.empty(self.output_shape(input.x.shape))
+        feed = Feed.from_any(feed)
+        y = np.empty(self.output_shape(feed.x.shape))
         offset = 0
-        for x_batch in input.batches():
+        for x_batch in feed.batches():
             y_batch = np.array(self._embed_batch(x_batch))
             batch_size = y_batch.shape[0]
             y[offset:offset+batch_size, ...] = y_batch

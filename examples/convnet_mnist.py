@@ -25,10 +25,10 @@ scaler = dp.StandardScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
-# Prepare network inputs
+# Prepare network feeds
 batch_size = 128
-train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-test_input = dp.Input(x_test)
+train_feed = dp.SupervisedFeed(x_train, y_train, batch_size=batch_size)
+test_feed = dp.Feed(x_test)
 
 # Setup network
 def pool_layer():
@@ -78,7 +78,7 @@ net = dp.NeuralNetwork(
 n_epochs = [50, 15, 15]
 learn_rate = 0.05/batch_size
 learn_rule = dp.Momentum(momentum=0.9)
-trainer = dp.GradientDescent(net, train_input, learn_rule)
+trainer = dp.GradientDescent(net, train_feed, learn_rule)
 for i, epochs in enumerate(n_epochs):
     learn_rule.learn_rate = learn_rate/10**i
     trainer.train_epochs(epochs)

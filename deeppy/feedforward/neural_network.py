@@ -1,6 +1,6 @@
 import numpy as np
 from ..base import Model, ParamMixin, CollectionMixin
-from ..input import Input
+from ..feed import Feed
 from ..loss import SoftmaxCrossEntropy
 
 
@@ -46,9 +46,9 @@ class NeuralNetwork(Model, CollectionMixin):
             x_shape = layer.y_shape(x_shape)
         return x_shape
 
-    def predict(self, input):
+    def predict(self, feed):
         """ Calculate the output for the given input x. """
-        input = Input.from_any(input)
+        feed = Feed.from_any(feed)
         self.phase = 'test'
 
         if isinstance(self.loss, SoftmaxCrossEntropy):
@@ -56,10 +56,10 @@ class NeuralNetwork(Model, CollectionMixin):
             self.layers += [self.loss]
 
         y = []
-        for batch in input.batches():
+        for batch in feed.batches():
             x_batch = batch['x']
             y.append(np.array(self.fprop(x_batch)))
-        y = np.concatenate(y)[:input.n_samples]
+        y = np.concatenate(y)[:feed.n_samples]
 
         if isinstance(self.loss, SoftmaxCrossEntropy):
             self.layers = self.layers[:-1]

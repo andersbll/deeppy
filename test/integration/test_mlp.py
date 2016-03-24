@@ -24,10 +24,10 @@ def test_classification():
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
 
-    # Setup input
+    # Setup feeds
     batch_size = 16
-    train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-    test_input = dp.Input(x_test)
+    train_feed = dp.SupervisedFeed(x_train, y_train, batch_size=batch_size)
+    test_feed = dp.Feed(x_test)
 
     # Setup neural network
     weight_decay = 1e-03
@@ -55,10 +55,10 @@ def test_classification():
 
     # Train neural network
     learn_rule = dp.Momentum(learn_rate=0.01/batch_size, momentum=0.9)
-    trainer = dp.GradientDescent(net, train_input, learn_rule)
+    trainer = dp.GradientDescent(net, train_feed, learn_rule)
     trainer.train_epochs(n_epochs=10)
 
     # Evaluate on test data
-    error = np.mean(net.predict(test_input) != y_test)
+    error = np.mean(net.predict(test_feed) != y_test)
     print('Test error rate: %.4f' % error)
     assert error < 0.2

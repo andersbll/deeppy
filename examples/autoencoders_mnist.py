@@ -20,9 +20,9 @@ scaler = dp.UniformScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
-# Prepare autoencoder input
+# Prepare autoencoder feed
 batch_size = 128
-train_input = dp.Input(x_train, batch_size=batch_size)
+train_feed = dp.Feed(x_train, batch_size=batch_size)
 
 # Setup autoencoders
 sae = dp.StackedAutoencoder(
@@ -53,11 +53,11 @@ n_epochs = 25
 learn_rate = 0.025/batch_size
 learn_rule = dp.Momentum(learn_rate, momentum=0.9)
 for ae in sae.ae_models():
-    trainer = dp.GradientDescent(ae, train_input, learn_rule)
+    trainer = dp.GradientDescent(ae, train_feed, learn_rule)
     trainer.train_epochs(n_epochs)
 
 # Train stacked autoencoders
-trainer = dp.GradientDescent(sae, train_input, learn_rule)
+trainer = dp.GradientDescent(sae, train_feed, learn_rule)
 trainer.train_epochs(n_epochs)
 
 # Setup neural network using the stacked autoencoder layers
@@ -72,13 +72,13 @@ net = dp.NeuralNetwork(
 )
 
 # Fine-tune neural network
-train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-test_input = dp.Input(x_test)
-trainer = dp.GradientDescent(net, train_input, learn_rule)
+train_feed = dp.SupervisedFeed(x_train, y_train, batch_size=batch_size)
+test_feed = dp.Feed(x_test)
+trainer = dp.GradientDescent(net, train_feed, learn_rule)
 trainer.train_epochs(n_epochs)
 
 # Evaluate on test data
-error = np.mean(net.predict(test_input) != y_test)
+error = np.mean(net.predict(test_feed) != y_test)
 print('Test error rate: %.4f' % error)
 
 

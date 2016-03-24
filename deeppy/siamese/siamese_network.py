@@ -1,7 +1,7 @@
 from copy import copy
 import numpy as np
 from ..base import Model, CollectionMixin, ParamMixin
-from ..input import Input
+from ..feed import Feed
 
 
 class SiameseNetwork(Model, CollectionMixin):
@@ -59,32 +59,32 @@ class SiameseNetwork(Model, CollectionMixin):
 
         return self.loss.loss(y, x1, x2)
 
-    def embed(self, input):
+    def embed(self, feed):
         self.phase = 'test'
-        input = Input.from_any(input)
-        next_shape = input.x.shape
+        feed = Feed.from_any(feed)
+        next_shape = feed.x.shape
         for layer in self.layers:
             next_shape = layer.y_shape(next_shape)
         feats = []
-        for batch in input.batches():
+        for batch in feed.batches():
             x_batch = batch['x']
             x_next = x_batch
             for layer in self.layers:
                 x_next = layer.fprop(x_next)
             feats.append(np.array(x_next))
-        feats = np.concatenate(feats)[:input.n_samples]
+        feats = np.concatenate(feats)[:feed.n_samples]
         return feats
 
-    def distances(self, input):
+    def distances(self, feed):
         self.phase = 'test'
-        input = Input.from_any(input)
+        feed = Feed.from_any(feed)
         dists = []
-        for batch in input.batches():
+        for batch in feed.batches():
             x1, x2 = batch
             for layer in self.layers:
                 x1 = layer.fprop(x1)
             for layer in self.layers2:
                 x2 = layer.fprop(x2)
             dists.append(np.ravel(np.array(self.loss.fprop(x1, x2))))
-        dists = np.concatenate(dists)[:input.n_samples]
+        dists = np.concatenate(dists)[:feed.n_samples]
         return dists

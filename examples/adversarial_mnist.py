@@ -62,9 +62,9 @@ discriminator = expr.Sequential([
 ])
 model = dp.model.AdversarialNet(generator, discriminator, n_hidden=512)
 
-# Prepare network inputs
+# Prepare network feeds
 batch_size = 64
-train_input = dp.Input(x_train, batch_size=batch_size)
+train_feed = dp.Feed(x_train, batch_size=batch_size)
 
 # Samples to be plotted during training
 n_examples = 100
@@ -79,7 +79,7 @@ equilibrium = 0.6931
 learn_rate = 0.075
 learn_rule_g = dp.RMSProp(learn_rate=learn_rate)
 learn_rule_d = dp.RMSProp(learn_rate=learn_rate)
-model.setup(**train_input.shapes)
+model.setup(**train_feed.shapes)
 g_params, d_params = model.params
 learn_rule_g.learn_rate /= batch_size
 learn_rule_d.learn_rate /= batch_size*2
@@ -87,7 +87,7 @@ g_states = [learn_rule_g.init_state(p) for p in g_params]
 d_states = [learn_rule_d.init_state(p) for p in d_params]
 for epoch in range(n_epochs):
     batch_costs = []
-    for batch in train_input.batches():
+    for batch in train_feed.batches():
         real_cost, gen_cost = model.update(**batch)
         batch_costs.append((real_cost, gen_cost))
         update_g = True
@@ -112,7 +112,7 @@ for epoch in range(n_epochs):
     if epoch in plot_epochs:
         samples_img = model.generate(samples)
         plot_imgs.append((samples_img, 'Samples after epoch %i' % (epoch + 1)))
-        model.setup(train_input.x_shape)
+        model.setup(train_feed.x_shape)
         model.phase = 'train'
 
 # Plot

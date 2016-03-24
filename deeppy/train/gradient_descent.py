@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import cudarray as ca
-from ..input import Input
+from ..feed import Feed
 from ..parameter import SharedParameter
 
 import logging
@@ -9,8 +9,8 @@ log = logging.getLogger(__name__)
 
 
 class GradientDescent(object):
-    def __init__(self, model, input, learn_rule):
-        self.input = Input.from_any(input)
+    def __init__(self, model, feed, learn_rule):
+        self.feed = Feed.from_any(feed)
         self.learn_rule = learn_rule
         self.model = model
         self.params = None
@@ -18,19 +18,19 @@ class GradientDescent(object):
         self.reset()
 
     def reset(self):
-        self.input.reset()
-        self.model.setup(**self.input.shapes)
+        self.feed.reset()
+        self.model.setup(**self.feed.shapes)
         self.params = [p for p in self.model.params
                        if not isinstance(p, SharedParameter)]
         self.learn_rule_states = [self.learn_rule.init_state(p)
                                   for p in self.params]
         n_params = np.sum([p.array.size for p in self.params])
         log.info('SGD: Model contains %i parameters.', n_params)
-        log.info('SGD: %d gradient updates per epoch.', self.input.epoch_size)
+        log.info('SGD: %d gradient updates per epoch.', self.feed.epoch_size)
 
     def train_epoch(self):
         batch_losses = []
-        for batch in self.input.batches():
+        for batch in self.feed.batches():
             loss = np.array(ca.mean(self.model.update(**batch)))
             for param, state in zip(self.params, self.learn_rule_states):
                 self.learn_rule.step(param, state)

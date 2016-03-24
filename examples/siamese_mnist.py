@@ -41,9 +41,9 @@ while n < n_pairs:
         y[n] = 0
     n += 1
 
-# Prepare network inputs
+# Prepare network feeds
 batch_size = 128
-train_input = dp.SupervisedSiameseInput(x1, x2, y, batch_size=batch_size)
+train_feed = dp.SupervisedSiameseFeed(x1, x2, y, batch_size=batch_size)
 
 # Setup network
 w_gain = 1.5
@@ -71,14 +71,14 @@ net = dp.SiameseNetwork(
 # Train network
 learn_rate = 0.01/batch_size
 learn_rule = dp.RMSProp(learn_rate)
-trainer = dp.GradientDescent(net, train_input, learn_rule)
+trainer = dp.GradientDescent(net, train_feed, learn_rule)
 trainer.train_epochs(n_epochs=15)
 
 
 # Plot 2D embedding
-test_input = dp.Input(x_test)
+test_feed = dp.Feed(x_test)
 x_test = np.reshape(x_test, (-1,) + dataset.img_shape)
-embedding = net.embed(test_input)
+embedding = net.embed(test_feed)
 embedding -= np.min(embedding, 0)
 embedding /= np.max(embedding, 0)
 

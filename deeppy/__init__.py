@@ -27,11 +27,11 @@ from .feedforward.convnet_layers import (
 from .filler import (
     AutoFiller, CopyFiller, ConstantFiller, NormalFiller, UniformFiller
 )
-from .input import Input, SupervisedInput
+from .feed import Feed, SupervisedFeed
 from .loss import SoftmaxCrossEntropy, BinaryCrossEntropy, MeanSquaredError
 from .parameter import Parameter
 from .preprocess.scalers import StandardScaler, UniformScaler
-from .siamese.input import SiameseInput, SupervisedSiameseInput
+from .siamese.feed import SiameseFeed, SupervisedSiameseFeed
 from .siamese.loss import ContrastiveLoss
 from .siamese.siamese_network import SiameseNetwork
 from .train.annealers import ZeroAnnealer, DecayAnnealer, GammaAnnealer

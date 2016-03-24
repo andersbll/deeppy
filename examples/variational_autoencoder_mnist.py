@@ -20,9 +20,9 @@ scaler = dp.UniformScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
-# Prepare network inputs
+# Prepare network feeds
 batch_size = 128
-train_input = dp.Input(x_train, batch_size=batch_size)
+train_feed = dp.Feed(x_train, batch_size=batch_size)
 
 # Setup network
 def affine(n_out, gain):
@@ -58,7 +58,7 @@ net = dp.model.VariationalAutoencoder(
 # Train network
 learn_rate = 0.25/batch_size
 learn_rule = dp.RMSProp(learn_rate)
-trainer = dp.GradientDescent(net, train_input, learn_rule)
+trainer = dp.GradientDescent(net, train_feed, learn_rule)
 trainer.train_epochs(n_epochs=25)
 
 

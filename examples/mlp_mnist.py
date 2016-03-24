@@ -20,10 +20,10 @@ scaler = dp.StandardScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
-# Prepare network inputs
+# Prepare network feeds
 batch_size = 128
-train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
-test_input = dp.Input(x_test)
+train_feed = dp.SupervisedFeed(x_train, y_train, batch_size=batch_size)
+test_feed = dp.Feed(x_test)
 
 # Setup network
 weight_gain = 2.0
@@ -54,13 +54,13 @@ net = dp.NeuralNetwork(
 n_epochs = [50, 15]
 learn_rate = 0.05/batch_size
 learn_rule = dp.Momentum(momentum=0.94)
-trainer = dp.GradientDescent(net, train_input, learn_rule)
+trainer = dp.GradientDescent(net, train_feed, learn_rule)
 for i, epochs in enumerate(n_epochs):
     learn_rule.learn_rate = learn_rate/10**i
     trainer.train_epochs(n_epochs=25)
 
 # Evaluate on test data
-error = np.mean(net.predict(test_input) != y_test)
+error = np.mean(net.predict(test_feed) != y_test)
 print('Test error rate: %.4f' % error)
 
 

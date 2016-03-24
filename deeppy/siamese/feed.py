@@ -1,11 +1,11 @@
 import numpy as np
 import cudarray as ca
-from ..input import Input
+from ..feed import Feed
 
 
-class SiameseInput(Input):
+class SiameseFeed(Feed):
     def __init__(self, x1, x2, batch_size=None, epoch_size=None):
-        super(SiameseInput, self).__init__(x1, batch_size, epoch_size)
+        super(SiameseFeed, self).__init__(x1, batch_size, epoch_size)
         if x1.shape[0] != x2.shape[0]:
             raise ValueError('shape mismatch between x1 and x2')
         self.x2 = x2
@@ -25,9 +25,9 @@ class SiameseInput(Input):
             yield {'x1': x1, 'x2': x2}
 
 
-class SupervisedSiameseInput(SiameseInput):
+class SupervisedSiameseFeed(SiameseFeed):
     def __init__(self, x1, x2, y, batch_size=None, epoch_size=None):
-        super(SupervisedSiameseInput, self).__init__(x1, x2, batch_size,
+        super(SupervisedSiameseFeed, self).__init__(x1, x2, batch_size,
                                                      epoch_size)
         if x1.shape[0] != y.shape[0]:
             raise ValueError('shape mismatch between x and y')

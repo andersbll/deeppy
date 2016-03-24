@@ -18,11 +18,11 @@ def avg_running_time(fun, reps):
     return float(time.time() - start_time) / reps
 
 
-def profile(net, input, reps=50):
-    input = dp.Input.from_any(input)
-    net.setup(**input.shapes)
+def profile(net, feed, reps=50):
+    feed = dp.Feed.from_any(feed)
+    net.setup(**feed.shapes)
     net.phase = 'train'
-    batch = next(input.batches())
+    batch = next(feed.batches())
     x = batch['x']
     total_duration = 0
     for layer_idx, layer in enumerate(net.layers[:-1]):
@@ -51,9 +51,9 @@ def profile(net, input, reps=50):
 dataset = dp.dataset.CIFAR10()
 x_train, y_train, x_test, y_test = dataset.arrays(dp_dtypes=True)
 
-# Prepare network inputs
+# Prepare network feeds
 batch_size = 128
-train_input = dp.SupervisedInput(x_train, y_train, batch_size=batch_size)
+train_feed = dp.SupervisedFeed(x_train, y_train, batch_size=batch_size)
 
 # Setup network
 def conv_layer(n_filters):
@@ -98,4 +98,4 @@ net = dp.NeuralNetwork(
     loss=dp.SoftmaxCrossEntropy(),
 )
 
-profile(net, train_input)
+profile(net, train_feed)

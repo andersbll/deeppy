@@ -3,7 +3,7 @@ import cudarray as ca
 import deeppy.expr as expr
 from ..base import Model, CollectionMixin
 from ..filler import AutoFiller
-from ..input import Input
+from ..feed import Feed
 
 
 class NormalSampler(expr.Op, CollectionMixin):
@@ -97,25 +97,23 @@ class VariationalAutoencoder(Model, CollectionMixin):
         self._graph.bprop()
         return self.lowerbound.array
 
-    def _batchwise(self, input, expr_fun):
+    def _batchwise(self, feed, expr_fun):
         self.phase = 'test'
-        input = Input.from_any(input)
-        src = expr.Source(input.x_shape)
+        feed = Feed.from_any(feed)
+        src = expr.Source(feed.x_shape)
         sink = expr_fun(src)
         graph = expr.graph.ExprGraph(sink)
         graph.setup()
         z = []
-        for x_batch in input.batches():
+        for x_batch in feed.batches():
             src.array = x_batch['x']
             graph.fprop()
             z.append(np.array(sink.array))
-        z = np.concatenate(z)[:input.n_samples]
+        z = np.concatenate(z)[:feed.n_samples]
         return z
 
-    def embed(self, input):
-        """ Input to hidden. """
-        return self._batchwise(input, self._embed_expr)
+    def embed(self, feed):
+        return self._batchwise(feed, self._embed_expr)
 
-    def reconstruct(self, input):
-        """ Hidden to input. """
-        return self._batchwise(input, self._reconstruct_expr)
+    def reconstruct(self, feed):
+        return self._batchwise(feed, self._reconstruct_expr)
