@@ -36,7 +36,9 @@ def draw(sinks, filepath, omit_splits=True, emph_nodes=[]):
             node_labels[label] = 0
         else:
             node_labels[label] += 1
-        label += str(node_labels[label])
+        label += ' #' + str(node_labels[label])
+        if node.shape is not None:
+            label += ' ' + str(node.shape)
         color = 'black' if node.bpropable else 'grey'
         nx_graph.add_node(node, label=label, color=color)
 
@@ -101,8 +103,8 @@ class NANGuardExprGraph(ExprGraph):
         visited = []
         for node in self._fprop_top:
             node.fprop()
-            if node.out is not None:
-                arr = np.array(node.out)
+            if node.array is not None:
+                arr = np.array(node.array)
                 if np.any(np.isnan(arr) + np.isinf(arr)):
                     draw(self.sinks, 'debug_fprop_nan.pdf', omit_splits=True,
                          emph_nodes=[node])
@@ -114,8 +116,8 @@ class NANGuardExprGraph(ExprGraph):
     def bprop(self):
         visited = []
         for node in self._bprop_top:
-            if node.out_grad is not None:
-                arr = np.array(node.out_grad)
+            if node.grad_array is not None:
+                arr = np.array(node.grad_array)
                 if np.any(np.isnan(arr) + np.isinf(arr)):
                     draw(self.sinks, 'debug_bprop_nan.pdf', omit_splits=True,
                          emph_nodes=[node])
