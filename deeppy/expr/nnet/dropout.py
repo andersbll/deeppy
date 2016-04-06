@@ -10,7 +10,7 @@ class Dropout(UnaryElementWise, PhaseMixin):
         self.phase = 'train'
 
     def __call__(self, x):
-        if self.dropout == 0:
+        if self.dropout == 0.0:
             return x
         return super(Dropout, self).__call__(x)
 
@@ -24,8 +24,9 @@ class Dropout(UnaryElementWise, PhaseMixin):
             ca.less(self.dropout, ca.random.uniform(size=self.mask_shape),
                     self._tmp_mask)
             ca.multiply(self.x.array, self._tmp_mask, self.array)
+            self.array *= 1.0/(1.0-self.dropout)
         elif self.phase == 'test':
-            ca.multiply(self.x.array, 1.0-self.dropout, self.array)
+            self.array = self.x.array
         else:
             raise ValueError('Invalid phase: %s' % self.phase)
 
