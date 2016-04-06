@@ -9,17 +9,17 @@ log = logging.getLogger(__name__)
 
 
 _ALIGNED_IMGS_URL = (
-    'https://www.dropbox.com/sh/8oqt9vytwxb3s4r/AADVdnYbokd7TXhpvfWLL3sga/img_align_celeba.zip?dl=1',
+    'https://www.dropbox.com/sh/8oqt9vytwxb3s4r/AADIKlz8PR9zr6Y20qbkunrba/Img/img_align_celeba.zip?dl=1',
     'b7e1990e1f046969bd4e49c6d804b93cd9be1646'
 )
 
 _PARTITIONS_URL = (
-    'https://www.dropbox.com/sh/8oqt9vytwxb3s4r/AABamfKsYY1riQzG-fy4LKqua/list_eval_partition.txt?dl=1',
+    'https://www.dropbox.com/sh/8oqt9vytwxb3s4r/AADxLE5t6HqyD8sQCmzWJRcHa/Eval/list_eval_partition.txt?dl=1',
     'fb3d89825c49a2d389601eacb10d73815fd3c52d'
 )
 
 _ATTRIBUTES_URL = (
-    'https://www.dropbox.com/sh/8oqt9vytwxb3s4r/AAB7G69NLjRNqv_tyiULHSVUa/list_attr_celeba.txt?dl=1',
+    'https://www.dropbox.com/sh/8oqt9vytwxb3s4r/AAC7-uCaJkmPmvLX2_P5qy0ga/Anno/list_attr_celeba.txt?dl=1',
     'da6959c54754838f1a12cbb80ed9baba5618eddd'
 )
 
