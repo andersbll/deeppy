@@ -6,32 +6,32 @@ from .. import expr as ex
 
 
 class FeedForwardNet(Model, CollectionMixin, PickleMixin):
-    _pickle_ignore = ['_graph']
+    _pickle_ignore = ['graph']
 
     def __init__(self, expression, loss):
         self.expression = expression
         self.loss = loss
-        self._graph = None
+        self.graph = None
         self.collection = [expression]
 
     def setup(self, x_shape, y_shape=None):
-        self._x_src = ex.Source(x_shape)
-        y_expr = self._fprop_expr(self._x_src)
+        self.x_src = ex.Source(x_shape)
+        y_expr = self._fprop_expr(self.x_src)
         if y_shape is not None:
-            self._y_src = ex.Source(y_shape)
-            y_expr = self.loss(y_expr, self._y_src)
+            self.y_src = ex.Source(y_shape)
+            y_expr = self.loss(y_expr, self.y_src)
             y_expr.grad_array = ca.array(1.0)
-        self._graph = ex.graph.ExprGraph(y_expr)
-        self._graph.setup()
+        self.graph = ex.graph.ExprGraph(y_expr)
+        self.graph.setup()
 
     def _fprop_expr(self, x):
         return self.expression(x)
 
     def update(self, x, y):
-        self._x_src.array = x
-        self._y_src.array = y
-        self._graph.fprop()
-        self._graph.bprop()
+        self.x_src.array = x
+        self.y_src.array = y
+        self.graph.fprop()
+        self.graph.bprop()
         return self.loss.array
 
     def _batchwise(self, feed, expr_fun):
