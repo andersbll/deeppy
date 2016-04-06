@@ -9,7 +9,7 @@ from test_layers import check_grad, check_params
 
 batch_sizes = [1, 4, 5]
 n_channels = [1, 3, 8]
-img_shapes = [(1, 6), (6, 1), (7, 7), (8, 8), (9, 15)]
+img_shapes = [(1, 6), (6, 1), (7, 7), (8, 8), (9, 5)]
 
 
 def shuffled(l):
