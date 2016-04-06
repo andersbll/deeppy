@@ -52,6 +52,8 @@ class GradientDescent(object):
         start_time = time.clock()
         while epoch < max_epochs and not converged:
             epoch += 1
+            self.model.phase = 'train'
+            self.model.setup(*self.feed.shapes)
             epoch_loss = self.train_epoch()
             if error_fun is None:
                 epoch_error = epoch_loss
