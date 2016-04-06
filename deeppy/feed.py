@@ -21,6 +21,8 @@ class Feed(object):
             return arg
         elif isinstance(arg, np.ndarray):
             return cls(arg)
+        elif isinstance(arg, ca.ndarray):
+            return cls(np.array(arg))
         elif isinstance(arg, tuple):
             return SupervisedFeed(arg[0], arg[1])
         raise ValueError('Invalid arguments.')
