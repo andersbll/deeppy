@@ -104,7 +104,7 @@ class ExprGraph(CollectionMixin):
         graph = build_graph(self.sinks)
 
         # Insert ExprSplit nodes
-        for node, out_degree in graph.out_degree():
+        for node, out_degree in list(graph.out_degree()):
             if out_degree <= 1 or out_degree - len(node.inputs) == 0 or \
                not node.bpropable or isinstance(node, SplitMixin):
                 continue
