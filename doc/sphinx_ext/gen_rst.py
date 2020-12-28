@@ -402,7 +402,7 @@ class NameFinder(ast.NodeVisitor):
 
 
 def identify_names(code):
-    """Builds a codeobj summary by identifying and resovles used names
+    """Builds a codeobj summary by identifying and resolves used names
 
     >>> code = '''
     ... from a.b import c
